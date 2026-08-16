@@ -1,0 +1,41 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "GNU LGPL 3.0"
+
+[[mods]]
+modId = "duty_fixerupper"
+version = "${mod_version}"
+displayName = "Duty: FixerUpper"
+authors = "Duty"
+credits = "Derived from ModernFix by embeddedt (LGPL-3.0) and Modernica by Reverie Projects (LGPL-3.0)."
+description = '''
+Duty does what it needs to do, perform its duty.
+
+FixerUpper: startup time and general throughput. Trims datafixer work, makes
+resource and registry loading lazy, and cuts the long tail of startup stalls.
+'''
+
+[[mixins]]
+config = "duty_fixerupper.mixins.json"
+
+[[dependencies.duty_fixerupper]]
+modId = "neoforge"
+type = "required"
+versionRange = "[26.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.duty_fixerupper]]
+modId = "minecraft"
+type = "required"
+versionRange = "[26.1.2,26.2)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.duty_fixerupper]]
+modId = "modernfix"
+type = "incompatible"
+reason = "Duty: FixerUpper already contains ModernFix. Running both applies the same patches twice."
+versionRange = "[0,)"
+ordering = "NONE"
+side = "BOTH"

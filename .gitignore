@@ -1,0 +1,35 @@
+# Build output. Every module's build/ holds a decompiled and patched Minecraft plus the
+# NeoForm runtime artifacts -- around 100 MB each, and all of it reproducible from a build.
+build/
+*/build/
+.gradle/
+
+# Staging directory for tools/deploy.sh. Contains built jars, including duty-client, which
+# bundles EntityCulling and is not redistributable. Keep it out of the repo.
+install-mods/
+
+# Compiled artifacts and native libraries.
+*.jar
+*.class
+*.dll
+*.so
+*.dylib
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Runtime
+run/
+logs/
+*.log

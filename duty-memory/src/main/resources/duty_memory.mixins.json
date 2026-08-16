@@ -1,0 +1,28 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "net.dutymod.memory.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "plugin": "net.dutymod.memory.DutyMemoryMixinPlugin",
+  "mixins": [
+    "blockstate.StateDefinitionMixin",
+    "blockstate.StateHolderAccessor",
+    "blockstate.StateHolderMixin",
+    "blockstatecache.ArrayVSAccess",
+    "blockstatecache.BitSetDVSAccess",
+    "blockstatecache.BlockStateBaseMixin",
+    "blockstatecache.BlockStateCacheMixin",
+    "blockstatecache.DiscreteVSAccess",
+    "blockstatecache.SliceShapeAccess",
+    "blockstatecache.SubShapeAccess",
+    "blockstatecache.VoxelShapeAccess",
+    "datacomponents.PatchedDataComponentMapMixin",
+    "tags.ResourceKeyMixin",
+    "tags.TagKeyMixin"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

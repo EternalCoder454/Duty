@@ -1,0 +1,33 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+# MIT rather than LGPL on purpose: Duty Core is original code, and keeping it
+# permissive is what lets Duty: Client stay MIT. See NOTICE.
+license = "MIT"
+
+# Duty Core carries no game logic of its own. It exists so the three Duty
+# modules can share one config file and one mixin-gating implementation instead
+# of shipping three near-identical copies that fight over the same file.
+# It is nested inside each module jar via JarJar, so exactly one copy loads no
+# matter how many Duty modules are installed.
+[[mods]]
+modId = "duty_core"
+version = "${mod_version}"
+displayName = "Duty Core"
+authors = "Duty"
+description = '''
+Shared configuration and mixin gating for the Duty module family. Installed automatically.
+'''
+
+[[dependencies.duty_core]]
+modId = "neoforge"
+type = "required"
+versionRange = "[26.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.duty_core]]
+modId = "minecraft"
+type = "required"
+versionRange = "[26.1.2,26.2)"
+ordering = "NONE"
+side = "BOTH"

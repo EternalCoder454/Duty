@@ -1,0 +1,85 @@
+package net.dutymod.client.mixin.stfu.chat;
+
+import net.minecraft.client.gui.components.ChatComponent;
+//? if > 1.21.11 {
+import net.minecraft.client.multiplayer.chat.GuiMessage;
+//? } else
+ //import net.minecraft.client.GuiMessage;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import net.dutymod.client.stfu.config.Config;
+
+import java.util.List;
+
+@Mixin(ChatComponent.class)
+public abstract class Deduplicate {
+    @Unique
+    private static final Style OCCURRENCES = Style.EMPTY.withColor(ChatFormatting.GRAY);
+    @Shadow
+    @Final
+    private List<GuiMessage> allMessages;
+
+    @Shadow
+    protected abstract void /*? >1.21{*/refreshTrimmedMessages/*?}else{*//*refreshTrimmedMessage*//*?}*/();
+
+    @ModifyVariable(
+            method = {"addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V", "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V"},
+            at = @At("HEAD"),
+            argsOnly = true
+    )
+    private Component compact(Component message) {
+        if (Config.get().compactChat == Config.CompactChat.NEVER || allMessages.isEmpty()) return message;
+        // Skip common separators
+        boolean isSeparator = true;
+        for (char c : message.getString().trim().toCharArray())
+            if (c != ' ' && c != '=' && c != '-' && c != '_' && c != '~') {
+                isSeparator = false;
+                break;
+            }
+        if (isSeparator) return message;
+
+        // Find matching messages
+        int matches = 0;
+        for (GuiMessage other : Config.get().compactChat == Config.CompactChat.ONLY_CONSECUTIVE ? List.of(allMessages.get(0)) : allMessages) {
+            Component content = other.content();
+            if (!content.getContents().equals(message.getContents()) || !content.getStyle().equals(message.getStyle())) continue;
+
+            // Check siblings without occurrences count
+            List<Component> siblings = content.getSiblings();
+            String o = null;
+            if (!siblings.isEmpty()) {
+                Component last = siblings.get(siblings.size() - 1);
+                if (last.getStyle() == OCCURRENCES) {
+                    String raw = last.getString();
+                    if (raw != null && raw.startsWith(" (") && raw.endsWith(")")) {
+                        o = raw.substring(2, raw.length() - 1);
+                        siblings.remove(siblings.size() - 1);
+                    }
+                }
+            }
+            if (!siblings.equals(message.getSiblings())) continue;
+
+            // Increment occurrences count
+            if (o == null) matches = 2;
+            else try {
+                matches = Integer.parseInt(o) + 1;
+            } catch (NumberFormatException e) {
+                continue;
+            }
+            // remove previous message
+            allMessages.remove(other);
+            /*? >1.21{*/refreshTrimmedMessages/*?}else{*//*refreshTrimmedMessage*//*?}*/();
+            break; // Trust the previous message
+        }
+        if (matches > 1) return message.copy().append(Component.literal(" (" + matches + ")").setStyle(OCCURRENCES));
+        return message;
+    }
+}

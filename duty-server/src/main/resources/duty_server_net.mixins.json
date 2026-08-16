@@ -1,0 +1,28 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "net.dutymod.server.mixin.net",
+  "compatibilityLevel": "JAVA_25",
+  "plugin": "net.dutymod.server.net.NetMixinPlugin",
+  "mixins": [
+    "accessor.ConnectionAccessor",
+    "microopt.PacketProcessorMixin",
+    "microopt.Utf8StringMixin",
+    "microopt.VarIntMixin",
+    "microopt.VarLongMixin",
+    "pipeline.CompressionConnectionMixin",
+    "pipeline.EncryptionConnectionMixin",
+    "pipeline.LegacyQueryHandlerMixin",
+    "pipeline.PrependerConnectionMixin",
+    "pipeline.ServerLoginPacketListenerImplMixin",
+    "pipeline.ServerStatusPacketListenerImplMixin",
+    "pipeline.Varint21FrameDecoderMixin"
+  ],
+  "client": [
+    "pipeline.ClientLoginMixin"
+  ],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

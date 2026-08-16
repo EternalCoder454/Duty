@@ -1,0 +1,12 @@
+# Normalise to LF in the repository. Duty is developed on Windows but every upstream it was
+# merged from uses LF, so without this the first commit rewrites every ported file and buries
+# the real changes in whitespace.
+* text=auto eol=lf
+
+*.bat text eol=crlf
+
+*.jar binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.png binary

@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "net.dutymod.server.mixin.biome",
+  "compatibilityLevel": "JAVA_25",
+  "plugin": "net.dutymod.server.biome.MixinPlugin",
+  "mixins": [
+    "ChunkGeneratorMixin",
+    "MultiNoiseBiomeSourceAccessor",
+    "MultiNoiseBiomeSourceMixin",
+    "StructureCheckAccessor",
+    "StructureManagerAccessor"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

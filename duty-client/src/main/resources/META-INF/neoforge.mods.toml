@@ -1,0 +1,70 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+# Not an OSI licence: this jar contains EntityCulling, whose licence permits use,
+# modification and compilation but not redistribution. Personal build only -- see NOTICE.
+license = "Mixed: MIT and tr7zw Protective License (not redistributable)"
+
+[[mods]]
+modId = "duty_client"
+version = "${mod_version}"
+displayName = "Duty: Client"
+authors = "Duty"
+credits = "Derived from Particle Core by fzzyhmstrs (MIT), EntityCulling by tr7zw, OptimisedBlockEntities by maDU59 (LGPL-3.0), and OcclusionCulling by LogisticsCraft (MIT)."
+description = '''
+Duty does what it needs to do, perform its duty.
+
+Client: bakes block entities such as chests, signs and banners into the chunk
+mesh so they are not redrawn every frame; culls entities and block entities
+hidden behind blocks using a background tracing thread, and skips their client
+ticks too; and optimizes particle rendering.
+'''
+
+[[mixins]]
+config = "duty_client.mixins.json"
+
+[[dependencies.duty_client]]
+modId = "neoforge"
+type = "required"
+versionRange = "[26.1,)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.duty_client]]
+modId = "minecraft"
+type = "required"
+versionRange = "[26.1.2,26.2)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.duty_client]]
+modId = "particle_core"
+type = "incompatible"
+reason = "Duty: Client already contains Particle Core. Running both applies the same optimizations twice."
+versionRange = "[0,)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.duty_client]]
+modId = "obe"
+type = "incompatible"
+reason = "Duty: Client already contains OptimisedBlockEntities. Running both would bake the same block entities twice."
+versionRange = "[0,)"
+ordering = "NONE"
+side = "CLIENT"
+
+# Sodium is explicitly supported, not merely tolerated: Duty carries OBE's Sodium
+# chunk-meshing compat, and those mixins only apply when Sodium is installed.
+[[dependencies.duty_client]]
+modId = "sodium"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.duty_client]]
+modId = "entityculling"
+type = "incompatible"
+reason = "Duty: Client already contains EntityCulling. Running both installs two culling threads competing over the same state."
+versionRange = "[0,)"
+ordering = "NONE"
+side = "CLIENT"

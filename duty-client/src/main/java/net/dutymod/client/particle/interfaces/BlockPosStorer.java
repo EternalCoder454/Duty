@@ -1,0 +1,12 @@
+package net.dutymod.client.particle.interfaces;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
+
+public interface BlockPosStorer {
+
+    void particle_core_tickCachedPos();
+    BlockPos particle_core_getCachedPos();
+    BlockState particle_core_getCachedState();
+    boolean particle_core_getCachedEmpty();
+}

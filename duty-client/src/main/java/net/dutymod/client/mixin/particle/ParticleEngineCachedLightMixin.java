@@ -1,0 +1,38 @@
+package net.dutymod.client.mixin.particle;
+
+import net.dutymod.client.particle.interfaces.CachedLightProvider;
+import net.minecraft.client.particle.TrackingEmitter;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.client.particle.ParticleEngine;
+import net.minecraft.client.particle.ParticleRenderType;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.culling.Frustum;
+import net.minecraft.client.renderer.MultiBufferSource;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import java.util.function.Predicate;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Mixin(ParticleEngine.class)
+public class ParticleEngineCachedLightMixin implements CachedLightProvider {
+
+    @Unique
+    private volatile ConcurrentHashMap<BlockPos, Integer> cachedLightMap = new ConcurrentHashMap<>(64, 0.75f);
+
+    @Override
+    public ConcurrentHashMap<BlockPos, Integer> particle_core_getCache() {
+        return cachedLightMap;
+    }
+
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void particle_core_clearCache(CallbackInfo ci) {
+        int size = cachedLightMap.size();
+        cachedLightMap = new ConcurrentHashMap<>(size, 0.75f);
+    }
+}

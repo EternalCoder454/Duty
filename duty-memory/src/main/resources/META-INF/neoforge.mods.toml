@@ -1,0 +1,51 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "GNU LGPL 3.0"
+
+[[mods]]
+modId = "duty_memory"
+version = "${mod_version}"
+displayName = "Duty: Memory"
+authors = "Duty"
+credits = "Derived from FerriteCore by malte0811 (MIT) and Jasione by decce (LGPL-3.0)."
+description = '''
+Duty does what it needs to do, perform its duty.
+
+Memory: cuts heap footprint and allocation pressure. Deduplicates block state
+neighbour tables, property maps and model data, and removes the array copy that
+Enum.values() performs on every call.
+'''
+
+[[mixins]]
+config = "duty_memory.mixins.json"
+
+[[dependencies.duty_memory]]
+modId = "neoforge"
+type = "required"
+versionRange = "[26.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.duty_memory]]
+modId = "minecraft"
+type = "required"
+versionRange = "[26.1.2,26.2)"
+ordering = "NONE"
+side = "BOTH"
+
+# Duty must apply its block-state changes before anything that reads the tables.
+[[dependencies.duty_memory]]
+modId = "ferritecore"
+type = "incompatible"
+reason = "Duty: Memory already contains FerriteCore. Running both applies the same optimizations twice."
+versionRange = "[0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.duty_memory]]
+modId = "jasione"
+type = "incompatible"
+reason = "Duty: Memory already contains Jasione. Running both would install two Enum.values() transformers."
+versionRange = "[0,)"
+ordering = "NONE"
+side = "BOTH"
