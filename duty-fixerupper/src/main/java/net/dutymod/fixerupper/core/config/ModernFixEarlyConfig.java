@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import net.dutymod.core.DutyConfig;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import net.dutymod.fixerupper.annotation.FeatureLevel;
 import net.dutymod.fixerupper.annotation.IgnoreOutsideDev;
@@ -498,22 +499,38 @@ public class ModernFixEarlyConfig {
      */
     public static ModernFixEarlyConfig load(File file) {
         ModernFixEarlyConfig config = new ModernFixEarlyConfig(file);
-        Properties props = new Properties();
         if(!Boolean.getBoolean("duty.ignoreConfigForTesting")) {
+            // FixerUpper's options live in Duty's config file rather than one of their own, so
+            // every Duty option is in one place and reachable from the settings screen.
+            //
+            // Registration happens first and only once, while every option still holds the value
+            // the constructor gave it. That is what makes the registered default the real default:
+            // do this after reading a user's file and every value they changed gets recorded as
+            // though it were built in, and "reset to default" in the screen resets to their old
+            // setting instead.
+            config.registerWithDutyConfig();
+
+            // An older build's standalone file, if one is still there. Read once, copied across,
+            // then removed so it cannot keep overriding the settings screen.
             if(file.exists()) {
-                try (FileInputStream fin = new FileInputStream(file)){
-                    props.load(fin);
+                Properties legacy = new Properties();
+                try (FileInputStream fin = new FileInputStream(file)) {
+                    legacy.load(fin);
                 } catch (IOException e) {
                     throw new RuntimeException("Could not load config file", e);
                 }
-                config.readProperties(props);
+                config.readProperties(legacy);
+                config.saveToDutyConfig();
+                if (file.delete()) {
+                    LOGGER.info("Migrated {} into Duty's config and removed it", file.getName());
+                } else {
+                    LOGGER.warn("Migrated {} into Duty's config, but could not remove the old file; "
+                            + "it will be read again next launch and override the settings screen",
+                            file.getName());
+                }
             }
 
-            try {
-                config.save();
-            } catch (IOException e) {
-                LOGGER.warn("Could not write configuration file", e);
-            }
+            config.readProperties(config.readFromDutyConfig());
 
             config.readGlobalProperties();
             config.readJVMProperties();
@@ -536,60 +553,96 @@ public class ModernFixEarlyConfig {
         }
     }
 
+    /**
+     * Persists user-set options.
+     *
+     * <p>FixerUpper's own settings screen calls this. It used to write a standalone properties
+     * file; now it writes through {@link DutyConfig}, so that screen and Duty's Cloth screen edit
+     * the same values and neither can be silently undone by the other.
+     *
+     * <p>Still declared to throw {@link IOException} because callers catch it, and because
+     * DutyConfig deliberately swallows write failures -- it keeps every value in memory, so a
+     * read-only config directory degrades to "defaults apply", never to "the game will not start".
+     */
     public void save() throws IOException {
-        File dir = configFile.getParentFile();
+        saveToDutyConfig();
+    }
 
-        if (!dir.exists()) {
-            if (!dir.mkdirs()) {
-                throw new IOException("Could not create parent directories");
-            }
-        } else if (!dir.isDirectory()) {
-            throw new IOException("The parent file is not a directory");
+    /**
+     * The prefix every FixerUpper option carries inside {@code duty.properties}.
+     *
+     * <p>ModernFix's own names ({@code mixin.perf.dynamic_resources}, {@code stability_level}) are
+     * generic enough to collide with another module's, and the settings screen groups by the text
+     * before the first dot, so the prefix is what puts them under their own heading.
+     */
+    public static final String DUTY_PREFIX = "fixerupper.";
+
+    /**
+     * Publishes every option to {@link DutyConfig} and returns the values stored there.
+     *
+     * <p>This is the whole of the move onto Duty's config. The options themselves are still built
+     * here -- discovered by scanning the mixin packages, given parents by their dotted names, and
+     * subject to per-mod overrides -- because none of that is storage and none of it belongs in a
+     * properties file. What moves is where the values live and who writes them.
+     *
+     * <p>The result is fed through {@link #readProperties}, the same method that used to consume
+     * the standalone file, so the mod-override guard and the value validation are unchanged. That
+     * matters more than the saving: these options decide which of roughly two hundred mixins apply,
+     * and a value that silently reads back differently would change what is patched.
+     *
+     * <p>Called after the constructor has built every option, so the values seen here are the
+     * defaults -- which is exactly what should be registered as each option's default.
+     */
+    private void registerWithDutyConfig() {
+        List<DutyConfig.Option> toRegister = new ArrayList<>(this.options.size());
+        for (Map.Entry<String, Option<?>> entry : this.options.entrySet()) {
+            String name = entry.getKey();
+            Option<?> option = entry.getValue();
+            toRegister.add(new DutyConfig.Option(
+                    DUTY_PREFIX + name,
+                    option.getSerializedValue(),
+                    describe(name, option)));
         }
+        DutyConfig.registerAll(toRegister);
+    }
 
-        try (Writer writer = new FileWriter(configFile)) {
-            writer.write("# This is the configuration file for ModernFix.\n");
-            writer.write("# In general, prefer using the config screen to editing this file. It can be accessed\n");
-            writer.write("# via the standard mod menu on your respective mod loader. Changes will, however,\n");
-            writer.write("# require restarting the game to take effect.\n");
-            writer.write("#\n");
-            writer.write("# The following options can be enabled or disabled if there is a compatibility issue.\n");
-            writer.write("# Add a line with your option name and =true or =false at the bottom of the file to enable\n");
-            writer.write("# or disable a rule. For example:\n");
-            writer.write("#   mixin.perf.dynamic_resources=true\n");
-            writer.write("# Do not include the #. You may reset to defaults by deleting this file.\n");
-            writer.write("#\n");
-            writer.write("# To enable features that are still in testing, add a line at the bottom setting the stability level:\n");
-            writer.write("#   stability_level=BETA\n");
-            writer.write("#\n");
-            writer.write("# Available options:\n");
-            List<String> keys = this.options.keySet().stream()
-                    .filter(key -> !key.equals("mixin.core"))
-                    .sorted()
-                    .collect(Collectors.toList());
-            for(String line : keys) {
-                if(!line.equals("mixin.core")) {
-                    Option<?> option = this.options.get(line);
-                    String extraContext = "";
-                    if(option != null) {
-                        if(!option.isUserDefined())
-                            extraContext = "=" + option.getSerializedValue() + " # " + (option.isModDefined() ? "(overridden for mod compat)" : "(default)");
-                        else {
-                            boolean defaultEnabled = DEFAULT_SETTING_OVERRIDES.getOrDefault(line, true);
-                            extraContext = "=" + defaultEnabled + " # (default)";
-                        }
-                    }
-                    writer.write("#  " + line + extraContext + "\n");
-                }
+    /** {@return the stored value of every option, keyed by its ModernFix name} */
+    private Properties readFromDutyConfig() {
+        Properties props = new Properties();
+        for (String name : this.options.keySet()) {
+            String stored = DutyConfig.rawOrDefault(DUTY_PREFIX + name);
+            if (stored != null) {
+                props.setProperty(name, stored);
             }
+        }
+        return props;
+    }
 
-            writer.write("#\n");
-            writer.write("# User overrides go here.\n");
+    /**
+     * ModernFix carries no per-option help text -- upstream's file documents the options as one
+     * block of prose at the top. The settings screen shows a tooltip per entry, so this builds the
+     * nearest useful thing from what the option does know about itself.
+     */
+    private String describe(String name, Option<?> option) {
+        StringBuilder out = new StringBuilder();
+        String category = OptionCategories.getCategoryForOption(name);
+        if (category != null && !category.isEmpty()) {
+            out.append(category).append('\n');
+        }
+        if (option.isModDefined()) {
+            out.append("Overridden for compatibility with another installed mod; changing this\n")
+                    .append("takes effect only if that mod is removed.\n");
+        }
+        out.append("Requires a restart. Delete the line to return to the default.");
+        return out.toString();
+    }
 
-            for (String key : keys) {
-                Option<?> option = this.options.get(key);
-                if(option.isUserDefined())
-                    writer.write(key + "=" + option.getSerializedValue() + "\n");
+    /** Writes every user-set option back to {@link DutyConfig}. */
+    private void saveToDutyConfig() {
+        for (Map.Entry<String, Option<?>> entry : this.options.entrySet()) {
+            Option<?> option = entry.getValue();
+            if (option.isUserDefined()) {
+                DutyConfig.set(DUTY_PREFIX + entry.getKey(), option.getSerializedValue());
             }
         }
     }

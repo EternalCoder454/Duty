@@ -3,11 +3,13 @@ package net.dutymod.core.screen;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import me.shedaniel.clothconfig2.impl.builders.SubCategoryBuilder;
 import net.dutymod.core.DutyConfig;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -23,9 +25,11 @@ import java.util.Map;
  * {@link NoClassDefFoundError}. {@link DutyConfigScreens} is the gate; do not reference this class
  * from anywhere else.
  *
- * <p>Options are grouped into categories by the prefix of their key ({@code memory.}, {@code
- * client.}, {@code server.}). Only modules that are actually installed have registered anything, so
- * the screen shows exactly the options that do something in this instance.
+ * <p>Options are grouped into a category per module, taken from the prefix of their key
+ * ({@code memory.}, {@code client.}, {@code server.}, {@code fixerupper.}), and into sub-categories
+ * within that -- see {@link #SUBCATEGORY_RULES}. FixerUpper alone contributes around two hundred
+ * options, so a flat list per module would not be usable. Only modules that are actually installed
+ * have registered anything, so the screen shows exactly the options that do something here.
  *
  * <p><b>Every entry is marked {@code requireRestart}</b>, and that is accurate rather than lazy.
  * Duty's options are read from three places that all run once: mixin config plugins, which decide
@@ -34,8 +38,6 @@ import java.util.Map;
  * re-reads its option, so presenting any of them as live would mean the value changes in the file
  * and nothing happens until the next launch.
  *
- * <p>{@code duty-fixerupper} does not appear here. It kept ModernFix's own config system and file
- * rather than being rewritten onto {@link DutyConfig}, so its options are not in this registry.
  */
 public final class ClothConfigScreen {
     private ClothConfigScreen() {}
@@ -44,7 +46,75 @@ public final class ClothConfigScreen {
     private static final Map<String, String> CATEGORY_NAMES = Map.of(
             "memory", "Duty: Memory",
             "client", "Duty: Client",
-            "server", "Duty: Server");
+            "server", "Duty: Server",
+            "fixerupper", "Duty: FixerUpper");
+
+    /**
+     * Ordered rules mapping an option name to the sub-category it appears under.
+     *
+     * <p>Matched by substring, first rule wins, so the order is the priority order -- {@code
+     * hide_own_potion_particles} has to reach "Particles" before anything matching {@code hide_}
+     * could claim it.
+     *
+     * <p>These are derived from the key rather than declared alongside the option because the
+     * screen is generated: a rule that matches on {@code particle} keeps working when a module adds
+     * another particle option, where a hand-written list would silently leave it ungrouped. Options
+     * matching nothing fall into "Other", which is the signal that a rule is missing.
+     */
+    private static final List<Map.Entry<String, String>> SUBCATEGORY_RULES = List.of(
+            // FixerUpper: its keys are ModernFix's, already structured as mixin.<kind>.<feature>
+            Map.entry("mixin.perf.", "Performance"),
+            Map.entry("mixin.bugfix.", "Bug fixes"),
+            Map.entry("mixin.feature.", "Features"),
+            Map.entry("mixin.safety.", "Safety"),
+            Map.entry("mixin.devenv", "Development"),
+            Map.entry("stability_level", "Stability"),
+
+            // Client
+            Map.entry("particle", "Particles"),
+            Map.entry("cull", "Culling"),
+            Map.entry("nametags_through_walls", "Culling"),
+            Map.entry("solid_leaves", "Culling"),
+            Map.entry("chat", "Chat"),
+            Map.entry("announce_advancements", "Chat"),
+            Map.entry("toast", "Toasts and overlays"),
+            Map.entry("splash", "Toasts and overlays"),
+            Map.entry("fade", "Toasts and overlays"),
+            Map.entry("loading_terrain", "Toasts and overlays"),
+            Map.entry("world_advice", "Toasts and overlays"),
+            Map.entry("thread_priority", "Thread priorities"),
+            Map.entry("block_entities", "Block entities"),
+            Map.entry("animate_textures", "Rendering"),
+            Map.entry("render_weather", "Rendering"),
+            Map.entry("night_vision_flicker", "Rendering"),
+            Map.entry("delete_to_trash", "Miscellaneous"),
+            Map.entry("unfocused_volume", "Miscellaneous"),
+
+            // Memory
+            Map.entry("block_state", "Block states"),
+            Map.entry("property_map", "Block states"),
+            Map.entry("compact_state", "Block states"),
+            Map.entry("enum_values", "Enums"),
+            Map.entry("tag_key_interning", "Tags and components"),
+            Map.entry("data_component", "Tags and components"),
+
+            // Server
+            Map.entry("compression", "Compression"),
+            Map.entry("compress", "Compression"),
+            Map.entry("encryption", "Encryption"),
+            Map.entry("varint", "Packet codec"),
+            Map.entry("varlong", "Packet codec"),
+            Map.entry("packet", "Packet codec"));
+
+    /** {@return the sub-category {@code name} belongs to} */
+    private static String subCategoryOf(String name) {
+        for (Map.Entry<String, String> rule : SUBCATEGORY_RULES) {
+            if (name.contains(rule.getKey())) {
+                return rule.getValue();
+            }
+        }
+        return "Other";
+    }
 
     public static Screen create(Screen parent) {
         ConfigBuilder builder = ConfigBuilder.create()
@@ -53,8 +123,10 @@ public final class ClothConfigScreen {
                 .setSavingRunnable(() -> {});
         ConfigEntryBuilder entries = builder.entryBuilder();
 
-        // Preserve registration order within a category, and category order by first appearance.
+        // Category order follows first appearance, which is module registration order; within a
+        // category, sub-categories and their entries keep the order their options were registered.
         Map<String, ConfigCategory> categories = new LinkedHashMap<>();
+        Map<String, SubCategoryBuilder> subCategories = new LinkedHashMap<>();
 
         for (DutyConfig.Option option : DutyConfig.options()) {
             String key = option.key();
@@ -62,8 +134,11 @@ public final class ClothConfigScreen {
             String prefix = dot > 0 ? key.substring(0, dot) : "other";
             String name = key.substring(dot + 1);
 
-            ConfigCategory category = categories.computeIfAbsent(prefix, p -> builder.getOrCreateCategory(
+            categories.computeIfAbsent(prefix, p -> builder.getOrCreateCategory(
                     Component.literal(CATEGORY_NAMES.getOrDefault(p, "Duty: " + capitalise(p)))));
+            String groupName = subCategoryOf(name);
+            SubCategoryBuilder group = subCategories.computeIfAbsent(prefix + '/' + groupName,
+                    k -> entries.startSubCategory(Component.literal(groupName)));
 
             String current = DutyConfig.rawOrDefault(key);
             Component label = Component.literal(prettify(name));
@@ -71,7 +146,7 @@ public final class ClothConfigScreen {
 
             if (isBoolean(option.defaultValue())) {
                 boolean value = Boolean.parseBoolean(current);
-                category.addEntry(entries
+                group.add(entries
                         .startBooleanToggle(label, value)
                         .setDefaultValue(Boolean.parseBoolean(option.defaultValue()))
                         .setTooltip(tooltip)
@@ -79,7 +154,7 @@ public final class ClothConfigScreen {
                         .setSaveConsumer(v -> DutyConfig.set(key, Boolean.toString(v)))
                         .build());
             } else if (isInteger(option.defaultValue())) {
-                category.addEntry(entries
+                group.add(entries
                         .startIntField(label, parseIntOr(current, option.defaultValue()))
                         .setDefaultValue(Integer.parseInt(option.defaultValue()))
                         .setTooltip(tooltip)
@@ -87,7 +162,7 @@ public final class ClothConfigScreen {
                         .setSaveConsumer(v -> DutyConfig.set(key, Integer.toString(v)))
                         .build());
             } else {
-                category.addEntry(entries
+                group.add(entries
                         .startStrField(label, current)
                         .setDefaultValue(option.defaultValue())
                         .setTooltip(tooltip)
@@ -95,6 +170,12 @@ public final class ClothConfigScreen {
                         .setSaveConsumer(v -> DutyConfig.set(key, v))
                         .build());
             }
+        }
+
+        // Attach each sub-category to its category, once every entry is in it.
+        for (Map.Entry<String, SubCategoryBuilder> entry : subCategories.entrySet()) {
+            String prefix = entry.getKey().substring(0, entry.getKey().indexOf('/'));
+            categories.get(prefix).addEntry(entry.getValue().build());
         }
 
         return builder.build();

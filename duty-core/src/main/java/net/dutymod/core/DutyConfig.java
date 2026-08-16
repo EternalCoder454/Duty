@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,6 +120,26 @@ public final class DutyConfig {
      */
     public static synchronized String getString(String key) {
         return rawValue(requireOption(key));
+    }
+
+    /**
+     * Registers many options at once, writing the file only after the last one.
+     *
+     * <p>{@link #register} rewrites the file whenever a new key arrives after the first read, which
+     * is fine for the handful of options a module declares by hand. FixerUpper registers roughly
+     * two hundred, discovered by scanning its own mixin packages, and doing that one at a time
+     * turns into two hundred rewrites during startup.
+     */
+    public static synchronized void registerAll(Collection<Option> newOptions) {
+        boolean changed = false;
+        for (Option option : newOptions) {
+            Option previous = OPTIONS.put(option.key(), option);
+            changed |= previous == null || !previous.equals(option);
+        }
+        if (changed && initialized) {
+            dirty = true;
+            writeIfDirty();
+        }
     }
 
     /**
