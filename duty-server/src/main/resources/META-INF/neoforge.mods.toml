@@ -25,6 +25,13 @@ config = "duty_server.mixins.json"
 [[mixins]]
 config = "duty_server_net.mixins.json"
 
+# Alternate Current's redstone dust. Its own config, because the plugin refuses to apply the
+# mixins at all when the feature is off -- that is what keeps RedStoneWireBlock untouched for
+# Lithium rather than merely idle.
+[[mixins]]
+config = "duty_server_wire.mixins.json"
+
+
 [[dependencies.duty_server]]
 modId = "neoforge"
 type = "required"

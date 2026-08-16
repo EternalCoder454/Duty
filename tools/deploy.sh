@@ -9,6 +9,16 @@
 #   $env:TMP="C:\gtmp"; $env:TEMP="C:\gtmp"; .\gradlew.bat build
 #   bash tools/deploy.sh
 
+
+# Replacing a jar under a running game is how you get "ZipFile invalid LOC header": the JVM
+# reads a file that changed beneath it, and the failure surfaces as a NoClassDefFoundError in
+# whichever mod happened to be loading. Refuse rather than corrupt a live session.
+if tasklist 2>/dev/null | awk '/javaw\.exe/{found=1} END{exit !found}'; then
+    echo "REFUSING TO DEPLOY: Minecraft appears to be running (javaw.exe)."
+    echo "Close the game first, or re-run with FORCE=1 if you are sure."
+    [ "${FORCE:-0}" = "1" ] || exit 1
+    echo "FORCE=1 set; continuing anyway."
+fi
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
