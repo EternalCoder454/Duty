@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import net.dutymod.server.wire.AlternateCurrent;
+import net.dutymod.server.wire.RedstoneWire;
 import net.dutymod.server.wire.interfaces.IServerLevel;
 
 import net.minecraft.core.BlockPos;
@@ -27,7 +27,7 @@ public class RedStoneWireBlockMixin {
 		)
 	)
 	private void duty$onUpdate(Level level, BlockPos pos, BlockState state, Orientation orientation, boolean added, CallbackInfo ci) {
-		if (AlternateCurrent.on) {
+		if (RedstoneWire.on) {
 			// Using redirects for calls to this method makes conflicts with
 			// other mods more likely, so we inject-cancel instead.
 			ci.cancel();
@@ -42,7 +42,7 @@ public class RedStoneWireBlockMixin {
 		)
 	)
 	private void duty$onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston, CallbackInfo ci) {
-		if (AlternateCurrent.on) {
+		if (RedstoneWire.on) {
 			((IServerLevel)level).duty$getWireHandler().onWireAdded(pos, state);
 		}
 	}
@@ -55,7 +55,7 @@ public class RedStoneWireBlockMixin {
 		)
 	)
 	private void duty$onRemove(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston, CallbackInfo ci) {
-		if (AlternateCurrent.on) {
+		if (RedstoneWire.on) {
 			((IServerLevel)level).duty$getWireHandler().onWireRemoved(pos, state);
 		}
 	}
@@ -68,7 +68,7 @@ public class RedStoneWireBlockMixin {
 		)
 	)
 	private void duty$onNeighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, Orientation orientation, boolean movedByPiston, CallbackInfo ci) {
-		if (AlternateCurrent.on) {
+		if (RedstoneWire.on) {
 			if (((IServerLevel)level).duty$getWireHandler().onWireUpdated(pos, state, orientation)) {
 				ci.cancel(); // needed to fix duplication bugs
 			}

@@ -66,7 +66,7 @@ public final class ClientOptions {
     public static final String HIDE_MOB_POTION_PARTICLES = "client.hide_mob_potion_particles";
 
 
-    // -- Stfu: annoyance fixes and quality-of-life ---------------------------------------------
+    // -- Quiet: annoyance fixes and quality-of-life ---------------------------------------------
 
     public static final String MAX_CHAT_HISTORY = "client.max_chat_history";
     public static final String COMPACT_CHAT = "client.compact_chat";

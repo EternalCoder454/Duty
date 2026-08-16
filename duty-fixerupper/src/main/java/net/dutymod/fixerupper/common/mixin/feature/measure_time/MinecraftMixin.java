@@ -2,7 +2,7 @@ package net.dutymod.fixerupper.common.mixin.feature.measure_time;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Overlay;
-import net.dutymod.fixerupper.ModernFixClient;
+import net.dutymod.fixerupper.FixerUpperClient;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,13 +20,13 @@ public class MinecraftMixin {
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void onClientTick(CallbackInfo ci) {
-        if(this.overlay == null && ModernFixClient.INSTANCE != null) {
-            ModernFixClient.INSTANCE.onGameLaunchFinish();
+        if(this.overlay == null && FixerUpperClient.INSTANCE != null) {
+            FixerUpperClient.INSTANCE.onGameLaunchFinish();
         }
     }
 
     @Inject(method = "doWorldLoad", at = @At("HEAD"))
     private void recordWorldLoadStart(CallbackInfo ci) {
-        ModernFixClient.worldLoadStartTime = System.nanoTime();
+        FixerUpperClient.worldLoadStartTime = System.nanoTime();
     }
 }

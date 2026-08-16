@@ -15,7 +15,7 @@ import java.util.Optional;
 @Mixin(value = BrandingControl.class, remap = false, priority = 1100)
 public class BrandingControlMixin {
     @Inject(method = "computeBranding", at = @At(value = "INVOKE", target = "Lnet/neoforged/fml/ModList;get()Lnet/neoforged/fml/ModList;"), locals = LocalCapture.CAPTURE_FAILHARD, require = 0)
-    private static void addModernFixBranding(CallbackInfo ci, ImmutableList.Builder<String> builder) {
+    private static void addFixerUpperBranding(CallbackInfo ci, ImmutableList.Builder<String> builder) {
         Optional<? extends ModContainer> mfContainer = ModList.get().getModContainerById("duty_fixerupper");
         if(mfContainer.isPresent())
             builder.add("Duty " + mfContainer.get().getModInfo().getVersion().toString());

@@ -3,7 +3,7 @@ package net.dutymod.server.wire;
 import java.util.Iterator;
 import java.util.Queue;
 
-//import net.dutymod.server.wire.AlternateCurrent;
+//import net.dutymod.server.wire.RedstoneWire;
 //import net.dutymod.server.wire.profiler.Profiler;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -821,7 +821,7 @@ public class WireHandler {
 	private void update() {
 		// The profiler keeps track of how long various parts of the algorithm take.
 		// It is only here for debugging purposes, and is commented out in production.
-//		Profiler profiler = AlternateCurrent.createProfiler();
+//		Profiler profiler = RedstoneWire.createProfiler();
 //		profiler.start();
 
 		// Search through the network for wires that need power changes. This includes

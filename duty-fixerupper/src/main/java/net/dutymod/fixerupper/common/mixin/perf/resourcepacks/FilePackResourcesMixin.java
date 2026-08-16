@@ -3,7 +3,7 @@ package net.dutymod.fixerupper.common.mixin.perf.resourcepacks;
 import net.minecraft.server.packs.FilePackResources;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.annotation.FeatureLevel;
 import net.dutymod.fixerupper.annotation.RequiresFeatureLevel;
 import net.dutymod.fixerupper.resources.ZipPackIndex;
@@ -48,7 +48,7 @@ public class FilePackResourcesMixin {
                     try {
                         mf$packIndex = index = new ZipPackIndex(access.duty$getFile().toPath());
                     } catch (IOException e) {
-                        ModernFix.LOGGER.error("Failed to build zip index for {}", access.duty$getFile(), e);
+                        FixerUpper.LOGGER.error("Failed to build zip index for {}", access.duty$getFile(), e);
                     }
                 }
             }

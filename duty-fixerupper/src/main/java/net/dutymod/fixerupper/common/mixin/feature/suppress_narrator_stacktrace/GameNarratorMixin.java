@@ -6,7 +6,7 @@ import com.mojang.text2speech.Narrator;
 import com.mojang.text2speech.NarratorLinux;
 import com.mojang.text2speech.OperatingSystem;
 import net.minecraft.client.GameNarrator;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,7 +22,7 @@ public class GameNarratorMixin {
                 default -> original.call();
             };
         } catch (Narrator.InitializeException e) {
-            ModernFix.LOGGER.warn("Failed to initialize Linux Narrator. Make sure you have libflite installed!");
+            FixerUpper.LOGGER.warn("Failed to initialize Linux Narrator. Make sure you have libflite installed!");
             return Narrator.EMPTY;
         }
     }

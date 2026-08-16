@@ -1,7 +1,7 @@
 package net.dutymod.fixerupper.common.mixin.perf.dedicated_reload_executor;
 
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,11 +14,11 @@ import java.util.concurrent.Executor;
 public class CreateWorldScreenMixin {
     @ModifyArg(method = "applyNewPackConfig", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/WorldLoader;load(Lnet/minecraft/server/WorldLoader$InitConfig;Lnet/minecraft/server/WorldLoader$WorldDataSupplier;Lnet/minecraft/server/WorldLoader$ResultFactory;Ljava/util/concurrent/Executor;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"), index = 3)
     private Executor getReloadExecutorService(Executor e) {
-        return ModernFix.resourceReloadExecutor();
+        return FixerUpper.resourceReloadExecutor();
     }
 
     @ModifyArg(method = "openCreateWorldScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/WorldLoader;load(Lnet/minecraft/server/WorldLoader$InitConfig;Lnet/minecraft/server/WorldLoader$WorldDataSupplier;Lnet/minecraft/server/WorldLoader$ResultFactory;Ljava/util/concurrent/Executor;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"), index = 3)
     private static Executor getCreationExecutorService(Executor e) {
-        return ModernFix.resourceReloadExecutor();
+        return FixerUpper.resourceReloadExecutor();
     }
 }

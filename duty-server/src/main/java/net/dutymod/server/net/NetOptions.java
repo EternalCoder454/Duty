@@ -8,7 +8,7 @@ import net.dutymod.core.DutyConfig;
  * <p>Upstream (KryptonReno) backed these with Sewlia-config and a generated LibSL options screen,
  * which made the jar depend on two libraries at runtime purely to store a handful of numbers.
  * Duty already has a config file, so both dependencies are dropped and the values are read from
- * that instead -- the same substitution made for Stfu's YACL config.
+ * that instead -- the same substitution made for Quiet's YACL config.
  *
  * <p>Defaults are upstream's, deliberately: compression level 4, oversized packets rejected, and
  * wide VarInts rejected. The two "permit" options exist for talking to servers that violate the

@@ -5,7 +5,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.server.WorldLoader;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -26,7 +26,7 @@ public class WorldLoaderMixin {
         if (watch != null) {
             return original.whenComplete((o, throwable) -> {
                 watch.stop();
-                ModernFix.LOGGER.warn("Initial datapack load took {}", watch);
+                FixerUpper.LOGGER.warn("Initial datapack load took {}", watch);
             });
         } else {
             return original;

@@ -37,7 +37,7 @@ public class RecipeBookSettingsMixin {
     @Redirect(method = "read(Lnet/minecraft/network/FriendlyByteBuf;)Lnet/minecraft/stats/RecipeBookSettings;", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/FriendlyByteBuf;readBoolean()Z"), require = 0)
     private static boolean useDefaultBooleanIfVanilla(FriendlyByteBuf buf, @Local(ordinal = 0) RecipeBookType type) {
         if(type.ordinal() >= (duty$maxVanillaOrdinal + 1)) {
-            ModernFix.LOGGER.warn("Not reading recipe book data for type '{}' as we are using vanilla connection", type.name());
+            FixerUpper.LOGGER.warn("Not reading recipe book data for type '{}' as we are using vanilla connection", type.name());
             return false; // skip actually reading buffer
         }
         return buf.readBoolean();

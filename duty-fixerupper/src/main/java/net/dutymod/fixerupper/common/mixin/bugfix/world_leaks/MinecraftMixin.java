@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.lighting.LevelLightEngine;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
@@ -36,7 +36,7 @@ public class MinecraftMixin {
                 // clear BE list otherwise they will hold chunks
                 this.level.blockEntityTickers.clear();
             } catch(RuntimeException e) {
-                ModernFix.LOGGER.error("Exception clearing level data", e);
+                FixerUpper.LOGGER.error("Exception clearing level data", e);
             }
         }
     }

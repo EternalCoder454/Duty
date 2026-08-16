@@ -1,0 +1,71 @@
+package net.dutymod.client.mixin.bakedentities.blockentity.decoratedpot;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import net.dutymod.client.bakedentities.registry.Registry;
+import net.dutymod.client.bakedentities.renderer.blockentity.ext.BlockEntityExt;
+import net.dutymod.client.bakedentities.renderer.blockentity.misc.RenderModeManager;
+import net.dutymod.client.bakedentities.renderer.blockentity.misc.RenderModeManager.RenderMode;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.DecoratedPotBlockEntity;
+import net.minecraft.world.level.block.entity.PotDecorations;
+
+@Mixin(DecoratedPotBlockEntity.class)
+public abstract class DecoratedPotBlockEntityMixin{
+
+    @Shadow
+    private PotDecorations decorations;
+
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void init(CallbackInfo ci) {
+
+        BlockEntity be = (BlockEntity)(Object)this;
+        BlockEntityExt ext = (BlockEntityExt)be;
+
+        ext.isSupportedBlockEntity(Registry.isSupported("decorated_pot", be.getType()));
+        obe$updatePot();
+    }
+
+    @Inject(method = "loadAdditional", at = @At("RETURN"))
+    public void obe$load(CallbackInfo ci) {
+        obe$updatePot();
+    }
+
+    @Inject(method = "applyImplicitComponents", at = @At("RETURN"))
+    public void obe$applyComponents(CallbackInfo ci) {
+        obe$updatePot();
+    }
+
+    @Inject(method = "triggerEvent", at = @At("RETURN"))
+    public void obe$triggerEvent(final int event, final int data, CallbackInfoReturnable<Boolean> ci) {
+        DecoratedPotBlockEntity be = (DecoratedPotBlockEntity)(Object)this;
+        BlockEntityExt ext = (BlockEntityExt)be;
+        RenderModeManager.setRenderModeDelayed(ext, RenderMode.ENTITY, be.getBlockPos());
+        ext.setTimer(be.wobbleStartedAtTick, be.lastWobbleStyle.duration);
+    }
+
+    @Inject(method = "getDecorations", at = @At("RETURN"))
+    public void obe$updateTimer(CallbackInfoReturnable<PotDecorations> cir) {
+        DecoratedPotBlockEntity be = (DecoratedPotBlockEntity)(Object)this;
+        BlockEntityExt ext = (BlockEntityExt)be;
+        if(ext.isTimerFinished()) RenderModeManager.setRenderModeDelayed(ext, RenderMode.TERRAIN, be.getBlockPos());
+    }
+
+    @Unique
+    private void obe$updatePot(){
+        DecoratedPotBlockEntity be = (DecoratedPotBlockEntity)(Object)this;
+        BlockEntityExt ext = (BlockEntityExt)be;
+        if(decorations != PotDecorations.EMPTY){
+            ext.forceEntity(true);
+        }
+        else{
+            ext.forceEntity(false);
+        }
+    }
+}

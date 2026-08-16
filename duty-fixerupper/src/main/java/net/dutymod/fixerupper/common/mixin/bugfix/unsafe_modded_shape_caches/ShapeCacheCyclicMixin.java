@@ -1,6 +1,6 @@
 package net.dutymod.fixerupper.common.mixin.bugfix.unsafe_modded_shape_caches;
 
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.annotation.RequiresMod;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,6 +22,6 @@ public class ShapeCacheCyclicMixin {
 
     @Inject(method = "<clinit>", at = @At("RETURN"))
     private static void duty$notify(CallbackInfo ci) {
-        ModernFix.LOGGER.info("Made Cyclic shape cache map thread-safe");
+        FixerUpper.LOGGER.info("Made Cyclic shape cache map thread-safe");
     }
 }

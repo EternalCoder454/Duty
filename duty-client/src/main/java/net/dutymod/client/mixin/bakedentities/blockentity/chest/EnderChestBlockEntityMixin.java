@@ -1,0 +1,39 @@
+package net.dutymod.client.mixin.bakedentities.blockentity.chest;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import net.dutymod.client.bakedentities.registry.Registry;
+import net.dutymod.client.bakedentities.renderer.blockentity.ext.BlockEntityExt;
+import net.dutymod.client.bakedentities.renderer.blockentity.misc.RenderModeManager;
+import net.dutymod.client.bakedentities.renderer.blockentity.misc.RenderModeManager.RenderMode;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.EnderChestBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+
+@Mixin(EnderChestBlockEntity.class)
+public abstract class EnderChestBlockEntityMixin{
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void obe$init(CallbackInfo ci) {
+        
+        BlockEntity be = (BlockEntity)(Object)this;
+        BlockEntityExt ext = (BlockEntityExt)be;
+        
+        ext.isSupportedBlockEntity(Registry.isSupported("chest", be.getType()));
+    }
+
+    @Inject(method = "lidAnimateTick", at = @At("HEAD"))
+    private static void obe$lidAnimateTick(final Level level, final BlockPos pos, final BlockState state, final EnderChestBlockEntity entity, CallbackInfo ci) {
+        BlockEntityExt ext = (BlockEntityExt)entity;
+        if(entity.getOpenNess(0.5f) > 0.0001){
+            RenderModeManager.setRenderModeDelayed(ext, RenderMode.ENTITY, pos);
+        }
+        else{
+            RenderModeManager.setRenderModeDelayed(ext, RenderMode.TERRAIN, pos);
+        }
+    }
+}

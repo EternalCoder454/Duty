@@ -1,6 +1,6 @@
 package net.dutymod.server.mixin.wire;
 
-import net.dutymod.server.wire.AlternateCurrent;
+import net.dutymod.server.wire.RedstoneWire;
 import java.util.List;
 import java.util.concurrent.Executor;
 

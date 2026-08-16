@@ -1,6 +1,6 @@
 package net.dutymod.fixerupper.util;
 
-import net.dutymod.fixerupper.core.ModernFixMixinPlugin;
+import net.dutymod.fixerupper.core.FixerUpperMixinPlugin;
 
 public class CommonModUtil {
     @FunctionalInterface
@@ -16,7 +16,7 @@ public class CommonModUtil {
         try {
             r.run();
         } catch(Throwable e) {
-            ModernFixMixinPlugin.instance.logger.error(errorMsg, e);
+            FixerUpperMixinPlugin.instance.logger.error(errorMsg, e);
         }
     }
 }

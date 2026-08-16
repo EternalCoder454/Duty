@@ -62,7 +62,7 @@ public final class ClothConfigScreen {
      * matching nothing fall into "Other", which is the signal that a rule is missing.
      */
     private static final List<Map.Entry<String, String>> SUBCATEGORY_RULES = List.of(
-            // FixerUpper: its keys are ModernFix's, already structured as mixin.<kind>.<feature>
+            // FixerUpper: its keys are FixerUpper's, already structured as mixin.<kind>.<feature>
             Map.entry("mixin.perf.", "Performance"),
             Map.entry("mixin.bugfix.", "Bug fixes"),
             Map.entry("mixin.feature.", "Features"),

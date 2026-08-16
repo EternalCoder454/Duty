@@ -15,7 +15,7 @@ import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.duck.IChunkGenerator;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -75,7 +75,7 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
         // Try reading from cache
         List<ChunkPos> cached = duty$readFromCache(cacheKey);
         if (cached != null) {
-            ModernFix.LOGGER.debug("Using cached stronghold positions for {}", cacheKey);
+            FixerUpper.LOGGER.debug("Using cached stronghold positions for {}", cacheKey);
             return CompletableFuture.completedFuture(List.copyOf(cached));
         }
 
@@ -113,7 +113,7 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
         String biomeSourceKey = BiomeSource.CODEC.encodeStart(ops, this.biomeSource)
                 .result().map(Tag::toString).orElse(null);
         if (placementKey == null || biomeSourceKey == null) {
-            ModernFix.LOGGER.warn("Failed to create cache key for concentric structure placement");
+            FixerUpper.LOGGER.warn("Failed to create cache key for concentric structure placement");
             return null;
         }
         String data = placementKey + ";biomes=" + biomeSourceKey + ";seed=" + this.concentricRingsSeed;
@@ -170,7 +170,7 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
             }
             return result;
         } catch (Exception e) {
-            ModernFix.LOGGER.warn("Failed to read stronghold cache, will recompute", e);
+            FixerUpper.LOGGER.warn("Failed to read stronghold cache, will recompute", e);
             return new HashMap<>();
         }
     }
@@ -191,7 +191,7 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
         try {
             NbtIo.writeCompressed(root, file);
         } catch (Exception e) {
-            ModernFix.LOGGER.warn("Failed to write stronghold cache", e);
+            FixerUpper.LOGGER.warn("Failed to write stronghold cache", e);
         }
     }
 }

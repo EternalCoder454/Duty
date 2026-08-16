@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import net.dutymod.server.wire.AlternateCurrent;
+import net.dutymod.server.wire.RedstoneWire;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -25,7 +25,7 @@ public class ExperimentalRedstoneUtilsMixin {
 	)
 	private static void noRandomOrientation(Level level, Direction front, Direction up, CallbackInfoReturnable<Orientation> cir) {
 		// if the given front is null, a random front is chosen - use default value instead
-		if (AlternateCurrent.on && front == null) {
+		if (RedstoneWire.on && front == null) {
 			cir.setReturnValue(cir.getReturnValue().withFront(Direction.WEST));
 		}
 	}

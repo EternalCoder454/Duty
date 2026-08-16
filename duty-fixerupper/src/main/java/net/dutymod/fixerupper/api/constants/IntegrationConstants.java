@@ -2,10 +2,10 @@ package net.dutymod.fixerupper.api.constants;
 
 public class IntegrationConstants {
     /**
-     * Deliberately still the ModernFix key.
+     * Deliberately still the FixerUpper key.
      *
      * <p>Third-party mods declare their integration under this name in their own metadata.
-     * Duty replaces ModernFix rather than sitting alongside it, so honouring the original key
+     * Duty replaces FixerUpper rather than sitting alongside it, so honouring the original key
      * means those integrations keep working; renaming it would silently break every one of
      * them for no benefit.
      */

@@ -27,7 +27,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.UnbakedModelParser;
 import net.neoforged.neoforge.client.model.standalone.StandaloneModelLoader;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.common.mixin.perf.dynamic_resources.BlockStateDefinitionsAccessor;
 import net.dutymod.fixerupper.common.mixin.perf.dynamic_resources.IdMapperAccessor;
 import net.dutymod.fixerupper.common.mixin.perf.dynamic_resources.ModelDiscoveryAccessor;
@@ -67,7 +67,7 @@ public class DynamicModelSystem {
                     return Optional.empty();
                 }
                 if (DEBUG_DYNAMIC_MODEL_LOADING) {
-                    ModernFix.LOGGER.info("Loading {} {}", debugName, id);
+                    FixerUpper.LOGGER.info("Loading {} {}", debugName, id);
                 }
                 return Optional.ofNullable(loader.load(file, resource));
             }
@@ -80,7 +80,7 @@ public class DynamicModelSystem {
             try {
                 return resultCache.getUnchecked(key).orElse(null);
             } catch (RuntimeException e) {
-                ModernFix.LOGGER.error("Error loading {} {} from cache", debugName, key);
+                FixerUpper.LOGGER.error("Error loading {} {} from cache", debugName, key);
                 throw e;
             }
         });
@@ -167,7 +167,7 @@ public class DynamicModelSystem {
                     var wrapper = discovery.createAndQueueWrapper(id, unbaked);
                     ((ModelDiscoveryAccessor)discovery).duty$getModelWrappers().put(id, wrapper);
                 } else {
-                    ModernFix.LOGGER.warn("Cannot find the root model for {}", id);
+                    FixerUpper.LOGGER.warn("Cannot find the root model for {}", id);
                 }
             }
             var resolved = discovery.resolve();
@@ -229,12 +229,12 @@ public class DynamicModelSystem {
                 }
 
                 if (DEBUG_DYNAMIC_MODEL_LOADING) {
-                    ModernFix.LOGGER.info("Baking {}", key);
+                    FixerUpper.LOGGER.info("Baking {}", key);
                 }
 
                 var bakerResult = baker.apply(key, unbaked);
                 if (bakerResult == null) {
-                    ModernFix.LOGGER.warn("Baker has returned null for {}", key);
+                    FixerUpper.LOGGER.warn("Baker has returned null for {}", key);
                     return NULL_BAKED;
                 }
 

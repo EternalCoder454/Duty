@@ -3,7 +3,7 @@
   "minVersion": "0.8.5",
   "package": "net.dutymod.server.mixin.biome",
   "compatibilityLevel": "JAVA_25",
-  "plugin": "net.dutymod.server.biome.MixinPlugin",
+  "plugin": "net.dutymod.server.biome.BiomeMixinPlugin",
   "mixins": [
     "ChunkGeneratorMixin",
     "MultiNoiseBiomeSourceAccessor",

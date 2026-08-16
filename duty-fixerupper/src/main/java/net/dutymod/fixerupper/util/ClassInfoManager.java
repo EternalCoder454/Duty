@@ -1,7 +1,7 @@
 package net.dutymod.fixerupper.util;
 
-import net.dutymod.fixerupper.ModernFix;
-import net.dutymod.fixerupper.core.ModernFixMixinPlugin;
+import net.dutymod.fixerupper.FixerUpper;
+import net.dutymod.fixerupper.core.FixerUpperMixinPlugin;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.logging.ILogger;
 import org.spongepowered.asm.logging.LoggerAdapterDefault;
@@ -19,10 +19,10 @@ public class ClassInfoManager {
     private static boolean hasRun = false;
     private static final List<Runnable> loggersToRestore = new ArrayList<>();
     public static void clear() {
-        if (!ModernFixMixinPlugin.instance.isOptionEnabled("perf.clear_mixin_classinfo.ClassInfoManager") || hasRun)
+        if (!FixerUpperMixinPlugin.instance.isOptionEnabled("perf.clear_mixin_classinfo.ClassInfoManager") || hasRun)
             return;
         hasRun = true;
-        ModernFix.resourceReloadExecutor().execute(ClassInfoManager::doClear);
+        FixerUpper.resourceReloadExecutor().execute(ClassInfoManager::doClear);
     }
 
     private static Field accessible(Field f) {
@@ -96,6 +96,6 @@ public class ClassInfoManager {
         // Put back the old logger
         loggersToRestore.forEach(Runnable::run);
         loggersToRestore.clear();
-        ModernFix.LOGGER.warn("Cleared mixin data structures");
+        FixerUpper.LOGGER.warn("Cleared mixin data structures");
     }
 }

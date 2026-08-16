@@ -27,8 +27,8 @@ public final class WireMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public void onLoad(String mixinPackage) {
-        AlternateCurrent.init();
-        this.enabled = AlternateCurrent.enabled();
+        RedstoneWire.init();
+        this.enabled = RedstoneWire.enabled();
         if (this.enabled) {
             DutyLog.info("Alternate Current is enabled; Duty owns redstone dust. Lithium's "
                     + "mixin.block.redstone_wire must be false or the two will fight over "

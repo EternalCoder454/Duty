@@ -25,7 +25,7 @@ public record MixinConfig(
     InjectorOptions injectors, OverwriteOptions overwrites
     ) {
     public MixinConfig(String packageName, List<String> commonMixins, List<String> clientMixins) {
-        this(true, "0.8", packageName, "net.dutymod.fixerupper.core.ModernFixMixinPlugin", "JAVA_25",
+        this(true, "0.8", packageName, "net.dutymod.fixerupper.core.FixerUpperMixinPlugin", "JAVA_25",
         commonMixins, clientMixins, InjectorOptions.DEFAULT, OverwriteOptions.DEFAULT);
     }
     public record InjectorOptions(int defaultRequire) {

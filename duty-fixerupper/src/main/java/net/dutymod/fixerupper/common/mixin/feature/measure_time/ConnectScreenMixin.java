@@ -1,7 +1,7 @@
 package net.dutymod.fixerupper.common.mixin.feature.measure_time;
 
 import net.minecraft.client.gui.screens.ConnectScreen;
-import net.dutymod.fixerupper.ModernFixClient;
+import net.dutymod.fixerupper.FixerUpperClient;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -13,6 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ConnectScreenMixin {
     @Inject(method = "connect", at = @At("HEAD"))
     private void recordConnectStartTime(CallbackInfo ci) {
-        ModernFixClient.worldLoadStartTime = System.nanoTime();
+        FixerUpperClient.worldLoadStartTime = System.nanoTime();
     }
 }

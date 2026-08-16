@@ -3,7 +3,7 @@ package net.dutymod.fixerupper.resources;
 import net.minecraft.ReportType;
 import net.minecraft.ReportedException;
 import net.minecraft.server.Bootstrap;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
@@ -19,9 +19,9 @@ public class ReloadExecutor {
             ForkJoinWorkerThread forkJoinWorkerThread = new ForkJoinWorkerThread(forkJoinPool) {
                 protected void onTermination(Throwable throwOnTermination) {
                     if (throwOnTermination != null) {
-                        ModernFix.LOGGER.warn("{} died", this.getName(), throwOnTermination);
+                        FixerUpper.LOGGER.warn("{} died", this.getName(), throwOnTermination);
                     } else {
-                        ModernFix.LOGGER.debug("{} shutdown", this.getName());
+                        FixerUpper.LOGGER.debug("{} shutdown", this.getName());
                     }
 
                     super.onTermination(throwOnTermination);
@@ -44,6 +44,6 @@ public class ReloadExecutor {
             System.exit(-1);
         }
 
-        ModernFix.LOGGER.error(String.format("Caught exception in thread %s", thread), throwable);
+        FixerUpper.LOGGER.error(String.format("Caught exception in thread %s", thread), throwable);
     }
 }

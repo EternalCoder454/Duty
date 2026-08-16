@@ -64,7 +64,7 @@ public abstract class IntegratedServerMixin extends MinecraftServer implements I
      * @reason If waiting for a client connection to exist, we only need to tick the server connection,
      * not the whole server as vanilla does. However, we must tick the whole server once to accommodate mods
      * that rely on the first tick to initialize state as a side effect. Not doing this causes issues like
-     * <a href="https://github.com/embeddedt/ModernFix/issues/639">#639</a>.
+     * <a href="https://github.com/embeddedt/FixerUpper/issues/639">#639</a>.
      */
     @WrapWithCondition(method = "tickServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;tickServer(Ljava/util/function/BooleanSupplier;)V", ordinal = 0))
     private boolean preventRunningFullServerTick(MinecraftServer server, BooleanSupplier hasTimeLeft) {

@@ -17,12 +17,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.dutymod.fixerupper.ModernFix;
-import net.dutymod.fixerupper.core.ModernFixMixinPlugin;
+import net.dutymod.fixerupper.FixerUpper;
+import net.dutymod.fixerupper.core.FixerUpperMixinPlugin;
 import net.dutymod.fixerupper.core.config.Option;
 import net.dutymod.fixerupper.core.config.OptionCategories;
 import net.dutymod.fixerupper.core.config.OptionType;
-import net.dutymod.fixerupper.platform.ModernFixPlatformHooks;
+import net.dutymod.fixerupper.platform.FixerUpperPlatformHooks;
 
 import java.io.IOException;
 import java.util.*;
@@ -37,7 +37,7 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
 
     private static final Set<String> OPTIONS_MISSING_HELP = new HashSet<>();
 
-    private ModernFixConfigScreen mainScreen;
+    private FixerUpperConfigScreen mainScreen;
 
     private static MutableComponent getOptionComponent(Option<?> option) {
         String friendlyKey = "duty.option.name." + option.getName();
@@ -66,19 +66,19 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
             int w = this.minecraft.font.width(getOptionComponent(option)) + DEPTH_OFFSET * option.getDepth();
             this.maxNameWidth = Math.max(w, this.maxNameWidth);
             this.addEntry(new OptionEntry(option.getName(), option));
-            ModernFixMixinPlugin.instance.config.getOptionMap().values().stream()
+            FixerUpperMixinPlugin.instance.config.getOptionMap().values().stream()
                     .filter(subOption -> subOption.getParent() == option)
                     .sorted(Comparator.comparing(Option::getName))
                     .forEach(this::addOption);
         }
     }
 
-    public OptionList(ModernFixConfigScreen arg, Minecraft arg2) {
+    public OptionList(FixerUpperConfigScreen arg, Minecraft arg2) {
         super(arg2,arg.width + 45, arg.height - 52, 20, 20);
 
         this.mainScreen = arg;
 
-        Multimap<String, Option<?>> optionsByCategory = ModernFixMixinPlugin.instance.config.getOptionCategoryMap();
+        Multimap<String, Option<?>> optionsByCategory = FixerUpperMixinPlugin.instance.config.getOptionCategoryMap();
         List<String> theCategories = OptionCategories.getCategoriesInOrder();
         for(String category : theCategories) {
             String categoryTranslationKey = "duty.option.category." + category;
@@ -154,26 +154,26 @@ public class OptionList extends ContainerObjectSelectionList<OptionList.Entry> {
             this.toggleButton = new Button.Builder(Component.literal(""), (arg) -> {
                 this.option.setValue(!this.option.getValue(), !this.option.isUserDefined());
                 try {
-                    ModernFixMixinPlugin.instance.config.save();
+                    FixerUpperMixinPlugin.instance.config.save();
                     if(!OptionList.this.mainScreen.madeChanges) {
                         OptionList.this.mainScreen.madeChanges = true;
                     }
                 } catch(IOException e) {
                     // revert
                     this.option.setValue(!this.option.getValue(), !this.option.isUserDefined());
-                    ModernFix.LOGGER.error("Unable to save config", e);
+                    FixerUpper.LOGGER.error("Unable to save config", e);
                 }
                 OptionList.this.updateOptionEntryStatuses();
             }).tooltip(toggleTooltip).pos(0, 0).size(55, 20).build();
             updateStatus();
             this.helpButton = new Button.Builder(Component.literal("?"), (arg) -> {
                 mainScreen.setLastScrollAmount(scrollAmount());
-                Minecraft.getInstance().setScreen(new ModernFixOptionInfoScreen(mainScreen, optionName));
+                Minecraft.getInstance().setScreen(new FixerUpperOptionInfoScreen(mainScreen, optionName));
             }).pos(75, 0).size(20, 20).build();
             if(!I18n.exists("duty.option." + optionName)) {
                 this.helpButton.active = false;
-                if(ModernFixPlatformHooks.INSTANCE.isDevEnv() && OPTIONS_MISSING_HELP.add(optionName))
-                    ModernFix.LOGGER.warn("Missing help for {}", optionName);
+                if(FixerUpperPlatformHooks.INSTANCE.isDevEnv() && OPTIONS_MISSING_HELP.add(optionName))
+                    FixerUpper.LOGGER.warn("Missing help for {}", optionName);
             }
         }
 

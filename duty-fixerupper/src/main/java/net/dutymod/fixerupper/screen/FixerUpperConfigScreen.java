@@ -1,0 +1,54 @@
+package net.dutymod.fixerupper.screen;
+
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Util;
+
+public class FixerUpperConfigScreen extends Screen {
+    private OptionList optionList;
+    private Screen lastScreen;
+
+    public boolean madeChanges = false;
+    private Button doneButton, wikiButton;
+    private double lastScrollAmount = 0;
+
+    public FixerUpperConfigScreen(Screen lastScreen) {
+        super(Component.translatable("duty.config"));
+        this.lastScreen = lastScreen;
+    }
+
+    @Override
+    protected void init() {
+        this.optionList = new OptionList(this, this.minecraft);
+        this.optionList.setScrollAmount(lastScrollAmount);
+        this.addWidget(this.optionList);
+        this.wikiButton = new Button.Builder(Component.translatable("duty.config.wiki"), (arg) -> {
+            Util.getPlatform().openUri("https://github.com/embeddedt/FixerUpper/wiki/Summary-of-Patches");
+        }).pos(this.width / 2 - 155, this.height - 29).size(150, 20).build();
+        this.doneButton = new Button.Builder(CommonComponents.GUI_DONE, (arg) -> {
+            this.onClose();
+        }).pos(this.width / 2 - 155 + 160, this.height - 29).size(150, 20).build();
+        this.addRenderableWidget(this.wikiButton);
+        this.addRenderableWidget(this.doneButton);
+    }
+
+    @Override
+    public void onClose() {
+        this.minecraft.setScreen(lastScreen);
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
+        this.optionList.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
+        guiGraphics.centeredText(this.font, this.title, this.width / 2, 8, -1);
+        this.doneButton.setMessage(madeChanges ? Component.translatable("duty.config.done_restart") : CommonComponents.GUI_DONE);
+    }
+
+    public void setLastScrollAmount(double d) {
+        this.lastScrollAmount = d;
+    }
+}

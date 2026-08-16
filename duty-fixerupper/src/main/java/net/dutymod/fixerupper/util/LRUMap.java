@@ -1,8 +1,8 @@
 package net.dutymod.fixerupper.util;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import net.dutymod.fixerupper.ModernFix;
-import net.dutymod.fixerupper.platform.ModernFixPlatformHooks;
+import net.dutymod.fixerupper.FixerUpper;
+import net.dutymod.fixerupper.platform.FixerUpperPlatformHooks;
 
 import java.util.Map;
 import java.util.Set;
@@ -42,8 +42,8 @@ public class LRUMap<K, V> extends Object2ObjectLinkedOpenHashMap<K, V> {
                 }
             }
             trim(size() + expectedQuota);
-            if(ModernFixPlatformHooks.INSTANCE.isDevEnv()) {
-                ModernFix.LOGGER.warn("Trimmed map from {} to {} entries", prevSize, size);
+            if(FixerUpperPlatformHooks.INSTANCE.isDevEnv()) {
+                FixerUpper.LOGGER.warn("Trimmed map from {} to {} entries", prevSize, size);
             }
         }
     }

@@ -34,7 +34,7 @@ public abstract class ChunkMapLoadMixin {
      * callbacks finish running. This change allows attempts to load the _same_ chunk in the promotion lambda to
      * succeed, as otherwise the future would block waiting for itself to complete.
      *
-     * <p>This is a cleaner version of a similar trick used in ModernFix versions for 1.16, which deferred specifically
+     * <p>This is a cleaner version of a similar trick used in FixerUpper versions for 1.16, which deferred specifically
      * entity addition to happen outside the futures.
      */
     @Redirect(method = "full", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", ordinal = 0))

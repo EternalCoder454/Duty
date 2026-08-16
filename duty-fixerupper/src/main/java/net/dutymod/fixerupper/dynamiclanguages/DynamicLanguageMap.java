@@ -7,7 +7,7 @@ import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.locale.Language;
 import net.minecraft.server.packs.resources.Resource;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -41,7 +41,7 @@ public class DynamicLanguageMap {
                         try (var stream = resource.open()) {
                             Language.loadFromJson(stream, data::put);
                         } catch (IOException e) {
-                            ModernFix.LOGGER.error("Error loading language data from {}", resource.sourcePackId(), e);
+                            FixerUpper.LOGGER.error("Error loading language data from {}", resource.sourcePackId(), e);
                         }
                         return data;
                     }

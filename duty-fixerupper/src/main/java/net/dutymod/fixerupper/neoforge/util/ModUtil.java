@@ -9,8 +9,8 @@ public class ModUtil {
 
     private static final ClassLoader targetClassLoader = Thread.currentThread().getContextClassLoader();
 
-    private static class ModernFixForkJoinWorkerThread extends ForkJoinWorkerThread {
-        ModernFixForkJoinWorkerThread(ForkJoinPool pool) {
+    private static class FixerUpperForkJoinWorkerThread extends ForkJoinWorkerThread {
+        FixerUpperForkJoinWorkerThread(ForkJoinPool pool) {
             super(pool);
             /* Ensure that the context class loader is set correctly */
             this.setContextClassLoader(targetClassLoader);
@@ -19,7 +19,7 @@ public class ModUtil {
 
     public static ForkJoinPool commonPool = new ForkJoinPool(
             ForkJoinPool.getCommonPoolParallelism(),
-            ModernFixForkJoinWorkerThread::new,
+            FixerUpperForkJoinWorkerThread::new,
             null,
             false
     );

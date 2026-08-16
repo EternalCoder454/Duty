@@ -86,6 +86,6 @@ public class CapProviderGetter {
             }
             entry.setValue(canonicalList);
         }
-        //ModernFix.LOGGER.info("Deduplicated {}/{} lists", hits, map.size());
+        //FixerUpper.LOGGER.info("Deduplicated {}/{} lists", hits, map.size());
     }
 }

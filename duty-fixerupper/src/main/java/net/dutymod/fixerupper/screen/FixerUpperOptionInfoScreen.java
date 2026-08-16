@@ -1,0 +1,48 @@
+package net.dutymod.fixerupper.screen;
+
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
+
+public class FixerUpperOptionInfoScreen extends Screen {
+    private final Screen lastScreen;
+    private final Component description;
+
+    public FixerUpperOptionInfoScreen(Screen lastScreen, String optionName) {
+        super(Component.literal(optionName));
+
+        this.lastScreen = lastScreen;
+        this.description = Component.translatable("duty.option." + optionName);
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        this.addRenderableWidget(new Button.Builder(CommonComponents.GUI_DONE, (button) -> {
+            this.onClose();
+        }).pos(this.width / 2 - 100, this.height - 29).size(200, 20).build());
+    }
+
+    @Override
+    public void onClose() {
+        this.minecraft.setScreen(lastScreen);
+    }
+
+    private void drawMultilineString(GuiGraphicsExtractor guiGraphics, Font fr, Component str, int x, int y) {
+        for(FormattedCharSequence s : fr.split(str, this.width - 50)) {
+            guiGraphics.text(fr, s, x, y, 16777215, true);
+            y += fr.lineHeight;
+        }
+    }
+
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        super.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
+        guiGraphics.centeredText(this.font, this.title, this.width / 2, 8, 16777215);
+        this.drawMultilineString(guiGraphics, this.minecraft.font, description, 10, 50);
+    }
+}

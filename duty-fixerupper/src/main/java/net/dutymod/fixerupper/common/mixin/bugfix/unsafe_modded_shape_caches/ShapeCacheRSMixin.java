@@ -1,6 +1,6 @@
 package net.dutymod.fixerupper.common.mixin.bugfix.unsafe_modded_shape_caches;
 
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.annotation.RequiresMod;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Some mods use a custom shape cache with a non-thread-safe map. There is no reason why this wouldn't cause crashes
- * in vanilla as well if getShape was called on two threads at once. It seems more likely to happen with ModernFix
+ * in vanilla as well if getShape was called on two threads at once. It seems more likely to happen with FixerUpper
  * installed due to the dynamic blockstate cache generation, so we solve it by making the maps thread-safe.
  */
 @Pseudo
@@ -24,6 +24,6 @@ public class ShapeCacheRSMixin {
 
     @Inject(method = "<clinit>", at = @At("RETURN"))
     private static void duty$notify(CallbackInfo ci) {
-        ModernFix.LOGGER.info("Made Refined Storage shape cache map thread-safe");
+        FixerUpper.LOGGER.info("Made Refined Storage shape cache map thread-safe");
     }
 }

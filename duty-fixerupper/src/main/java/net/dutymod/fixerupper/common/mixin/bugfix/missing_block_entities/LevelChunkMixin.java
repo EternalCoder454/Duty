@@ -14,7 +14,7 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainerFactory;
 import net.minecraft.world.level.chunk.UpgradeData;
 import net.minecraft.world.level.levelgen.blending.BlendingData;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
@@ -52,7 +52,7 @@ public abstract class LevelChunkMixin extends ChunkAccess {
                         scanSectionForBlockEntities(section, i);
                     }
                 } catch(Exception e) {
-                    ModernFix.LOGGER.error("Exception validating data in chunk", e);
+                    FixerUpper.LOGGER.error("Exception validating data in chunk", e);
                     return;
                 }
             }
@@ -85,9 +85,9 @@ public abstract class LevelChunkMixin extends ChunkAccess {
         }
 
         BlockEntity blockEntity = this.getBlockEntity(pos.immutable(), LevelChunk.EntityCreationType.IMMEDIATE);
-        if (blockEntity != null && ModernFix.LOGGER.isDebugEnabled()) {
+        if (blockEntity != null && FixerUpper.LOGGER.isDebugEnabled()) {
             String blockName = state.getBlock().toString();
-            ModernFix.LOGGER.debug("Created missing block entity for {} at {}", blockName, pos.toShortString());
+            FixerUpper.LOGGER.debug("Created missing block entity for {} at {}", blockName, pos.toShortString());
         }
     }
 }

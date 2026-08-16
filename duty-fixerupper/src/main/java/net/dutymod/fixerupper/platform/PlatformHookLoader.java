@@ -3,14 +3,14 @@ package net.dutymod.fixerupper.platform;
 import java.lang.reflect.Constructor;
 
 class PlatformHookLoader {
-    static ModernFixPlatformHooks findInstance() {
+    static FixerUpperPlatformHooks findInstance() {
         String[] locations = new String[] { "neoforge", "fabric" };
         for(String location : locations) {
             try {
-                Class<?> clz = Class.forName("net.dutymod.fixerupper.platform." + location + ".ModernFixPlatformHooksImpl");
+                Class<?> clz = Class.forName("net.dutymod.fixerupper.platform." + location + ".FixerUpperPlatformHooksImpl");
                 Constructor<?> constructor = clz.getConstructor();
                 constructor.setAccessible(true);
-                return (ModernFixPlatformHooks)constructor.newInstance();
+                return (FixerUpperPlatformHooks)constructor.newInstance();
             } catch(ClassNotFoundException ignored) {
             } catch(ReflectiveOperationException | ClassCastException e) {
                 e.printStackTrace();

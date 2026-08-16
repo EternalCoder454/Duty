@@ -1,6 +1,6 @@
 package net.dutymod.fixerupper.dfu;
 
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -31,10 +31,10 @@ public class DFUBlaster {
             if (Map.class.isAssignableFrom(field.getType())) {
                 list.add((Map<?, ?>)field.get(null));
             } else {
-                ModernFix.LOGGER.error("Field {} on class {} is not a map", field, className);
+                FixerUpper.LOGGER.error("Field {} on class {} is not a map", field, className);
             }
         } catch (ReflectiveOperationException e) {
-            ModernFix.LOGGER.error("Error tracking DFU field {} on class {}", fieldName, className, e);
+            FixerUpper.LOGGER.error("Error tracking DFU field {} on class {}", fieldName, className, e);
         }
     }
 

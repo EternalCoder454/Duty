@@ -8,7 +8,7 @@ import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.Entity;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,7 +26,7 @@ public abstract class LivingEntityRendererMixin<T extends Entity, S extends Livi
     @WrapMethod(method = "addLayer")
     private boolean handleOffThreadLayerAdd(RenderLayer<S, M> layer, Operation<Boolean> original) {
         if (!Minecraft.getInstance().isSameThread()) {
-            ModernFix.LOGGER.error("LivingEntityRenderer.addLayer called on wrong thread", new Exception());
+            FixerUpper.LOGGER.error("LivingEntityRenderer.addLayer called on wrong thread", new Exception());
             Minecraft.getInstance().schedule(() -> this.addLayer(layer));
             return true;
         }

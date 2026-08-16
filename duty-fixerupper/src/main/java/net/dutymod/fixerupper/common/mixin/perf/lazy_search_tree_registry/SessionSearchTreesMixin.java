@@ -6,7 +6,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.client.gui.screens.recipebook.RecipeCollection;
 import net.minecraft.client.multiplayer.SessionSearchTrees;
 import net.minecraft.client.searchtree.SearchTree;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -35,7 +35,7 @@ public class SessionSearchTreesMixin {
                 Stopwatch watch = Stopwatch.createStarted();
                 this.recipeSearch = CompletableFuture.completedFuture(duty$deferredSearchTreeSupplier.get());
                 watch.stop();
-                ModernFix.LOGGER.info("Building recipe book search tree took {}", watch);
+                FixerUpper.LOGGER.info("Building recipe book search tree took {}", watch);
                 duty$deferredSearchTreeSupplier = null;
             }
             return original.call();

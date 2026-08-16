@@ -1,10 +1,10 @@
 package net.dutymod.client;
 
-import net.dutymod.client.cull.EntityCulling;
-import net.dutymod.client.obe.compat.ModCompat;
-import net.dutymod.client.obe.registry.Registry;
-import net.dutymod.client.ifast.ImmediatelyFast;
-import net.dutymod.client.stfu.Stfu;
+import net.dutymod.client.culling.EntityCulling;
+import net.dutymod.client.bakedentities.compat.ModCompat;
+import net.dutymod.client.bakedentities.registry.Registry;
+import net.dutymod.client.batching.Batching;
+import net.dutymod.client.quiet.Quiet;
 import net.dutymod.core.DutyLog;
 import net.dutymod.core.screen.DutyConfigScreens;
 import net.neoforged.fml.ModContainer;
@@ -44,27 +44,27 @@ public class DutyClient {
         // Block entity groups have to be registered before anything asks which ones are baked.
         Registry.init();
 
-        Stfu.register(modBus);
+        Quiet.register(modBus);
 
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> {
             EntityCulling.get().clientTick();
-            Stfu.clientTick(net.minecraft.client.Minecraft.getInstance());
+            Quiet.clientTick(net.minecraft.client.Minecraft.getInstance());
         });
         // Mod compatibility is resolved once the full mod list is known.
         modBus.addListener(FMLLoadCompleteEvent.class, event -> ModCompat.init());
 
-        // ImmediatelyFast's sign text cache has to be dropped on resource reload, or it keeps
+        // Batching's sign text cache has to be dropped on resource reload, or it keeps
         // handing out glyphs from a resource pack that is no longer loaded. Upstream does this
         // from its own @Mod class; Duty is one mod, so it happens here.
         // Mod bus, not the game bus: AddClientReloadListenersEvent is an IModBusEvent, and
         // registering it on NeoForge.EVENT_BUS throws at mod construction.
         modBus.addListener(net.neoforged.neoforge.client.event.AddClientReloadListenersEvent.class,
                 event -> {
-                    if (ImmediatelyFast.config != null && ImmediatelyFast.config.experimental_sign_text_buffering) {
+                    if (Batching.config != null && Batching.config.experimental_sign_text_buffering) {
                         event.addListener(
                                 net.minecraft.resources.Identifier.fromNamespaceAndPath(MOD_ID, "sign_text_cache"),
                                 (net.minecraft.server.packs.resources.ResourceManagerReloadListener)
-                                        manager -> ImmediatelyFast.signTextCache.onResourceManagerReload(manager));
+                                        manager -> Batching.signTextCache.onResourceManagerReload(manager));
                     }
                     // Glyph metrics are re-derived on reload, so cached string widths stop being
                     // true. This event covers all three ways that happens: a resource pack change,

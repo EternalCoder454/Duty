@@ -5,7 +5,7 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.client.renderer.texture.Stitcher;
 import net.minecraft.client.renderer.texture.StitcherException;
 import net.minecraft.util.Mth;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import org.lwjgl.stb.STBRPContext;
 import org.lwjgl.stb.STBRPNode;
 import org.lwjgl.stb.STBRPRect;
@@ -202,9 +202,9 @@ public class StbStitcher {
                 } catch (StitcherException e) {
                     if(numTries >= 4) {
                         // If we get here, we weren't able to stitch. Throw an error.
-                        ModernFix.LOGGER.error("Stitcher ran out of space with target atlas size " + longestWidth + "x" + longestHeight + ":");
+                        FixerUpper.LOGGER.error("Stitcher ran out of space with target atlas size " + longestWidth + "x" + longestHeight + ":");
                         for(Stitcher.Holder<T> h : holders) {
-                            ModernFix.LOGGER.error(" - " + h.entry().name() + ", " + h.width() + "x" + h.height());
+                            FixerUpper.LOGGER.error(" - " + h.entry().name() + ", " + h.width() + "x" + h.height());
                         }
                         throw e;
                     } else {

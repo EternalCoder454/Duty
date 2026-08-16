@@ -7,7 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import net.dutymod.server.wire.AlternateCurrent;
+import net.dutymod.server.wire.RedstoneWire;
 import net.dutymod.server.wire.interfaces.IServerLevel;
 
 import net.minecraft.server.level.ServerLevel;
@@ -58,7 +58,7 @@ public interface Config {
 		@Override
 		public void setEnabled(boolean enabled) {
 			this.enabled = enabled;
-			AlternateCurrent.on = enabled;
+			RedstoneWire.on = enabled;
 			this.modified = true;
 		}
 
@@ -96,10 +96,10 @@ public interface Config {
 										setUpdateOrder(UpdateOrder.byId(value));
 										break;
 									default:
-										AlternateCurrent.LOGGER.info("skipping unknown option \'" + key + "\' in Alternate Current config");
+										RedstoneWire.LOGGER.info("skipping unknown option \'" + key + "\' in Alternate Current config");
 									}
 								} catch (Exception e) {
-									AlternateCurrent.LOGGER.info("skipping bad value \'" + value + "\' for option \'" + key + "\' in Alternate Current config!", e);
+									RedstoneWire.LOGGER.info("skipping bad value \'" + value + "\' for option \'" + key + "\' in Alternate Current config!", e);
 								}
 							}
 						}
@@ -107,7 +107,7 @@ public interface Config {
 
 					modified = false;
 				} catch (IOException e) {
-					AlternateCurrent.LOGGER.info("unable to load Alternate Current config!", e);
+					RedstoneWire.LOGGER.info("unable to load Alternate Current config!", e);
 					modified = true;
 				}
 			} else {
@@ -119,7 +119,7 @@ public interface Config {
 		public void save(boolean silent) {
 			if (modified) {
 				if (!silent) {
-					AlternateCurrent.LOGGER.info("saving Alternate Current config");
+					RedstoneWire.LOGGER.info("saving Alternate Current config");
 				}
 
 				try (BufferedWriter bw = Files.newBufferedWriter(path)) {
@@ -133,7 +133,7 @@ public interface Config {
 					bw.write(updateOrder.id());
 					bw.newLine();
 				} catch (IOException e) {
-					AlternateCurrent.LOGGER.info("unable to save Alternate Current config!", e);
+					RedstoneWire.LOGGER.info("unable to save Alternate Current config!", e);
 				} finally {
 					modified = false;
 				}

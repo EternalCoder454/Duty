@@ -3,7 +3,7 @@ package net.dutymod.server;
 import net.dutymod.core.DutyLog;
 import net.dutymod.core.screen.DutyConfigScreens;
 import net.dutymod.server.net.NetOptions;
-import net.dutymod.server.wire.AlternateCurrent;
+import net.dutymod.server.wire.RedstoneWire;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 
@@ -25,7 +25,7 @@ public final class DutyServer {
 
     public DutyServer(ModContainer container) {
         NetOptions.init();
-        AlternateCurrent.init();
+        RedstoneWire.init();
         DutyConfigScreens.register(container);
         DutyLog.info("Duty: Server reporting for duty.");
     }

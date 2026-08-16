@@ -1,6 +1,6 @@
 package net.dutymod.client;
 
-import net.dutymod.client.ifast.injection.ImmediatelyFastMixinPlugin;
+import net.dutymod.client.batching.injection.BatchingMixinPlugin;
 import net.dutymod.core.DutyConfig;
 import net.dutymod.core.DutyLog;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
@@ -24,28 +24,28 @@ import java.util.Set;
 public class DutyClientMixinPlugin implements IMixinConfigPlugin {
 
     /**
-     * ImmediatelyFast's own config plugin, delegated to for its mixins.
+     * Batching's own config plugin, delegated to for its mixins.
      *
      * <p>Merging its mixins into Duty's shared config meant losing its plugin, and with it two
      * things: {@code onLoad} is where it loads its config, and {@code shouldApplyMixin} is where
-     * each feature is gated by sub-package. Without the first, {@code ImmediatelyFast.config} is
+     * each feature is gated by sub-package. Without the first, {@code Batching.config} is
      * null when {@code RenderSystem.initRenderer} fires and the game dies during startup.
      */
-    private final ImmediatelyFastMixinPlugin ifast = new ImmediatelyFastMixinPlugin();
+    private final BatchingMixinPlugin ifast = new BatchingMixinPlugin();
 
     /**
-     * Stfu's own config plugin, delegated to for its mixins.
+     * Quiet's own config plugin, delegated to for its mixins.
      *
      * <p>Its {@code onLoad} is empty, so nothing is lost there, but {@code shouldApplyMixin}
      * honours the {@code @DisableIf} annotations and the duty-stfu-disable.txt list. Dropping it
      * would silently re-enable mixins that are meant to stand down for a particular mod.
      */
-    private final net.dutymod.client.stfu.MixinPlugin stfu = new net.dutymod.client.stfu.MixinPlugin();
+    private final net.dutymod.client.quiet.QuietMixinPlugin stfu = new net.dutymod.client.quiet.QuietMixinPlugin();
 
-    private static final String STFU_PACKAGE = "net.dutymod.client.mixin.stfu";
+    private static final String STFU_PACKAGE = "net.dutymod.client.mixin.quiet";
 
-    /** The package ImmediatelyFast's mixins live under, which is what its plugin expects. */
-    private static final String IFAST_PACKAGE = "net.dutymod.client.mixin.ifast";
+    /** The package Batching's mixins live under, which is what its plugin expects. */
+    private static final String IFAST_PACKAGE = "net.dutymod.client.mixin.batching";
 
     @Override
     public void onLoad(String mixinPackage) {
@@ -61,8 +61,8 @@ public class DutyClientMixinPlugin implements IMixinConfigPlugin {
      * presence check happens here instead.
      */
     private static final Map<String, String> COMPAT_MIXINS = Map.of(
-            ".mixin.obe.renderer.compat.sodium.", "sodium",   // Embeddium handled below
-            ".mixin.obe.blockentity.compat.lootr.", "lootr");
+            ".mixin.bakedentities.renderer.compat.sodium.", "sodium",   // Embeddium handled below
+            ".mixin.bakedentities.blockentity.compat.lootr.", "lootr");
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
@@ -112,7 +112,7 @@ public class DutyClientMixinPlugin implements IMixinConfigPlugin {
 
     /** {@return the config key gating this mixin, or null if it is always applied} */
     private static String keyFor(String mixinClassName) {
-        if (mixinClassName.contains(".mixin.cull.")) {
+        if (mixinClassName.contains(".mixin.culling.")) {
             return ClientOptions.CULLING_ENABLED;
         }
         if (mixinClassName.contains(".mixin.particle.")) {
@@ -125,7 +125,7 @@ public class DutyClientMixinPlugin implements IMixinConfigPlugin {
             // the type and entity mixins provide, so a partly applied group is a ClassCastException.
             return ClientOptions.RENDERER_CACHING;
         }
-        if (mixinClassName.contains(".mixin.obe.")) {
+        if (mixinClassName.contains(".mixin.bakedentities.")) {
             return ClientOptions.BAKED_BLOCK_ENTITIES;
         }
         return null;

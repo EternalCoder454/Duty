@@ -8,7 +8,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.util.PackTypeHelper;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,7 +173,7 @@ public class PackResourcesCacheEngine {
             r.run();
         }
         watch.stop();
-        ModernFix.LOGGER.debug("Generated cache for {} in {}", debugPath, watch);
+        FixerUpper.LOGGER.debug("Generated cache for {} in {}", debugPath, watch);
         debugPath = null;
         cacheGenerationTasks = ImmutableList.of();
     }
@@ -198,7 +198,7 @@ public class PackResourcesCacheEngine {
             }
             node = node.children.get(path);
             if (node == null) {
-                //ModernFix.LOGGER.info("Does not have " + String.join("/", paths));
+                //FixerUpper.LOGGER.info("Does not have " + String.join("/", paths));
                 return false;
             }
         }

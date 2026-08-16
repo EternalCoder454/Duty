@@ -1,7 +1,7 @@
 package net.dutymod.fixerupper.common.mixin.perf.dedicated_reload_executor;
 
 import net.minecraft.server.MinecraftServer;
-import net.dutymod.fixerupper.ModernFix;
+import net.dutymod.fixerupper.FixerUpper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -12,6 +12,6 @@ import java.util.concurrent.Executor;
 public class MinecraftServerMixin {
     @ModifyArg(method = "*", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/ReloadableServerResources;loadResources(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/core/LayeredRegistryAccess;Ljava/util/List;Lnet/minecraft/world/flag/FeatureFlagSet;Lnet/minecraft/commands/Commands$CommandSelection;Lnet/minecraft/server/permissions/PermissionSet;Ljava/util/concurrent/Executor;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"), index = 6)
     private Executor getReloadExecutor(Executor asyncExecutor) {
-        return ModernFix.resourceReloadExecutor();
+        return FixerUpper.resourceReloadExecutor();
     }
 }

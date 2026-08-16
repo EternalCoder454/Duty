@@ -20,7 +20,7 @@ public class BootstrapMixin {
     @Shadow @Final private static Logger LOGGER;
 
     @Inject(method = "bootStrap", at = @At("HEAD"))
-    private static void doModernFixBootstrap(CallbackInfo ci) {
+    private static void doFixerUpperBootstrap(CallbackInfo ci) {
         if(!isBootstrapped) {
             LOGGER.info("Duty reached bootstrap stage ({} after launch)", TimeFormatter.formatNanos(ManagementFactory.getRuntimeMXBean().getUptime() * 1000L * 1000L));
 

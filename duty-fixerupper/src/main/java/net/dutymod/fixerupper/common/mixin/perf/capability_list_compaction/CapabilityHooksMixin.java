@@ -23,7 +23,7 @@ public class CapabilityHooksMixin {
                 CapProviderGetter.deduplicateCap(cap);
             }
             //stopwatch.stop();
-            //ModernFix.LOGGER.info("Deduplicated capability lists in {}", stopwatch);
+            //FixerUpper.LOGGER.info("Deduplicated capability lists in {}", stopwatch);
         }
     }
 }
