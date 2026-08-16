@@ -120,6 +120,12 @@ public class DutyClientMixinPlugin implements IMixinConfigPlugin {
             // them, so they stand or fall together.
             return ClientOptions.PARTICLE_OPTIMIZATIONS;
         }
+        if (mixinClassName.contains(".mixin.crafting.")) {
+            // Both halves or neither: CraftingMenuMixin predicts the result and
+            // RecipeBookComponentMixin places it, and one without the other is a menu that
+            // shows a result it cannot fill or fills one it never showed.
+            return ClientOptions.CLIENT_CRAFTING;
+        }
         if (mixinClassName.contains(".mixin.rendercache.")) {
             // Gated as one unit on purpose: EntityRendererDispatcher casts to the duck interfaces
             // the type and entity mixins provide, so a partly applied group is a ClassCastException.

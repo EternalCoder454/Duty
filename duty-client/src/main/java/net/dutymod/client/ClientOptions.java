@@ -38,6 +38,9 @@ public final class ClientOptions {
     /** Cache each entity's and block entity's renderer on its type instead of a map lookup. */
     public static final String RENDERER_CACHING = "client.renderer_caching";
 
+    /** Predict the 2x2 crafting result client-side instead of waiting for the server. */
+    public static final String CLIENT_CRAFTING = "client.client_crafting";
+
     /** Master switch for all particle work. */
     public static final String PARTICLE_OPTIMIZATIONS = "client.particle_optimizations";
 
@@ -110,6 +113,16 @@ public final class ClientOptions {
                         + "behind walls. Matches vanilla behaviour more closely than hiding them.");
         DutyConfig.register(BLOCK_ENTITY_FRUSTUM_CULLING, true,
                 "Frustum-cull block entities as well, the same way entities already are.");
+        DutyConfig.register(CLIENT_CRAFTING, false,
+                "Show the crafting result immediately by working it out from the client's own\n"
+                        + "recipe book, instead of waiting for the server to send it.\n"
+                        + "\n"
+                        + "OFF by default because it only pays off across a real connection. On an\n"
+                        + "integrated server the round trip it removes is in-process and shorter\n"
+                        + "than a tick. Turn it on if you play multiplayer or host over LAN.\n"
+                        + "\n"
+                        + "It predicts rather than knows: with heavily modded recipes the result\n"
+                        + "slot can briefly show the wrong item until the server corrects it.");
         DutyConfig.register(PARTICLE_OPTIMIZATIONS, true,
                 "Batch particle geometry, cache their light and position lookups, and skip the\n"
                         + "ones that cannot be seen. Turn this off to take Duty entirely out of\n"
