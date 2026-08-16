@@ -2,6 +2,8 @@ package net.dutymod.memory;
 
 import net.dutymod.core.DutyConfig;
 import net.dutymod.core.DutyLog;
+import net.dutymod.core.screen.DutyConfigScreens;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 
 /**
@@ -21,8 +23,9 @@ import net.neoforged.fml.common.Mod;
 public class DutyMemory {
     public static final String MOD_ID = "duty_memory";
 
-    public DutyMemory() {
+    public DutyMemory(ModContainer container) {
         DutyLog.info("Duty: Memory reporting for duty.");
+        DutyConfigScreens.register(container);
         if (!DutyConfig.get(MemoryOptions.BLOCK_STATE_DEDUPLICATION)) {
             DutyLog.info("Block state deduplication is disabled in config.");
         }

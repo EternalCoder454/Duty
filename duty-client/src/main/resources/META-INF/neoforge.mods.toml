@@ -69,3 +69,12 @@ reason = "Duty: Client already contains EntityCulling. Running both installs two
 versionRange = "[0,)"
 ordering = "NONE"
 side = "CLIENT"
+
+# Cloth Config is optional: it only provides the in-game settings screen. Without it
+# Duty behaves identically and is configured through config/duty.properties.
+[[dependencies.duty_client]]
+modId = "cloth_config"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "CLIENT"

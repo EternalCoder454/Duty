@@ -6,6 +6,8 @@ import net.dutymod.client.obe.registry.Registry;
 import net.dutymod.client.ifast.ImmediatelyFast;
 import net.dutymod.client.stfu.Stfu;
 import net.dutymod.core.DutyLog;
+import net.dutymod.core.screen.DutyConfigScreens;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -35,8 +37,9 @@ import net.neoforged.neoforge.common.NeoForge;
 public class DutyClient {
     public static final String MOD_ID = "duty_client";
 
-    public DutyClient(IEventBus modBus) {
+    public DutyClient(IEventBus modBus, ModContainer container) {
         ClientOptions.init();
+        DutyConfigScreens.register(container);
 
         // Block entity groups have to be registered before anything asks which ones are baked.
         Registry.init();

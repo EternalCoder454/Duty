@@ -11,3 +11,17 @@ neoForge {
         }
     }
 }
+
+repositories {
+    maven("https://maven.shedaniel.me/") {
+        name = "shedaniel"
+        content { includeGroup("me.shedaniel.cloth") }
+    }
+}
+
+dependencies {
+    // Cloth Config is optional at runtime and compile-only here. Nothing outside
+    // net.dutymod.core.screen touches it, and that package is only reached when the
+    // mod is actually loaded -- see DutyConfigScreens.
+    compileOnly("me.shedaniel.cloth:cloth-config-neoforge:${rootProject.property("cloth_config_version")}")
+}

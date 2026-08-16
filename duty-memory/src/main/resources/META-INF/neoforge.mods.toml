@@ -50,3 +50,12 @@ reason = "Duty: Memory already contains Jasione. Running both would install two 
 versionRange = "[0,)"
 ordering = "NONE"
 side = "BOTH"
+
+# Cloth Config is optional: it only provides the in-game settings screen. Without it
+# Duty behaves identically and is configured through config/duty.properties.
+[[dependencies.duty_memory]]
+modId = "cloth_config"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "CLIENT"

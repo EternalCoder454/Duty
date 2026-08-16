@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -118,6 +119,52 @@ public final class DutyConfig {
      */
     public static synchronized String getString(String key) {
         return rawValue(requireOption(key));
+    }
+
+    /**
+     * {@return every registered option, in registration order}
+     *
+     * <p>For building a settings screen. The order is the order modules registered their options,
+     * which groups them by module without needing to encode that anywhere.
+     *
+     * <p>Note that this only lists options whose owning module is installed: registration happens
+     * in each module's static initializer, so a screen built from this shows exactly the options
+     * that actually do something in this instance.
+     */
+    public static synchronized List<Option> options() {
+        ensureLoaded();
+        return List.copyOf(OPTIONS.values());
+    }
+
+    /**
+     * {@return the current value of {@code key} as it is stored, without parsing}
+     *
+     * <p>Used by a settings screen to populate a control. Returns the default when nothing has been
+     * written, which is the same value {@link #get} would produce.
+     */
+    public static synchronized String rawOrDefault(String key) {
+        return rawValue(requireOption(key));
+    }
+
+    /**
+     * Stores {@code value} for {@code key} and rewrites the file.
+     *
+     * <p>The value is not validated here: the typed accessors already fall back or clamp on
+     * anything they cannot use, and rejecting a value at this point would leave a settings screen
+     * unable to report why. Callers that need validation should do it before calling.
+     *
+     * @throws IllegalArgumentException if the key was never {@link #register registered}
+     */
+    public static synchronized void set(String key, String value) {
+        requireOption(key);
+        ensureLoaded();
+        String current = LOADED.getProperty(key);
+        if (value.equals(current)) {
+            return;
+        }
+        LOADED.setProperty(key, value);
+        dirty = true;
+        writeIfDirty();
     }
 
     private static Option requireOption(String key) {

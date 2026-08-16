@@ -32,3 +32,12 @@ type = "required"
 versionRange = "[26.1.2,26.2)"
 ordering = "NONE"
 side = "BOTH"
+
+# Cloth Config is optional: it only provides the in-game settings screen. Without it
+# Duty behaves identically and is configured through config/duty.properties.
+[[dependencies.duty_core]]
+modId = "cloth_config"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
+side = "CLIENT"
