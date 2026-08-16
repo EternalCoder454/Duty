@@ -5,6 +5,8 @@
   "compatibilityLevel": "JAVA_25",
   "plugin": "net.dutymod.client.DutyClientMixinPlugin",
   "mixins": [
+    "audio.ChannelMixin",
+    "audio.ListenerMixin",
     "hash.InputKeyMixin",
     "hash.VertexFormatMixin",
     "text.FontWidthMixin"

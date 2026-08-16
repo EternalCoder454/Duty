@@ -353,3 +353,23 @@ dropping it reclaims a few percent for free -- the cheapest performance change a
 
 These are launcher settings rather than mod code, so Duty cannot set them; they are recorded here
 because they outweigh several of the code-level wins above.
+
+### Lomka: audio taken, mipmap and texture atlas declined
+
+**`Channel.setSelfPosition`** built a `float[3]` per sound position update and **`Listener.setTransform`**
+a `float[6]` per frame, the latter running whether or not anything is playing because the listener
+tracks the camera. Both confirmed against the 26.1.2 bytecode -- one `newarray` each -- rather than
+taken on the README's word. `alSource3f` takes loose floats so the first array disappears entirely;
+orientation genuinely needs an array for `alListenerfv`, so that one is allocated once and refilled.
+Nothing else installed touches either class.
+
+**`MipmapGenerator.alphaTestCoverage` -- declined.** Lomka rewrites it with precomputed bilinear
+weight tables. Vanilla's inner loop does contain the 22 float operations that would make it a valid
+constant hoist, and nothing else patches the class, so it is plausible. It is also a numeric rewrite
+whose failure mode is subtly wrong alpha-cutout mipmaps -- leaves, grass, glass edges -- and the win
+is bounded to texture stitching at load. Accepting it needs the two formulas compared term by term
+against vanilla's source and a visual check, not a bytecode op count.
+
+**`TextureAtlas` -- declined.** Iris ships `MixinTextureAtlas` plus two accessors and sodium-extra
+ships its own `MixinTextureAtlas`. Two mods already rewriting atlas stitching is not a place to add
+a third with an `@Overwrite`.
