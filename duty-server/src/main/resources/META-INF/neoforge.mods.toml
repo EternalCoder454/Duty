@@ -31,6 +31,12 @@ config = "duty_server_net.mixins.json"
 [[mixins]]
 config = "duty_server_wire.mixins.json"
 
+# Hot world-data maths. No plugin: these are unconditional inlinings of vanilla methods with no
+# option behind them, and nothing else installed patches either class.
+[[mixins]]
+config = "duty_server_worldmath.mixins.json"
+
+
 
 [[dependencies.duty_server]]
 modId = "neoforge"

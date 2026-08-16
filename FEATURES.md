@@ -472,3 +472,37 @@ Two things the tooling caught that a green build would not have:
 - `ToastManager$ToastInstance` is a private inner class, so shadowing a field of that type needs an
   access transformer entry. That is a compile error rather than a runtime one, but it is the same
   category as the `public-f` lesson already recorded.
+
+## CPU pass, 2026-08-16
+
+Taken from Lomka (MIT), all uncontested -- nothing installed patches any of these classes:
+
+| Mixin | Module | What it removes |
+|---|---|---|
+| `DataLayerMixin` | server | the four-call delegation chain on every light and biome nibble lookup |
+| `Cursor3DMixin` | server | the same on `advance()`, the 3D block iterator |
+| `ByIdMapMixin` | server | boxing and a lambda per registry id lookup, via a fastutil map with a default |
+| `ArgbMixin` | client | recomputed divisions in 15 colour ops, replaced with lookup tables |
+| `QuadrantMixin` | client | a modulo per vertex rotation |
+| `ItemTransformMixin` | client | a quaternion rebuilt per item transform, now cached |
+| `LightCoordsUtilMixin` | client | branch and merge work on four light-packing helpers |
+
+`DataLayer` and `Cursor3D` went to `duty-server` rather than `duty-client` because both run on
+either side; `duty-server` is declared `side = "BOTH"`, so its mixins apply in single player too.
+
+**Contested and therefore skipped**, each verified against the installed jars rather than assumed:
+`Mth` (Lithium), `BufferBuilder`, `ItemInHandRenderer`, `LightTexture`, `ModelPart`, `TextureAtlas`
+(Iris and Sodium), `Model` (six mods), `BlockableEventLoop` (voxy), `SoundBufferLibrary`
+(AmbientSounds).
+
+**Skipped on judgement:** `ArrayListDeque`. Its mixin shadows `modCount`, which 26.1.2's
+`ArrayListDeque` does not declare -- it inherits it from `java.util.AbstractList`. Shadowing a JDK
+field is not worth it for capacity rounding.
+
+Two version drifts caught by compiling rather than by reading:
+
+- `ItemTransform` moved to `net.minecraft.client.resources.model.cuboid`. The correct import was
+  present in the file but commented out, and the active one named the old package.
+- `LightCoordsUtil.getLightCoords` does not exist in 26.1.2; it lives on `LevelRenderer` now. Four
+  of that mixin's five overwrites still resolve, so those were kept and the moved one dropped --
+  retargeting it would mean adding an `@Overwrite` to a class Duty's culling and Iris both patch.

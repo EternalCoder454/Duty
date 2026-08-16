@@ -1,0 +1,16 @@
+{
+  "required": true,
+  "minVersion": "0.8.5",
+  "package": "net.dutymod.server.mixin.worldmath",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "ByIdMapMixin",
+    "Cursor3DMixin",
+    "DataLayerMixin"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

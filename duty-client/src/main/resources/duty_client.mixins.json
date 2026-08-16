@@ -7,6 +7,10 @@
   "mixins": [
     "audio.ChannelMixin",
     "audio.ListenerMixin",
+    "fastmath.ArgbMixin",
+    "fastmath.ItemTransformMixin",
+    "fastmath.LightCoordsUtilMixin",
+    "fastmath.QuadrantMixin",
     "hash.InputKeyMixin",
     "hash.VertexFormatMixin",
     "rendercache.BlockEntityRenderDispatcherMixin",
