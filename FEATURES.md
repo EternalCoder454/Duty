@@ -407,3 +407,37 @@ Two conflict checks to finish before merging: `MixinEntityRendererDispatcher` **
 injection targets those same methods.
 
 `CacheHooks` is only needed by the lightmap and sky-colour features, not by either renderer cache.
+
+### BadOptimizations: renderer caching taken
+
+Both outstanding checks came back clear. Duty's `CullableMixin` adds only `@Unique` fields to
+`Entity` with no method injections, and its `BlockEntityRenderDispatcherMixin` targets
+`tryExtractRenderState`, where BadOptimizations targets `onResourceManagerReload` and the renderer
+getter. Different members, different methods.
+
+`EntityRenderDispatcher.getRenderer(entity)` is a map lookup for every entity, every frame. The
+renderer is now cached on the `EntityType`, with each `Entity` holding a reference to its type, so
+the lookup becomes a field read. Players resolve by skin model instead, which is why
+`MixinClientPlayer` and `MixinMannequinPlayer` override the same duck method. Block entities get
+the identical treatment through `BlockEntityType`.
+
+Gated as one unit on `client.renderer_caching`. The dispatcher casts to the duck interfaces the
+type and entity mixins provide, so a partly applied group is a `ClassCastException` -- the failure
+this project already hit once during the EntityCulling port.
+
+**The risk worth recording:** `getRenderer` is *overloaded* on both dispatchers in 26.1.2 --
+`(Entity)` and `(EntityRenderState)`, `(BlockEntity)` and `(BlockEntityRenderState)` -- and both
+mixins `@Overwrite` it. No checker covers `@Overwrite` binding, and picking the wrong overload is
+what took Liteminer down. Verified by comparing the compiled mixin descriptors against vanilla:
+
+```
+Duty    (Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/client/renderer/entity/EntityRenderer;
+vanilla (Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/client/renderer/entity/EntityRenderer;
+```
+
+Exact match, and the sibling overload erases differently, so the binding is unambiguous. The block
+entity pair checks out the same way.
+
+Not taken, beyond the particle overlap already recorded: the remaining eight features (sky colour,
+lightmap, entity flags, FOV, toasts, tutorial, debug renderer, sky angle). Each is independent and
+individually small; they need their own conflict passes rather than a blanket port.

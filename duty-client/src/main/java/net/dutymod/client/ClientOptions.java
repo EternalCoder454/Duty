@@ -35,6 +35,9 @@ public final class ClientOptions {
 
     // -- Particles (from Particle Core) --------------------------------------------------------
 
+    /** Cache each entity's and block entity's renderer on its type instead of a map lookup. */
+    public static final String RENDERER_CACHING = "client.renderer_caching";
+
     /** Master switch for all particle work. */
     public static final String PARTICLE_OPTIMIZATIONS = "client.particle_optimizations";
 
@@ -145,6 +148,11 @@ public final class ClientOptions {
                 "How much command feedback reaches chat. ENABLED, ONLY_PLAYERS or DISABLED.");
         DutyConfig.register(ANNOUNCE_ADVANCEMENTS, true,
                 "Announce advancements in chat.");
+        DutyConfig.register(RENDERER_CACHING, true,
+                "Cache each entity's and block entity's renderer on its type. Vanilla looks the\n"
+                        + "renderer up in a map for every entity, every frame; caching it on the type\n"
+                        + "turns that into a field read. The cache is refilled whenever renderers are\n"
+                        + "rebuilt, so a resource pack swap still takes effect.");
         DutyConfig.register(ADVANCEMENT_TOASTS, true,
                 "Show a toast when an advancement is earned. Turning this off drops the whole\n"
                         + "advancement update packet, not just the popup, so the advancement screen\n"

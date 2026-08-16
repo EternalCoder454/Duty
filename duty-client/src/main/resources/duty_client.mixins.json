@@ -9,6 +9,13 @@
     "audio.ListenerMixin",
     "hash.InputKeyMixin",
     "hash.VertexFormatMixin",
+    "rendercache.MixinBlockEntityRenderDispatcher",
+    "rendercache.MixinBlockEntityType",
+    "rendercache.MixinClientPlayer",
+    "rendercache.MixinEntity",
+    "rendercache.MixinEntityRendererDispatcher",
+    "rendercache.MixinEntityType",
+    "rendercache.MixinMannequinPlayer",
     "text.FontWidthMixin"
   ],
   "client": [

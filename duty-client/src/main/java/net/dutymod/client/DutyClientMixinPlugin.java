@@ -120,6 +120,11 @@ public class DutyClientMixinPlugin implements IMixinConfigPlugin {
             // them, so they stand or fall together.
             return ClientOptions.PARTICLE_OPTIMIZATIONS;
         }
+        if (mixinClassName.contains(".mixin.rendercache.")) {
+            // Gated as one unit on purpose: EntityRendererDispatcher casts to the duck interfaces
+            // the type and entity mixins provide, so a partly applied group is a ClassCastException.
+            return ClientOptions.RENDERER_CACHING;
+        }
         if (mixinClassName.contains(".mixin.obe.")) {
             return ClientOptions.BAKED_BLOCK_ENTITIES;
         }
