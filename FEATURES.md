@@ -373,3 +373,37 @@ against vanilla's source and a visual check, not a bytecode op count.
 **`TextureAtlas` -- declined.** Iris ships `MixinTextureAtlas` plus two accessors and sodium-extra
 ships its own `MixinTextureAtlas`. Two mods already rewriting atlas stitching is not a place to add
 a third with an `@Overwrite`.
+
+## BadOptimizations — analysed, port mapped, not yet merged
+
+MIT, `26.1` branch, **Mojang mappings despite being multiloader**, so no name translation. 34 files,
+11 features, each already gated by its own option upstream.
+
+**None of its declared incompatibilities are in the pack** — twilightforest, bedrockskinutility,
+lazyyyyy, polytone, biomeswevegone, performant and camera_lock_on are all absent, so no feature is
+ruled out on that axis.
+
+**Already covered by Duty — do not port.** `enable_particle_manager_optimization` cancels
+`renderParticles*` at HEAD when the particle map is empty. Stfu's `DisableParticles` in
+`duty-client` already injects `render` and `extract` at HEAD and cancels on `particles.isEmpty()`,
+plus a config-driven disable. Porting it would double-cancel the same method.
+
+**The headline feature, and the reason to do this port:** entity and block-entity renderer caching.
+Vanilla's `EntityRenderDispatcher.getRenderer(entity)` is a map lookup per entity per frame.
+BadOptimizations caches the renderer on the `EntityType` and gives each `Entity` a reference to its
+type, turning the lookup into a field read. The block-entity side is the same shape.
+
+Port groups, each of which must be gated as a unit -- the dispatcher casts to the duck interfaces,
+so a partially applied group is a `ClassCastException`:
+
+| Group | Files |
+|---|---|
+| Entity renderer cache | `EntityMethods`, `EntityTypeMethods`, `MixinEntity`, `MixinEntityType`, `MixinEntityRendererDispatcher` |
+| Block entity renderer cache | `BlockEntityTypeMethods`, `MixinBlockEntityType`, `MixinBlockEntityRenderDispatcher` |
+
+Two conflict checks to finish before merging: `MixinEntityRendererDispatcher` **`@Overwrite`s**
+`getRenderer`, and Duty already patches both `Entity` (particles, culling) and
+`BlockEntityRenderDispatcher` (EntityCulling). Class overlap is fine; the check is whether any Duty
+injection targets those same methods.
+
+`CacheHooks` is only needed by the lightmap and sky-colour features, not by either renderer cache.
