@@ -441,3 +441,34 @@ entity pair checks out the same way.
 Not taken, beyond the particle overlap already recorded: the remaining eight features (sky colour,
 lightmap, entity flags, FOV, toasts, tutorial, debug renderer, sky angle). Each is independent and
 individually small; they need their own conflict passes rather than a blanket port.
+
+### BadOptimizations: the remaining features
+
+Seven more taken, all under `client.renderer_caching`: the FOV wrapper on `Camera.tickFov`, the
+lightmap extractor's tick short-circuit, the tutorial skip, the toast `hideGui` check, the debug
+renderer early-out, and the two field accessors the lightmap needs
+(`GameRenderer.bossOverlayWorldDarkening`, `LocalPlayer.waterVisionTime`).
+
+**`enable_sky_angle_caching_in_worldrenderer` — rejected, and not for the reason it first looked.**
+Its target is written as `method_62215`, a Fabric intermediary name for a lambda inside `renderSky`,
+which would never resolve under Mojang mappings. That turned out not to matter: `LevelRenderer` has
+no `renderSky` in 26.1.2, and `getSunAngle` does not exist anywhere in the jar. Mojang restructured
+sky rendering into `SkyRenderState`. Same shape as Fastload -- the code it optimises is gone.
+
+**`MixinDebugHud_AddText` — skipped.** It injects `DebugScreenEntries.<clinit>`, which Duty already
+injects. Two injections into one static initialiser is not automatically a conflict, but it is not
+worth the ordering question for an F3 text tweak.
+
+**`CacheHooks` — dropped rather than ported.** It is an API letting *other* mods declare extra
+reasons the lightmap must recompute. Nothing outside BadOptimizations implements it, and carrying
+it meant carrying its config and platform layers. The call site in the lightmap mixin now returns
+false with a comment marking where it would go back.
+
+Two things the tooling caught that a green build would not have:
+
+- `ToastManager.render` does not exist in 26.1.2 -- it is `extractRenderState`, part of the same
+  render/extract split seen across the 26.x GUI. `check-descriptors.py` flagged the stale name, and
+  the `hideGui` read the injection point needs was confirmed to live in the new method.
+- `ToastManager$ToastInstance` is a private inner class, so shadowing a field of that type needs an
+  access transformer entry. That is a compile error rather than a runtime one, but it is the same
+  category as the `public-f` lesson already recorded.
