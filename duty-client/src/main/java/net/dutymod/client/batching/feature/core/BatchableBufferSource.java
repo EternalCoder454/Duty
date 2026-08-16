@@ -76,14 +76,16 @@ public class BatchableBufferSource extends MultiBufferSource.BufferSource implem
         }
 
         final BufferBuilder bufferBuilder;
+        final ByteBufferBuilder fixedBuffer;
         final boolean hasBufferForRenderType = renderType.canConsolidateConsecutiveGeometry() && this.dynamicBuffers.containsKey(renderType);
         if (!renderType.canConsolidateConsecutiveGeometry()) {
             bufferBuilder = new BufferBuilder(this.getNextByteBufferBuilder(), renderType.mode(), renderType.format());
             this.lastSharedType = renderType;
         } else if (hasBufferForRenderType) {
             bufferBuilder = this.dynamicBuffers.get(renderType).iterator().next();
-        } else if (this.fixedBuffers.containsKey(renderType)) {
-            bufferBuilder = new BufferBuilder(this.fixedBuffers.get(renderType), renderType.mode(), renderType.format());
+        } else if ((fixedBuffer = this.fixedBuffers.get(renderType)) != null) {
+            // One lookup, not a containsKey followed by a get. This runs per draw batch.
+            bufferBuilder = new BufferBuilder(fixedBuffer, renderType.mode(), renderType.format());
         } else {
             bufferBuilder = new BufferBuilder(this.getNextByteBufferBuilder(), renderType.mode(), renderType.format());
             this.lastSharedType = renderType;

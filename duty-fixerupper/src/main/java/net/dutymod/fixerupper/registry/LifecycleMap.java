@@ -14,8 +14,10 @@ public class LifecycleMap<T> extends Reference2ReferenceOpenHashMap<ResourceKey<
         if(lifecycle != defRetValue)
             return super.put(t, lifecycle);
         else {
-            // need the duplicate containsKey/get logic here to override the default return value
-            return super.containsKey(t) ? super.get(t) : null;
+            // fastutil's get returns defRetValue for a missing key rather than null, which is why
+            // upstream guarded with containsKey. getOrDefault expresses the same thing in one
+            // lookup instead of hashing the key twice.
+            return super.getOrDefault(t, null);
         }
     }
 }
