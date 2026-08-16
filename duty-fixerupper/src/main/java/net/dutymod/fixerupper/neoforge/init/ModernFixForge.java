@@ -64,6 +64,13 @@ public class ModernFixForge {
     private static final List<Pair<List<String>, String>> MOD_WARNINGS = ImmutableList.of();
 
     public void commonSetup(FMLCommonSetupEvent event) {
+        // Resolve the configured recipe types now that the registry is populated. Without this the
+        // whitelist stays empty and the recipe index quietly never applies -- the mixin would still
+        // load, still report as applied, and fall through to vanilla for every lookup.
+        if(ModernFixMixinPlugin.instance.isOptionEnabled("perf.fast_recipes.RecipeMapMixin")) {
+            event.enqueueWork(net.dutymod.fixerupper.fastrecipes.FastRecipes::resolveIndexedTypes);
+        }
+
         if(ModernFixMixinPlugin.instance.isOptionEnabled("feature.warn_missing_perf_mods.Warnings")) {
             event.enqueueWork(() -> {
                 boolean atLeastOneWarning = false;
