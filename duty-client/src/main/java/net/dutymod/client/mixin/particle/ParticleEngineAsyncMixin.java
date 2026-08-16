@@ -36,12 +36,12 @@ public abstract class ParticleEngineAsyncMixin {
 	@Shadow protected abstract void updateCount(ParticleLimit group, int count);
 
 	@WrapOperation(method = "<init>", at = @At(value = "INVOKE", target = "com/google/common/collect/Maps.newIdentityHashMap ()Ljava/util/IdentityHashMap;"))
-	private IdentityHashMap<?, ?> particle_core_setupSynchronizedParticleMap(Operation<IdentityHashMap<?, ?>> original) {
+	private IdentityHashMap<?, ?> duty$setupSynchronizedParticleMap(Operation<IdentityHashMap<?, ?>> original) {
 		return new SynchronizedIdentityHashMap<>(original.call());
 	}
 
 	@WrapOperation(method = "add(Lnet/minecraft/client/particle/Particle;)V", at = @At(value = "INVOKE", target = "java/util/Queue.add (Ljava/lang/Object;)Z"))
-	private boolean particle_core_synchronizeParticleAdds(Queue<? extends Particle> instance, Object e, Operation<Boolean> original) {
+	private boolean duty$synchronizeParticleAdds(Queue<? extends Particle> instance, Object e, Operation<Boolean> original) {
 		synchronized (lock) {
 			return original.call(instance, e);
 		}
@@ -49,7 +49,7 @@ public abstract class ParticleEngineAsyncMixin {
 
 	@SuppressWarnings({"SynchronizeOnNonFinalField"})
 	@WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "java/util/Map.forEach (Ljava/util/function/BiConsumer;)V"))
-	private void particle_core_asyncParticleTicking(Map<ParticleRenderType, Queue<Particle>> instance, BiConsumer<? super ParticleRenderType, ? extends Queue<Particle>> v, Operation<Void> original) {
+	private void duty$asyncParticleTicking(Map<ParticleRenderType, Queue<Particle>> instance, BiConsumer<? super ParticleRenderType, ? extends Queue<Particle>> v, Operation<Void> original) {
 		if (!PcConfig.INSTANCE.getImpl().getAsynchronousTicking().get()) {
 			original.call(instance, v);
 		} else {

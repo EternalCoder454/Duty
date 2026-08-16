@@ -21,7 +21,7 @@ public class ModernFixCommands {
                             }
                             if (level.getServer().getFunctions() instanceof IProfilingServerFunctionManager profiler) {
                                 context.getSource().sendSuccess(() -> Component.literal("mcfunction runtime breakdown:"), false);
-                                for(String line : profiler.mfix$getProfilingResults().split("\n")) {
+                                for(String line : profiler.duty$getProfilingResults().split("\n")) {
                                     context.getSource().sendSuccess(() -> Component.literal(line), false);
                                 }
 

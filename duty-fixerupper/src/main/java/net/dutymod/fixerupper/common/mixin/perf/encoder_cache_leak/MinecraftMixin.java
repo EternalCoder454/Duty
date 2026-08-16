@@ -20,6 +20,6 @@ public class MinecraftMixin {
             "clearClientLevel(Lnet/minecraft/client/gui/screens/Screen;)V"
     }, at = @At("RETURN"))
     private void clearEncoderCache(CallbackInfo ci) {
-        ((EncoderCacheAccessor)DataComponentsAccessor.mfix$getCache()).mfix$getCache().invalidateAll();
+        ((EncoderCacheAccessor)DataComponentsAccessor.duty$getCache()).duty$getCache().invalidateAll();
     }
 }

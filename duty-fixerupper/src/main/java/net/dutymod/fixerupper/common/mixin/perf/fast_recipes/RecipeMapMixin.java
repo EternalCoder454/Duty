@@ -30,10 +30,10 @@ import net.minecraft.world.level.Level;
 public abstract class RecipeMapMixin {
 
     @Unique
-    private Map<RecipeType<?>, CachedRecipeList<?, ?>> fastrecipes$cache = Collections.synchronizedMap(new HashMap<>());
+    private Map<RecipeType<?>, CachedRecipeList<?, ?>> duty$cache = Collections.synchronizedMap(new HashMap<>());
 
     @Inject(method = "getRecipesFor", at = @At("HEAD"), cancellable = true)
-    private <I extends RecipeInput, T extends Recipe<I>> void fastrecipes$indexedGetRecipesFor(RecipeType<T> type, I container, Level level, CallbackInfoReturnable<Stream<RecipeHolder<T>>> cir) {
+    private <I extends RecipeInput, T extends Recipe<I>> void duty$indexedGetRecipesFor(RecipeType<T> type, I container, Level level, CallbackInfoReturnable<Stream<RecipeHolder<T>>> cir) {
         if (!FastRecipes.indexedTypes.contains(type) || container.isEmpty()) {
             return; // only whitelisted recipe types are indexed; everything else (and empty inputs) falls through to vanilla
         }
@@ -45,11 +45,11 @@ public abstract class RecipeMapMixin {
     @Unique
     @SuppressWarnings("unchecked")
     private <I extends RecipeInput, T extends Recipe<I>> CachedRecipeList<I, T> getCachedList(RecipeType<T> type) {
-        synchronized (this.fastrecipes$cache) {
-            CachedRecipeList<I, T> list = (CachedRecipeList<I, T>) this.fastrecipes$cache.get(type);
+        synchronized (this.duty$cache) {
+            CachedRecipeList<I, T> list = (CachedRecipeList<I, T>) this.duty$cache.get(type);
             if (list == null) {
                 list = new CachedRecipeList<>(type, this.byType(type));
-                this.fastrecipes$cache.put(type, list);
+                this.duty$cache.put(type, list);
             }
             return list;
         }

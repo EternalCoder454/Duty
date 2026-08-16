@@ -47,12 +47,12 @@ public abstract class MixinMapRenderer {
 
     @ModifyArg(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitCustomGeometry(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;Lnet/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer;)V", ordinal = 0))
     private SubmitNodeCollector.CustomGeometryRenderer modifyTextureCoordinates(SubmitNodeCollector.CustomGeometryRenderer customGeometryRenderer, @Local(argsOnly = true) MapRenderState renderState, @Local(argsOnly = true) int light) {
-        final IMapRenderState immediatelyFast$renderState = (IMapRenderState) renderState;
-        if (immediatelyFast$renderState.immediatelyFast$getAtlasTexture() != null && immediatelyFast$renderState.immediatelyFast$getAtlasTexture().getTextureId().equals(renderState.texture)) {
-            final float u1 = (float) immediatelyFast$renderState.immediatelyFast$getAtlasX() / ATLAS_SIZE;
-            final float u2 = (float) (immediatelyFast$renderState.immediatelyFast$getAtlasX() + MAP_SIZE) / ATLAS_SIZE;
-            final float v1 = (float) immediatelyFast$renderState.immediatelyFast$getAtlasY() / ATLAS_SIZE;
-            final float v2 = (float) (immediatelyFast$renderState.immediatelyFast$getAtlasY() + MAP_SIZE) / ATLAS_SIZE;
+        final IMapRenderState duty$renderState = (IMapRenderState) renderState;
+        if (duty$renderState.duty$getAtlasTexture() != null && duty$renderState.duty$getAtlasTexture().getTextureId().equals(renderState.texture)) {
+            final float u1 = (float) duty$renderState.duty$getAtlasX() / ATLAS_SIZE;
+            final float u2 = (float) (duty$renderState.duty$getAtlasX() + MAP_SIZE) / ATLAS_SIZE;
+            final float v1 = (float) duty$renderState.duty$getAtlasY() / ATLAS_SIZE;
+            final float v2 = (float) (duty$renderState.duty$getAtlasY() + MAP_SIZE) / ATLAS_SIZE;
             return (matrix, vertexConsumer) -> {
                 vertexConsumer.addVertex(matrix, 0F, MAP_SIZE, -0.01F).setColor(-1).setUv(u1, v2).setLight(light);
                 vertexConsumer.addVertex(matrix, MAP_SIZE, MAP_SIZE, -0.01F).setColor(-1).setUv(u2, v2).setLight(light);
@@ -66,18 +66,18 @@ public abstract class MixinMapRenderer {
 
     @Inject(method = "extractRenderState", at = @At("RETURN"))
     private void initAtlasParameters(MapId mapId, MapItemSavedData mapState, MapRenderState renderState, CallbackInfo ci) {
-        final int packedLocation = ((IMapTextureManager) this.mapTextureManager).immediatelyFast$getAtlasMapping(mapId.id());
+        final int packedLocation = ((IMapTextureManager) this.mapTextureManager).duty$getAtlasMapping(mapId.id());
         if (packedLocation == -1) {
             ImmediatelyFast.LOGGER.warn("Map " + mapId.id() + " is not in an atlas");
             // Leave atlasTexture null to indicate that this map is not in an atlas, and it should use the vanilla system instead
             return;
         }
 
-        final IMapRenderState immediatelyFast$renderState = (IMapRenderState) renderState;
-        immediatelyFast$renderState.immediatelyFast$setAtlasX(((packedLocation >> 8) & 0xFF) * MAP_SIZE);
-        immediatelyFast$renderState.immediatelyFast$setAtlasY((packedLocation & 0xFF) * MAP_SIZE);
-        immediatelyFast$renderState.immediatelyFast$setAtlasTexture(((IMapTextureManager) this.mapTextureManager).immediatelyFast$getMapAtlasTexture(packedLocation >> 16));
-        if (immediatelyFast$renderState.immediatelyFast$getAtlasTexture() == null) {
+        final IMapRenderState duty$renderState = (IMapRenderState) renderState;
+        duty$renderState.duty$setAtlasX(((packedLocation >> 8) & 0xFF) * MAP_SIZE);
+        duty$renderState.duty$setAtlasY((packedLocation & 0xFF) * MAP_SIZE);
+        duty$renderState.duty$setAtlasTexture(((IMapTextureManager) this.mapTextureManager).duty$getMapAtlasTexture(packedLocation >> 16));
+        if (duty$renderState.duty$getAtlasTexture() == null) {
             throw new IllegalStateException("getMapAtlasTexture returned null for packedLocation " + packedLocation + " (map " + mapId.id() + ")");
         }
     }

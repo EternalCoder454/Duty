@@ -65,16 +65,16 @@ public abstract class MixinAbstractSignRenderer {
         if (!(signText instanceof ISignText mixinSignText)) {
             return;
         }
-        if (!mixinSignText.immediatelyFast$shouldCache()) {
+        if (!mixinSignText.duty$shouldCache()) {
             return;
         }
 
         SignAtlasRenderTarget.Slot slot = ImmediatelyFast.signTextCache.slotCache.getIfPresent(signText);
         if (slot == null) {
-            final int width = this.immediatelyFast$getTextWidth(signText, renderState.isTextFilteringEnabled, renderState.maxTextLineWidth);
+            final int width = this.duty$getTextWidth(signText, renderState.isTextFilteringEnabled, renderState.maxTextLineWidth);
             final int height = 4 * renderState.textLineHeight;
             if (width <= 0 || height <= 0) {
-                mixinSignText.immediatelyFast$setShouldCache(false);
+                mixinSignText.duty$setShouldCache(false);
                 return;
             }
             final int padding = signText.hasGlowingText() ? 2 : 0;
@@ -92,7 +92,7 @@ public abstract class MixinAbstractSignRenderer {
                 RenderSystem.outputColorTextureOverride = ImmediatelyFast.signTextCache.signAtlasRenderTarget.getColorTextureView();
                 RenderSystem.outputDepthTextureOverride = ImmediatelyFast.signTextCache.signAtlasRenderTarget.getDepthTextureView();
                 final ByteBufferBuilder bufferBuilder = ByteBufferBuilderPool.borrowBufferBuilder();
-                mixinSignText.immediatelyFast$setShouldCache(false);
+                mixinSignText.duty$setShouldCache(false);
 
                 try {
                     final MultiBufferSource.BufferSource bufferSource = MultiBufferSource.immediate(bufferBuilder);
@@ -107,7 +107,7 @@ public abstract class MixinAbstractSignRenderer {
                     bufferSource.endBatch();
                     renderDispatcher.close();
                 } finally {
-                    mixinSignText.immediatelyFast$setShouldCache(true);
+                    mixinSignText.duty$setShouldCache(true);
                     ByteBufferBuilderPool.returnBufferBuilderSafe(bufferBuilder);
                     RenderSystem.outputColorTextureOverride = previousColorTextureOverride;
                     RenderSystem.outputDepthTextureOverride = previousDepthTextureOverride;
@@ -119,7 +119,7 @@ public abstract class MixinAbstractSignRenderer {
                 ImmediatelyFast.signTextCache.slotCache.put(signText, slot);
             } else {
                 ImmediatelyFast.LOGGER.warn("Failed to find a free slot for sign text (" + ImmediatelyFast.signTextCache.slotCache.size() + " sign texts in atlas). Falling back to immediate mode rendering.");
-                mixinSignText.immediatelyFast$setShouldCache(false);
+                mixinSignText.duty$setShouldCache(false);
                 return;
             }
         }
@@ -145,7 +145,7 @@ public abstract class MixinAbstractSignRenderer {
     }
 
     @Unique
-    private int immediatelyFast$getTextWidth(final SignText signText, final boolean filterText, final int maxLineWidth) {
+    private int duty$getTextWidth(final SignText signText, final boolean filterText, final int maxLineWidth) {
         final FormattedCharSequence[] renderMessages = signText.getRenderMessages(filterText, textComponent -> {
             final List<FormattedCharSequence> list = this.font.split(textComponent, maxLineWidth);
             return list.isEmpty() ? FormattedCharSequence.EMPTY : list.getFirst();

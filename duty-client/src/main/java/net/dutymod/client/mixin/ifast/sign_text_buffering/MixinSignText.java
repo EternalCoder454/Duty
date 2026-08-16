@@ -59,30 +59,30 @@ public abstract class MixinSignText implements ISignText {
     private FormattedCharSequence[] renderMessages;
 
     @Unique
-    private boolean immediatelyFast$shouldCache;
+    private boolean duty$shouldCache;
 
     @Unique
-    private boolean immediatelyFast$checkedShouldCache;
+    private boolean duty$checkedShouldCache;
 
     @Unique
-    private int immediatelyFast$cachedHashCode;
+    private int duty$cachedHashCode;
 
     @Unique
-    private boolean immediatelyFast$calculatedHashCode;
+    private boolean duty$calculatedHashCode;
 
     @Inject(method = "getRenderMessages", at = @At("RETURN"))
     private void checkShouldCache(CallbackInfoReturnable<FormattedCharSequence[]> cir) {
-        if (!this.immediatelyFast$checkedShouldCache) {
-            this.immediatelyFast$checkedShouldCache = true;
-            this.immediatelyFast$shouldCache = true;
+        if (!this.duty$checkedShouldCache) {
+            this.duty$checkedShouldCache = true;
+            this.duty$shouldCache = true;
             for (FormattedCharSequence line : this.renderMessages) {
-                if (!this.immediatelyFast$shouldCache) {
+                if (!this.duty$shouldCache) {
                     break;
                 }
 
                 line.accept((index, style, codePoint) -> {
                     if (style.isObfuscated()) {
-                        this.immediatelyFast$shouldCache = false;
+                        this.duty$shouldCache = false;
                         return false;
                     }
 
@@ -94,20 +94,20 @@ public abstract class MixinSignText implements ISignText {
 
     @Inject(method = "getRenderMessages", at = @At(value = "FIELD", target = "Lnet/minecraft/world/level/block/entity/SignText;renderMessages:[Lnet/minecraft/util/FormattedCharSequence;", opcode = Opcodes.PUTFIELD))
     private void invalidateCache(CallbackInfoReturnable<FormattedCharSequence[]> cir) {
-        this.immediatelyFast$shouldCache = false;
-        this.immediatelyFast$checkedShouldCache = false;
-        this.immediatelyFast$cachedHashCode = 0;
-        this.immediatelyFast$calculatedHashCode = false;
+        this.duty$shouldCache = false;
+        this.duty$checkedShouldCache = false;
+        this.duty$cachedHashCode = 0;
+        this.duty$calculatedHashCode = false;
     }
 
     @Override
-    public boolean immediatelyFast$shouldCache() {
-        return this.immediatelyFast$shouldCache;
+    public boolean duty$shouldCache() {
+        return this.duty$shouldCache;
     }
 
     @Override
-    public void immediatelyFast$setShouldCache(final boolean shouldCache) {
-        this.immediatelyFast$shouldCache = shouldCache;
+    public void duty$setShouldCache(final boolean shouldCache) {
+        this.duty$shouldCache = shouldCache;
     }
 
     @Override
@@ -124,15 +124,15 @@ public abstract class MixinSignText implements ISignText {
 
     @Override
     public int hashCode() {
-        if (!this.immediatelyFast$calculatedHashCode) {
-            this.immediatelyFast$calculatedHashCode = true;
+        if (!this.duty$calculatedHashCode) {
+            this.duty$calculatedHashCode = true;
             int result = Objects.hash(color, hasGlowingText);
             result = 31 * result + Arrays.hashCode(messages);
             result = 31 * result + Arrays.hashCode(filteredMessages);
-            this.immediatelyFast$cachedHashCode = result;
+            this.duty$cachedHashCode = result;
         }
 
-        return this.immediatelyFast$cachedHashCode;
+        return this.duty$cachedHashCode;
     }
 
 }

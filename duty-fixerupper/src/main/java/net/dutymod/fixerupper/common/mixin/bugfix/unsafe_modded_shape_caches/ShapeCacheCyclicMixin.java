@@ -21,7 +21,7 @@ public class ShapeCacheCyclicMixin {
     @Shadow @Final @Mutable private static final Map CACHE = new ConcurrentHashMap();
 
     @Inject(method = "<clinit>", at = @At("RETURN"))
-    private static void mfix$notify(CallbackInfo ci) {
+    private static void duty$notify(CallbackInfo ci) {
         ModernFix.LOGGER.info("Made Cyclic shape cache map thread-safe");
     }
 }

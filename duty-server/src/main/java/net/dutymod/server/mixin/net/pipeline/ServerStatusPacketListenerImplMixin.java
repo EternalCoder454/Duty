@@ -23,7 +23,7 @@ public class ServerStatusPacketListenerImplMixin {
             ),
             cancellable = true
     )
-    private void kreno$outdatedServerFix(ServerboundStatusRequestPacket packet, CallbackInfo ci) {
+    private void duty$outdatedServerFix(ServerboundStatusRequestPacket packet, CallbackInfo ci) {
         if (ServerLifecycleHooks.getCurrentServer() != null) {
             ServerStatus serverStatus = ServerLifecycleHooks.getCurrentServer().getStatus();
             if (serverStatus == null || serverStatus.version().isEmpty())

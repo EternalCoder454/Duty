@@ -6,5 +6,5 @@ import net.minecraft.world.level.Level;
 import org.apache.commons.lang3.tuple.Pair;
 
 public interface ISpawnTrackingMinecraftServer {
-    Pair<ResourceKey<Level>, ChunkPos> mfix$getInitialStartTicketLocation();
+    Pair<ResourceKey<Level>, ChunkPos> duty$getInitialStartTicketLocation();
 }

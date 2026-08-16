@@ -10,7 +10,7 @@ public interface ExtendedSurfaceContext {
     ThreadLocal<Set<ResourceKey<Biome>>> COMPUTED_POSSIBLE_BIOMES = new ThreadLocal<>();
 
     @Nullable
-    Set<ResourceKey<Biome>> mfix$getPossibleBiomes();
+    Set<ResourceKey<Biome>> duty$getPossibleBiomes();
 
-    void mfix$applyPossibleBiomes();
+    void duty$applyPossibleBiomes();
 }

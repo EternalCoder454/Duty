@@ -22,7 +22,7 @@ public class IngredientItemStacksSoftReference extends SoftReference<ItemStack[]
         while ((ref = QUEUE.poll()) != null) {
             if (ref instanceof IngredientItemStacksSoftReference ingRef && (Object)ingRef.ingredient instanceof ExtendedIngredient extIng) {
                 // Null out the reference to the SoftReference object, to allow the SoftReference itself to be garbage collected.
-                extIng.mfix$clearReference();
+                extIng.duty$clearReference();
             }
         }
     }

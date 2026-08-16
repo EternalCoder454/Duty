@@ -42,13 +42,13 @@ public class FilePackResourcesMixin {
                 if (index == null) {
                     // Ensure the ZipFile is open first; if it fails, getOrCreateZipFile returns null.
                     var access = ((SharedZipFileAccessAccessor)this.zipFileAccess);
-                    if (access.mfix$getOrCreateZipFile() == null) {
+                    if (access.duty$getOrCreateZipFile() == null) {
                         return null;
                     }
                     try {
-                        mf$packIndex = index = new ZipPackIndex(access.mfix$getFile().toPath());
+                        mf$packIndex = index = new ZipPackIndex(access.duty$getFile().toPath());
                     } catch (IOException e) {
-                        ModernFix.LOGGER.error("Failed to build zip index for {}", access.mfix$getFile(), e);
+                        ModernFix.LOGGER.error("Failed to build zip index for {}", access.duty$getFile(), e);
                     }
                 }
             }
@@ -75,7 +75,7 @@ public class FilePackResourcesMixin {
     @Inject(method = "listResources", at = @At("HEAD"), cancellable = true)
     private void mf$listResources(PackType packType, String namespace, String path,
                                    PackResources.ResourceOutput resourceOutput, CallbackInfo ci) {
-        ZipFile zf = ((SharedZipFileAccessAccessor)this.zipFileAccess).mfix$getOrCreateZipFile();
+        ZipFile zf = ((SharedZipFileAccessAccessor)this.zipFileAccess).duty$getOrCreateZipFile();
         ZipPackIndex index = mf$getOrCreateIndex();
         if (index != null && zf != null) {
             index.listResources(packType, namespace, path, zf, resourceOutput);

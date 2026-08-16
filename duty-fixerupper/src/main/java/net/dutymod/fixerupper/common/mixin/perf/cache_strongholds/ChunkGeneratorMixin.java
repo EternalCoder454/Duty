@@ -48,17 +48,17 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
     @Final
     private BiomeSource biomeSource;
 
-    private Path mfix$dimensionPath;
-    private MinecraftServer mfix$server;
+    private Path duty$dimensionPath;
+    private MinecraftServer duty$server;
 
-    private SoftReference<Map<String, List<ChunkPos>>> mfix$cachedPositions = new SoftReference<>(null);
+    private SoftReference<Map<String, List<ChunkPos>>> duty$cachedPositions = new SoftReference<>(null);
 
     private static final String CACHE_FILENAME = "mfix_stronghold_cache_v2.nbt";
 
     @Override
-    public void mfix$setStrongholdCachePath(Path cachePath, MinecraftServer server) {
-        this.mfix$dimensionPath = cachePath;
-        this.mfix$server = server;
+    public void duty$setStrongholdCachePath(Path cachePath, MinecraftServer server) {
+        this.duty$dimensionPath = cachePath;
+        this.duty$server = server;
     }
 
     @WrapMethod(method = "generateRingPositions")
@@ -66,27 +66,27 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
                                                                            ConcentricRingsStructurePlacement placement,
                                                                            Operation<CompletableFuture<List<ChunkPos>>> original,
                                                                            @Share("threadPool") LocalRef<TracingExecutor> threadPoolRef) {
-        if (this.mfix$server == null || this.mfix$dimensionPath == null) {
+        if (this.duty$server == null || this.duty$dimensionPath == null) {
             return original.call(structureSet, placement);
         }
 
-        String cacheKey = mfix$makeCacheKey(placement);
+        String cacheKey = duty$makeCacheKey(placement);
 
         // Try reading from cache
-        List<ChunkPos> cached = mfix$readFromCache(cacheKey);
+        List<ChunkPos> cached = duty$readFromCache(cacheKey);
         if (cached != null) {
             ModernFix.LOGGER.debug("Using cached stronghold positions for {}", cacheKey);
             return CompletableFuture.completedFuture(List.copyOf(cached));
         }
 
-        var server = this.mfix$server;
+        var server = this.duty$server;
         ExecutorService strongholdPool = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime().availableProcessors() - 2));
         threadPoolRef.set(new TracingExecutor(strongholdPool));
         try {
             return original.call(structureSet, placement).thenApplyAsync(positions -> {
                 // Skip write if server exited before we finished
                 if (server.isRunning()) {
-                    mfix$writeToCache(cacheKey, positions);
+                    duty$writeToCache(cacheKey, positions);
                 }
                 return positions;
             }, Util.ioPool());
@@ -106,8 +106,8 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
         return threadPoolRef.get();
     }
 
-    private String mfix$makeCacheKey(ConcentricRingsStructurePlacement placement) {
-        RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, this.mfix$server.registryAccess());
+    private String duty$makeCacheKey(ConcentricRingsStructurePlacement placement) {
+        RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, this.duty$server.registryAccess());
         String placementKey = ConcentricRingsStructurePlacement.CODEC.codec().encodeStart(ops, placement)
                 .result().map(Tag::toString).orElse(null);
         String biomeSourceKey = BiomeSource.CODEC.encodeStart(ops, this.biomeSource)
@@ -127,30 +127,30 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
         }
     }
 
-    private synchronized List<ChunkPos> mfix$readFromCache(String cacheKey) {
-        Map<String, List<ChunkPos>> cache = mfix$getOrLoadCache();
+    private synchronized List<ChunkPos> duty$readFromCache(String cacheKey) {
+        Map<String, List<ChunkPos>> cache = duty$getOrLoadCache();
         return cache.get(cacheKey);
     }
 
-    private synchronized void mfix$writeToCache(String cacheKey, List<ChunkPos> positions) {
-        Map<String, List<ChunkPos>> cache = mfix$getOrLoadCache();
+    private synchronized void duty$writeToCache(String cacheKey, List<ChunkPos> positions) {
+        Map<String, List<ChunkPos>> cache = duty$getOrLoadCache();
         cache.put(cacheKey, List.copyOf(positions));
-        mfix$cachedPositions = new SoftReference<>(cache);
-        mfix$saveCacheFile(cache);
+        duty$cachedPositions = new SoftReference<>(cache);
+        duty$saveCacheFile(cache);
     }
 
-    private Map<String, List<ChunkPos>> mfix$getOrLoadCache() {
-        Map<String, List<ChunkPos>> cache = mfix$cachedPositions.get();
+    private Map<String, List<ChunkPos>> duty$getOrLoadCache() {
+        Map<String, List<ChunkPos>> cache = duty$cachedPositions.get();
         if (cache != null) {
             return cache;
         }
-        cache = mfix$loadCacheFile();
-        mfix$cachedPositions = new SoftReference<>(cache);
+        cache = duty$loadCacheFile();
+        duty$cachedPositions = new SoftReference<>(cache);
         return cache;
     }
 
-    private Map<String, List<ChunkPos>> mfix$loadCacheFile() {
-        Path file = mfix$dimensionPath.resolve(CACHE_FILENAME);
+    private Map<String, List<ChunkPos>> duty$loadCacheFile() {
+        Path file = duty$dimensionPath.resolve(CACHE_FILENAME);
         if (!Files.exists(file)) {
             return new HashMap<>();
         }
@@ -175,7 +175,7 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
         }
     }
 
-    private void mfix$saveCacheFile(Map<String, List<ChunkPos>> cache) {
+    private void duty$saveCacheFile(Map<String, List<ChunkPos>> cache) {
         CompoundTag root = new CompoundTag();
         for (var entry : cache.entrySet()) {
             List<ChunkPos> positions = entry.getValue();
@@ -187,7 +187,7 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
             }
             root.putIntArray(entry.getKey(), data);
         }
-        Path file = mfix$dimensionPath.resolve(CACHE_FILENAME);
+        Path file = duty$dimensionPath.resolve(CACHE_FILENAME);
         try {
             NbtIo.writeCompressed(root, file);
         } catch (Exception e) {

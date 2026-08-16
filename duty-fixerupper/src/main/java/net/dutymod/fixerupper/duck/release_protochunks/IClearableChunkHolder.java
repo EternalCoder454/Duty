@@ -9,5 +9,5 @@ public interface IClearableChunkHolder {
      */
     int LOWEST_DROPPABLE_TICKET_LEVEL = ChunkLevel.byStatus(FullChunkStatus.FULL) + 2;
 
-    void mfix$resetProtoChunkFutures();
+    void duty$resetProtoChunkFutures();
 }

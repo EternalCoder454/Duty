@@ -4,6 +4,6 @@ import net.dutymod.server.wire.WireHandler;
 
 public interface IServerLevel {
 
-	WireHandler alternate_current$getWireHandler();
+	WireHandler duty$getWireHandler();
 
 }

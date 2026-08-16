@@ -16,6 +16,6 @@ public class ClientConfigurationPacketListenerImplMixin {
      */
     @Inject(method = "handleConfigurationFinished", at = @At("RETURN"))
     private void resetEncoderCache(CallbackInfo ci) {
-        ((EncoderCacheAccessor)DataComponentsAccessor.mfix$getCache()).mfix$getCache().invalidateAll();
+        ((EncoderCacheAccessor)DataComponentsAccessor.duty$getCache()).duty$getCache().invalidateAll();
     }
 }

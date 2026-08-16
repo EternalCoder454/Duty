@@ -27,42 +27,42 @@ import org.spongepowered.asm.mixin.Unique;
 public abstract class MixinMapRenderState implements IMapRenderState {
 
     @Unique
-    private int immediatelyFast$atlasX;
+    private int duty$atlasX;
 
     @Unique
-    private int immediatelyFast$atlasY;
+    private int duty$atlasY;
 
     @Unique
-    private MapAtlasTexture immediatelyFast$atlasTexture;
+    private MapAtlasTexture duty$atlasTexture;
 
     @Override
-    public int immediatelyFast$getAtlasX() {
-        return this.immediatelyFast$atlasX;
+    public int duty$getAtlasX() {
+        return this.duty$atlasX;
     }
 
     @Override
-    public void immediatelyFast$setAtlasX(final int x) {
-        this.immediatelyFast$atlasX = x;
+    public void duty$setAtlasX(final int x) {
+        this.duty$atlasX = x;
     }
 
     @Override
-    public int immediatelyFast$getAtlasY() {
-        return this.immediatelyFast$atlasY;
+    public int duty$getAtlasY() {
+        return this.duty$atlasY;
     }
 
     @Override
-    public void immediatelyFast$setAtlasY(final int y) {
-        this.immediatelyFast$atlasY = y;
+    public void duty$setAtlasY(final int y) {
+        this.duty$atlasY = y;
     }
 
     @Override
-    public MapAtlasTexture immediatelyFast$getAtlasTexture() {
-        return this.immediatelyFast$atlasTexture;
+    public MapAtlasTexture duty$getAtlasTexture() {
+        return this.duty$atlasTexture;
     }
 
     @Override
-    public void immediatelyFast$setAtlasTexture(final MapAtlasTexture atlasTexture) {
-        this.immediatelyFast$atlasTexture = atlasTexture;
+    public void duty$setAtlasTexture(final MapAtlasTexture atlasTexture) {
+        this.duty$atlasTexture = atlasTexture;
     }
 
 }

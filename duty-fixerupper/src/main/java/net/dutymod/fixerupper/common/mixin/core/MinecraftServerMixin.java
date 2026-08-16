@@ -23,21 +23,21 @@ public class MinecraftServerMixin implements ITimeTrackingServer {
     }
 
     @ModifyExpressionValue(method = "reloadResources", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;thenAcceptAsync(Ljava/util/function/Consumer;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", ordinal = 0))
-    private CompletableFuture<Void> mfix$endReloadTrack(CompletableFuture<Void> original) {
+    private CompletableFuture<Void> duty$endReloadTrack(CompletableFuture<Void> original) {
         return original.thenAcceptAsync(val -> {
             MinecraftServerReloadTracker.ACTIVE_RELOADS--;
         }, (Executor)this);
     }
 
-    private long mfix$lastTickStartTime = -1L;
+    private long duty$lastTickStartTime = -1L;
 
     @Override
-    public long mfix$getLastTickStartTime() {
-        return mfix$lastTickStartTime;
+    public long duty$getLastTickStartTime() {
+        return duty$lastTickStartTime;
     }
 
     @Inject(method = "runServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;processPacketsAndTick(Z)V"))
     private void trackTickTime(CallbackInfo ci) {
-        mfix$lastTickStartTime = Util.getMillis();
+        duty$lastTickStartTime = Util.getMillis();
     }
 }

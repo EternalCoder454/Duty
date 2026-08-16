@@ -46,14 +46,14 @@ public record BlockStateModelMap(Map<BlockState, BlockStateModel> modelMap,
     @Override
     public BlockStateModel get(Object o) {
         if (o instanceof IModelHoldingBlockState modelHolder) {
-            BlockStateModel model = modelHolder.mfix$getModel();
+            BlockStateModel model = modelHolder.duty$getModel();
 
             if(model != null) {
                 return model;
             }
 
             model = modelMap.getOrDefault(o, fallbackModel);
-            modelHolder.mfix$setModel(model);
+            modelHolder.duty$setModel(model);
             return model;
         } else {
             return modelMap.getOrDefault(o, fallbackModel);
@@ -69,7 +69,7 @@ public record BlockStateModelMap(Map<BlockState, BlockStateModel> modelMap,
     @Override
     public @Nullable BlockStateModel put(BlockState blockState, BlockStateModel blockStateModel) {
         var oldModel = modelMap.put(blockState, blockStateModel);
-        ((IModelHoldingBlockState)blockState).mfix$setModel(null);
+        ((IModelHoldingBlockState)blockState).duty$setModel(null);
         return oldModel;
     }
 
@@ -77,7 +77,7 @@ public record BlockStateModelMap(Map<BlockState, BlockStateModel> modelMap,
     public BlockStateModel remove(Object o) {
         var old = modelMap.remove(o);
         if (o instanceof IModelHoldingBlockState holder) {
-            holder.mfix$setModel(null);
+            holder.duty$setModel(null);
         }
         return old;
     }
@@ -110,7 +110,7 @@ public record BlockStateModelMap(Map<BlockState, BlockStateModel> modelMap,
 
     public static void resetCache() {
         for (var state : Block.BLOCK_STATE_REGISTRY) {
-            ((IModelHoldingBlockState) state).mfix$setModel(null);
+            ((IModelHoldingBlockState) state).duty$setModel(null);
         }
     }
 }

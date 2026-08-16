@@ -71,7 +71,7 @@ public class MixinModelManager {
             StandaloneModelLoader.LoadedModels standaloneModels
     ) {
         UnbakedModel generatedItemModel;
-        var generatedItemWrapper = ((ModelDiscoveryAccessor) discovery).mfix$getModelWrappers().get(ItemModelGenerator.GENERATED_ITEM_MODEL_ID);
+        var generatedItemWrapper = ((ModelDiscoveryAccessor) discovery).duty$getModelWrappers().get(ItemModelGenerator.GENERATED_ITEM_MODEL_ID);
         if (generatedItemWrapper != null) {
             generatedItemModel = generatedItemWrapper.wrapped();
         } else {

@@ -12,7 +12,7 @@ public class PalettedContainerMixin<T> implements ExtendedPalettedContainer<T> {
     private volatile PalettedContainer.Data<T> data;
 
     @Override
-    public Palette<T> mfix$getPalette() {
+    public Palette<T> duty$getPalette() {
         return this.data.palette();
     }
 }

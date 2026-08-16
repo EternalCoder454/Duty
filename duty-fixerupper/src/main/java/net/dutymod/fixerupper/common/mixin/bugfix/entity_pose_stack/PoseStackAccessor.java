@@ -9,5 +9,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @ClientOnlyMixin
 public interface PoseStackAccessor {
     @Accessor("lastIndex")
-    int mfix$getLastIndex();
+    int duty$getLastIndex();
 }

@@ -40,9 +40,9 @@ public abstract class ChunkMapMixin implements ISuspendedHolderTrackingChunkMap 
     @Final
     public Long2ObjectLinkedOpenHashMap<ChunkHolder> pendingUnloads;
 
-    private final Long2IntOpenHashMap mfix$protoChunksToDrop = new Long2IntOpenHashMap();
+    private final Long2IntOpenHashMap duty$protoChunksToDrop = new Long2IntOpenHashMap();
 
-    private int mfix$dropTickCounter = 0;
+    private int duty$dropTickCounter = 0;
 
     /**
      * @author embeddedt
@@ -53,9 +53,9 @@ public abstract class ChunkMapMixin implements ISuspendedHolderTrackingChunkMap 
     private void dropProtoChunks(BooleanSupplier hasMoreTime, CallbackInfo ci) {
         int suspended = 0;
         int iterations = 0;
-        mfix$dropTickCounter++;
-        var dropIterator = mfix$protoChunksToDrop.long2IntEntrySet().fastIterator();
-        while (dropIterator.hasNext() && suspended < 50 && iterations < 500 && (hasMoreTime.getAsBoolean() || mfix$protoChunksToDrop.size() > 1000)) {
+        duty$dropTickCounter++;
+        var dropIterator = duty$protoChunksToDrop.long2IntEntrySet().fastIterator();
+        while (dropIterator.hasNext() && suspended < 50 && iterations < 500 && (hasMoreTime.getAsBoolean() || duty$protoChunksToDrop.size() > 1000)) {
             iterations++;
             var entry = dropIterator.next();
             long pos = entry.getLongKey();
@@ -71,11 +71,11 @@ public abstract class ChunkMapMixin implements ISuspendedHolderTrackingChunkMap 
             if (!holder.isReadyForSaving() // saveSync dependencies have not completed or chunk is still being referenced by another chunk for generation
             ) {
                 // Not safe to suspend yet, reset timer
-                entry.setValue(mfix$dropTickCounter);
+                entry.setValue(duty$dropTickCounter);
                 continue;
             }
 
-            if ((mfix$dropTickCounter - entry.getIntValue()) < MFIX$TICKS_TO_WAIT_BEFORE_SUSPENDING) {
+            if ((duty$dropTickCounter - entry.getIntValue()) < MFIX$TICKS_TO_WAIT_BEFORE_SUSPENDING) {
                 // Chunk has not been idle for long enough, wait
                 continue;
             }
@@ -88,19 +88,19 @@ public abstract class ChunkMapMixin implements ISuspendedHolderTrackingChunkMap 
             this.pendingUnloads.put(pos, holder);
             this.lambda$scheduleUnload$0(holder, holder.getSaveSyncFuture(), pos);
 
-            ((IClearableChunkHolder)holder).mfix$resetProtoChunkFutures();
+            ((IClearableChunkHolder)holder).duty$resetProtoChunkFutures();
 
             suspended++;
         }
     }
 
     @Override
-    public void mfix$markForSuspensionCheck(ChunkPos pos) {
-        this.mfix$protoChunksToDrop.put(pos.pack(), this.mfix$dropTickCounter);
+    public void duty$markForSuspensionCheck(ChunkPos pos) {
+        this.duty$protoChunksToDrop.put(pos.pack(), this.duty$dropTickCounter);
     }
 
     @Override
-    public Executor mfix$getMainThreadExecutor() {
+    public Executor duty$getMainThreadExecutor() {
         return this.mainThreadExecutor;
     }
 }

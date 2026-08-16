@@ -45,7 +45,7 @@ public abstract class ChunkMapLoadMixin {
         // of the task sorter. Doing this avoids deadlocking the sorter if a blocking chunk load is attempted
         // during chunk promotion. We still initially compose the future through the sorter's executor to stop promotion
         // from running earlier than it would in vanilla.
-        var mainThreadExecutor = ((ServerChunkCacheAccessor) worldGenContext.level().getChunkSource()).mfix$getMainThreadProcessor();
+        var mainThreadExecutor = ((ServerChunkCacheAccessor) worldGenContext.level().getChunkSource()).duty$getMainThreadProcessor();
         CompletableFuture.runAsync(() -> {}, executor).thenApplyAsync($ -> {
             // running on thread that executes lambda body
             MFIX_SURROGATE_FUTURE.set(surrogate);

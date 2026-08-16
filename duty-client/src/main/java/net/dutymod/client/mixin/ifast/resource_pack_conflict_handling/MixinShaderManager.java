@@ -76,18 +76,18 @@ public abstract class MixinShaderManager {
                 ImmediatelyFast.LOGGER.warn("Resource pack " + resourcePackWhichBreaksFontAtlasResizing.packId() + " is not compatible with font atlas resizing. Temporarily disabling font atlas resizing.");
                 if (ImmediatelyFast.runtimeConfig.font_atlas_resizing) {
                     ImmediatelyFast.runtimeConfig.font_atlas_resizing = false;
-                    this.immediatelyFast$reloadFontStorages();
+                    this.duty$reloadFontStorages();
                 }
             } else if (!ImmediatelyFast.runtimeConfig.font_atlas_resizing) {
                 ImmediatelyFast.LOGGER.info("Re-enabling font atlas resizing because no incompatible resource packs are loaded.");
                 ImmediatelyFast.runtimeConfig.font_atlas_resizing = true;
-                this.immediatelyFast$reloadFontStorages();
+                this.duty$reloadFontStorages();
             }
         }
     }
 
     @Unique
-    private void immediatelyFast$reloadFontStorages() {
+    private void duty$reloadFontStorages() {
         // Force reload the font manager to rebuild the font atlas textures
         Minecraft.getInstance().fontManager.updateOptions(Minecraft.getInstance().options);
     }

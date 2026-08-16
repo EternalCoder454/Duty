@@ -32,12 +32,12 @@ public class ServerLevelMixin implements IServerLevel {
 			value = "TAIL"
 		)
 	)
-	private void alternate_current$parseConfig(MinecraftServer server, Executor executor, LevelStorageSource.LevelStorageAccess storage, ServerLevelData data, ResourceKey<Level> key, LevelStem stem, boolean debug, long seed, List<CustomSpawner> customSpawners, boolean tickTime, CallbackInfo ci) {
+	private void duty$parseConfig(MinecraftServer server, Executor executor, LevelStorageSource.LevelStorageAccess storage, ServerLevelData data, ResourceKey<Level> key, LevelStem stem, boolean debug, long seed, List<CustomSpawner> customSpawners, boolean tickTime, CallbackInfo ci) {
 		this.wireHandler = new WireHandler((ServerLevel)(Object)this, storage);
 	}
 
 	@Override
-	public WireHandler alternate_current$getWireHandler() {
+	public WireHandler duty$getWireHandler() {
 		return wireHandler;
 	}
 }

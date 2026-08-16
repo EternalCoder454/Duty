@@ -34,7 +34,7 @@ public abstract class ChunkHolderMixin extends GenerationChunkHolder implements 
     }
 
     @Override
-    public void mfix$resetProtoChunkFutures() {
+    public void duty$resetProtoChunkFutures() {
         int len = this.futures.length();
         for (int i = 0; i < len; i++) {
             this.futures.set(i, null);
@@ -52,24 +52,24 @@ public abstract class ChunkHolderMixin extends GenerationChunkHolder implements 
 
     @Inject(method = "addSaveDependency", at = @At("RETURN"))
     private void recheckSuspensionAfterNeighbor(CompletableFuture<?> future, CallbackInfo ci) {
-        this.mfix$markAsNeedingProtoChunkDrop();
+        this.duty$markAsNeedingProtoChunkDrop();
     }
 
     @Inject(method = "updateFutures", at = @At("RETURN"))
     private void markForSuspensionOnDemotion(ChunkMap chunkMap, Executor executor, CallbackInfo ci) {
-        this.mfix$markAsNeedingProtoChunkDrop();
+        this.duty$markAsNeedingProtoChunkDrop();
     }
 
-    private void mfix$markAsNeedingProtoChunkDrop() {
+    private void duty$markAsNeedingProtoChunkDrop() {
         if (this.ticketLevel >= LOWEST_DROPPABLE_TICKET_LEVEL
                 && ChunkLevel.isLoaded(this.ticketLevel)) {
             // register for suspension check when chain completes
             var map = ((ISuspendedHolderTrackingChunkMap)this.playerProvider);
             this.saveSync.whenCompleteAsync((r, e) -> {
                 if (this.getLatestChunk() != null) {
-                    map.mfix$markForSuspensionCheck(this.pos);
+                    map.duty$markForSuspensionCheck(this.pos);
                 }
-            }, map.mfix$getMainThreadExecutor());
+            }, map.duty$getMainThreadExecutor());
         }
     }
 }

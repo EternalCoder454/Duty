@@ -5,8 +5,8 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public interface BlockPosStorer {
 
-    void particle_core_tickCachedPos();
-    BlockPos particle_core_getCachedPos();
-    BlockState particle_core_getCachedState();
-    boolean particle_core_getCachedEmpty();
+    void duty$tickCachedPos();
+    BlockPos duty$getCachedPos();
+    BlockState duty$getCachedState();
+    boolean duty$getCachedEmpty();
 }

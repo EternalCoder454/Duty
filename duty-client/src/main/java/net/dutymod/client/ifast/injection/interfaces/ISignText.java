@@ -19,8 +19,8 @@ package net.dutymod.client.ifast.injection.interfaces;
 
 public interface ISignText {
 
-    boolean immediatelyFast$shouldCache();
+    boolean duty$shouldCache();
 
-    void immediatelyFast$setShouldCache(final boolean shouldCache);
+    void duty$setShouldCache(final boolean shouldCache);
 
 }

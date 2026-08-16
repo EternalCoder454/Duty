@@ -23,12 +23,12 @@ public class ClientLoginMixin {
     @Final
     private Connection connection;
     @Unique
-    private Key kreno$secretKey;
+    private Key duty$secretKey;
 
     @Redirect(method = "handleHello", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Crypt;getCipher(ILjava/security/Key;)Ljavax/crypto/Cipher;"))
     private Cipher handleHello$initKey(int opMode, Key key) {
-        if (this.kreno$secretKey == null)
-            this.kreno$secretKey = key;
+        if (this.duty$secretKey == null)
+            this.duty$secretKey = key;
         return null;
     }
 
@@ -36,7 +36,7 @@ public class ClientLoginMixin {
     public ChannelFutureListener initEncryption(Runnable runnable) {
         return PacketSendListener.thenRun(() -> {
             try {
-                ((ClientConnectionEncryptionExtension) this.connection).setupEncryption((SecretKey) kreno$secretKey);
+                ((ClientConnectionEncryptionExtension) this.connection).setupEncryption((SecretKey) duty$secretKey);
             } catch (GeneralSecurityException e) {
                 throw new RuntimeException(e);
             }

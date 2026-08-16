@@ -22,7 +22,7 @@ public class ParticleEngineTypeMixin {
     private final TagKey<ParticleType<?>> tag = TagKey.create(Registries.PARTICLE_TYPE, Identifier.fromNamespaceAndPath("particle_core","excluded_particles"));
 
     @Inject(method = "createParticle", at = @At("HEAD"), cancellable = true)
-    private void particle_core_excludeAndChanceParticles(ParticleOptions parameters, double x, double y, double z, double velocityX, double velocityY, double velocityZ, CallbackInfoReturnable<Particle> cir) {
+    private void duty$excludeAndChanceParticles(ParticleOptions parameters, double x, double y, double z, double velocityX, double velocityY, double velocityZ, CallbackInfoReturnable<Particle> cir) {
         if (PcConfig.INSTANCE.getImpl().getDisableParticles().get()) cir.setReturnValue(null);
         if(BuiltInRegistries.PARTICLE_TYPE.wrapAsHolder(parameters.getType()).is(tag)) cir.setReturnValue(null);
         if(!PcConfig.INSTANCE.getImpl().shouldSpawnParticle(parameters.getType())) cir.setReturnValue(null);

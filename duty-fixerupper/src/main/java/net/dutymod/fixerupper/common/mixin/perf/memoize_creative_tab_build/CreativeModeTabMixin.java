@@ -13,7 +13,7 @@ public abstract class CreativeModeTabMixin {
     @Shadow public abstract CreativeModeTab.Type getType();
 
     @Unique
-    private CreativeModeTab.ItemDisplayParameters mfix$oldParameters;
+    private CreativeModeTab.ItemDisplayParameters duty$oldParameters;
 
     @Unique
     private static boolean MFIX$REBUILT_NON_CATEGORY = false;
@@ -28,7 +28,7 @@ public abstract class CreativeModeTabMixin {
     @WrapMethod(method = "buildContents")
     private synchronized void buildContentsIfChanged(CreativeModeTab.ItemDisplayParameters parameters, Operation<Void> original) {
         synchronized (CreativeModeTab.class) {
-            if (mfix$oldParameters == null || mfix$oldParameters.needsUpdate(parameters.enabledFeatures(), parameters.hasPermissions(), parameters.holders())) {
+            if (duty$oldParameters == null || duty$oldParameters.needsUpdate(parameters.enabledFeatures(), parameters.hasPermissions(), parameters.holders())) {
                 original.call(parameters);
                 if (this.getType() == CreativeModeTab.Type.CATEGORY) {
                     if (MFIX$REBUILT_NON_CATEGORY) {
@@ -37,7 +37,7 @@ public abstract class CreativeModeTabMixin {
                         // in a broken state.
                         for (CreativeModeTab tab : BuiltInRegistries.CREATIVE_MODE_TAB) {
                             if (tab.getType() != CreativeModeTab.Type.CATEGORY) {
-                                ((CreativeModeTabMixin)(Object)tab).mfix$oldParameters = null;
+                                ((CreativeModeTabMixin)(Object)tab).duty$oldParameters = null;
                             }
                         }
                         MFIX$REBUILT_NON_CATEGORY = false;
@@ -46,7 +46,7 @@ public abstract class CreativeModeTabMixin {
                     MFIX$REBUILT_NON_CATEGORY = true;
                 }
             }
-            mfix$oldParameters = parameters;
+            duty$oldParameters = parameters;
         }
     }
 }

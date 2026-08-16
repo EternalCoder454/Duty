@@ -44,9 +44,9 @@ public class ConcentricRingsStructurePlacementMixin {
     @Unique private static final double MFIX_MAX_POSITION_ERROR = MFIX_MAX_ROUNDING_ERROR + MFIX_MAX_BIOME_SNAP_ERROR;
 
     /** Squared chunk-distance below which no ring position can ever land. */
-    @Unique private long mfix$innerRadiusSq;
+    @Unique private long duty$innerRadiusSq;
     /** Squared chunk-distance above which no ring position can ever land. */
-    @Unique private long mfix$outerRadiusSq;
+    @Unique private long duty$outerRadiusSq;
 
     /**
      * Precomputes conservative radial bounds for vanilla's ring placement distance:
@@ -62,25 +62,25 @@ public class ConcentricRingsStructurePlacementMixin {
         method = "<init>(Lnet/minecraft/core/Vec3i;Lnet/minecraft/world/level/levelgen/structure/placement/StructurePlacement$FrequencyReductionMethod;FILjava/util/Optional;IIILnet/minecraft/core/HolderSet;)V",
         at = @At("RETURN")
     )
-    private void mfix$computeRadiusBounds(CallbackInfo ci) {
+    private void duty$computeRadiusBounds(CallbackInfo ci) {
         double maxNoise = this.distance * 1.25; // (nextDouble() - 0.5) * (distance * 2.5)
 
         // min(dist): 4*i + i*0*6 - maxNoise
         double minDist = 4.0 * this.distance - maxNoise;
         double safeInnerRadius = minDist - MFIX_MAX_POSITION_ERROR;
-        this.mfix$innerRadiusSq = (long)Math.max(0.0, Math.floor(safeInnerRadius * safeInnerRadius));
+        this.duty$innerRadiusSq = (long)Math.max(0.0, Math.floor(safeInnerRadius * safeInnerRadius));
 
         if (this.spread == 0) {
             // Vanilla behavior becomes non-finite here (angle += 2π / 0), so keep only inner rejection.
-            this.mfix$outerRadiusSq = Long.MAX_VALUE;
+            this.duty$outerRadiusSq = Long.MAX_VALUE;
             return;
         }
 
-        int maxCircle = this.mfix$computeMaxCircleIndex();
+        int maxCircle = this.duty$computeMaxCircleIndex();
         // max(dist): 4*i + i*maxCircle*6 + maxNoise
         double maxDist = 4.0 * this.distance + (double)this.distance * maxCircle * 6.0 + maxNoise;
         double safeOuterRadius = maxDist + MFIX_MAX_POSITION_ERROR;
-        this.mfix$outerRadiusSq = (long)Math.ceil(safeOuterRadius * safeOuterRadius);
+        this.duty$outerRadiusSq = (long)Math.ceil(safeOuterRadius * safeOuterRadius);
     }
 
     /**
@@ -91,7 +91,7 @@ public class ConcentricRingsStructurePlacementMixin {
      * but only tracks deterministic loop state (no RNG).
      */
     @Unique
-    private int mfix$computeMaxCircleIndex() {
+    private int duty$computeMaxCircleIndex() {
         int ringSpread = this.spread;
         int total = 0;
         int circle = 0;
@@ -113,10 +113,10 @@ public class ConcentricRingsStructurePlacementMixin {
      * avoid blocking on the slow noise computations within the spawn region around (0, 0).
      */
     @Inject(method = "isPlacementChunk", at = @At("HEAD"), cancellable = true)
-    private void mfix$earlyRejectByRadius(ChunkGeneratorStructureState structureState, int x, int z,
+    private void duty$earlyRejectByRadius(ChunkGeneratorStructureState structureState, int x, int z,
                                           CallbackInfoReturnable<Boolean> cir) {
         long distSq = (long)x * x + (long)z * z;
-        if (distSq < this.mfix$innerRadiusSq || distSq > this.mfix$outerRadiusSq) {
+        if (distSq < this.duty$innerRadiusSq || distSq > this.duty$outerRadiusSq) {
             cir.setReturnValue(false);
         }
     }

@@ -19,7 +19,7 @@ public class CapabilityHooksMixin {
     private static void deduplicateCaps(CallbackInfo ci, @Local(ordinal = 0) RegisterCapabilitiesEvent event) {
         if(event instanceof ITrackingCapEvent) {
             //var stopwatch = Stopwatch.createStarted();
-            for(BaseCapability<?, ?> cap : ((ITrackingCapEvent)event).mfix$getTrackedCaps()) {
+            for(BaseCapability<?, ?> cap : ((ITrackingCapEvent)event).duty$getTrackedCaps()) {
                 CapProviderGetter.deduplicateCap(cap);
             }
             //stopwatch.stop();

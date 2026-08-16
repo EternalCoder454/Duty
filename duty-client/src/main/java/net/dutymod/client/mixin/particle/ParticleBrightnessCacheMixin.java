@@ -29,14 +29,14 @@ public class ParticleBrightnessCacheMixin implements CachedLightPreparer {
     @Shadow @Final protected ClientLevel level;
 
     @Unique
-    private int particle_core_cachedLight = -1;
+    private int duty$cachedLight = -1;
 
     @WrapOperation(method = "getLightCoords", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;getLightCoords(Lnet/minecraft/world/level/BlockAndLightGetter;Lnet/minecraft/core/BlockPos;)I"), require = 0)
-    private int particle_core_getCachedBrightness(BlockAndLightGetter world, BlockPos pos, Operation<Integer> original) {
-        if (particle_core_cachedLight == -1) {
-            particle_core_cachedLight = LevelRenderer.getLightCoords(world, pos);
+    private int duty$getCachedBrightness(BlockAndLightGetter world, BlockPos pos, Operation<Integer> original) {
+        if (duty$cachedLight == -1) {
+            duty$cachedLight = LevelRenderer.getLightCoords(world, pos);
         }
-        return particle_core_cachedLight;
+        return duty$cachedLight;
     }
 
     /**
@@ -54,11 +54,11 @@ public class ParticleBrightnessCacheMixin implements CachedLightPreparer {
      * which is why {@code putIfAbsent}'s return value is preferred over the local.
      */
     @Override
-    public void particle_core_tickLightUpdate() {
-        BlockPos blockPos = ((BlockPosStorer) this).particle_core_getCachedPos();
-        BlockState state = ((BlockPosStorer) this).particle_core_getCachedState();
+    public void duty$tickLightUpdate() {
+        BlockPos blockPos = ((BlockPosStorer) this).duty$getCachedPos();
+        BlockState state = ((BlockPosStorer) this).duty$getCachedState();
         ConcurrentHashMap<BlockPos, Integer> cache =
-                ((CachedLightProvider) Minecraft.getInstance().particleEngine).particle_core_getCache();
+                ((CachedLightProvider) Minecraft.getInstance().particleEngine).duty$getCache();
 
         Integer cached = cache.get(blockPos);
         if (cached == null) {
@@ -66,7 +66,7 @@ public class ParticleBrightnessCacheMixin implements CachedLightPreparer {
             Integer existing = cache.putIfAbsent(blockPos, computed);
             cached = existing != null ? existing : computed;
         }
-        particle_core_cachedLight = cached;
+        duty$cachedLight = cached;
     }
 
     @Unique

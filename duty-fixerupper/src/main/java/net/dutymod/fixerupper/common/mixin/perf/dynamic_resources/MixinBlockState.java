@@ -11,16 +11,16 @@ import java.lang.ref.SoftReference;
 @Mixin(BlockBehaviour.BlockStateBase.class)
 @ClientOnlyMixin
 public class MixinBlockState implements IModelHoldingBlockState {
-    private volatile SoftReference<BlockStateModel> mfix$model;
+    private volatile SoftReference<BlockStateModel> duty$model;
 
     @Override
-    public BlockStateModel mfix$getModel() {
-        var ref = mfix$model;
+    public BlockStateModel duty$getModel() {
+        var ref = duty$model;
         return ref != null ? ref.get() : null;
     }
 
     @Override
-    public void mfix$setModel(BlockStateModel model) {
-        mfix$model = model != null ? new SoftReference<>(model) : null;
+    public void duty$setModel(BlockStateModel model) {
+        duty$model = model != null ? new SoftReference<>(model) : null;
     }
 }

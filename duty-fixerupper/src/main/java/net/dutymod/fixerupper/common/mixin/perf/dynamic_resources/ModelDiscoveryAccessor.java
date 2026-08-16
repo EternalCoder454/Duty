@@ -11,5 +11,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @ClientOnlyMixin
 public interface ModelDiscoveryAccessor {
     @Accessor("modelWrappers")
-    Object2ObjectMap<Identifier, ModelDiscovery.ModelWrapper> mfix$getModelWrappers();
+    Object2ObjectMap<Identifier, ModelDiscovery.ModelWrapper> duty$getModelWrappers();
 }

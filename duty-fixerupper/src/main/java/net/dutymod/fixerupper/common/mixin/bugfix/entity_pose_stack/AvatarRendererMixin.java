@@ -16,11 +16,11 @@ public class AvatarRendererMixin {
     @Redirect(method = "submit(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V", at = @At(value = "INVOKE", target = "Lnet/neoforged/bus/api/IEventBus;post(Lnet/neoforged/bus/api/Event;)Lnet/neoforged/bus/api/Event;", ordinal = 0))
     private Event fireCheckingPoseStack(IEventBus instance, Event event) {
         PoseStack stack = ((RenderPlayerEvent)event).getPoseStack();
-        int size = ((PoseStackAccessor)stack).mfix$getLastIndex();
+        int size = ((PoseStackAccessor)stack).duty$getLastIndex();
         instance.post(event);
         if (((RenderPlayerEvent.Pre)event).isCanceled()) {
             // Pop the stack if someone pushed it in the event
-            while (((PoseStackAccessor)stack).mfix$getLastIndex() > size) {
+            while (((PoseStackAccessor)stack).duty$getLastIndex() > size) {
                 stack.popPose();
             }
         }

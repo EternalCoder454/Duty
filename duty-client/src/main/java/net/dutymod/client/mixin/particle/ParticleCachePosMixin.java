@@ -43,7 +43,7 @@ public class ParticleCachePosMixin implements BlockPosStorer {
      * before: the particle staying in one block does not mean the block is still there.
      */
     @Override
-    public void particle_core_tickCachedPos() {
+    public void duty$tickCachedPos() {
         int blockX = Mth.floor(this.x);
         int blockY = Mth.floor(this.y);
         int blockZ = Mth.floor(this.z);
@@ -56,12 +56,12 @@ public class ParticleCachePosMixin implements BlockPosStorer {
     }
 
     @Override
-    public BlockPos particle_core_getCachedPos() {
+    public BlockPos duty$getCachedPos() {
         return cachedPos;
     }
 
     @Override
-    public BlockState particle_core_getCachedState() {
+    public BlockState duty$getCachedState() {
         if (cachedState == null) {
             cachedState = this.level.getBlockState(cachedPos);
         }
@@ -69,9 +69,9 @@ public class ParticleCachePosMixin implements BlockPosStorer {
     }
 
     @Override
-    public boolean particle_core_getCachedEmpty() {
+    public boolean duty$getCachedEmpty() {
         if (isEmpty == TriState.DEFAULT) {
-            isEmpty = TriState.of(particle_core_getCachedState().getCollisionShape(this.level, cachedPos).isEmpty());
+            isEmpty = TriState.of(duty$getCachedState().getCollisionShape(this.level, cachedPos).isEmpty());
         }
         return isEmpty.getAsBoolean();
     }

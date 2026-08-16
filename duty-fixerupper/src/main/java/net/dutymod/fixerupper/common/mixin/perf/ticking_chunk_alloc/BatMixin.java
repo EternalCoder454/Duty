@@ -9,8 +9,8 @@ import java.time.LocalDate;
 
 @Mixin(value = Bat.class, priority = 1200)
 public class BatMixin {
-    private static long mfix$lastQueriedTime = -1L;
-    private static LocalDate mfix$lastQueriedDate = null;
+    private static long duty$lastQueriedTime = -1L;
+    private static LocalDate duty$lastQueriedDate = null;
 
     /**
      * @author embeddedt
@@ -18,10 +18,10 @@ public class BatMixin {
      */
     @Redirect(method = "isHalloween", at = @At(value = "INVOKE", target = "Ljava/time/LocalDate;now()Ljava/time/LocalDate;"), require = 0)
     private static LocalDate useCachedLocalDate() {
-        LocalDate date = mfix$lastQueriedDate;
-        if(date == null || Math.abs(System.currentTimeMillis() - mfix$lastQueriedTime) > 30000) {
-            mfix$lastQueriedDate = date = LocalDate.now();
-            mfix$lastQueriedTime = System.currentTimeMillis();
+        LocalDate date = duty$lastQueriedDate;
+        if(date == null || Math.abs(System.currentTimeMillis() - duty$lastQueriedTime) > 30000) {
+            duty$lastQueriedDate = date = LocalDate.now();
+            duty$lastQueriedTime = System.currentTimeMillis();
         }
         return date;
     }

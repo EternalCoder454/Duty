@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 @ClientOnlyMixin
 public class SkinManagerMixin {
     @Unique
-    private final Cache<MinecraftProfileTexture, String> mfix$hashCache = CacheBuilder.newBuilder()
+    private final Cache<MinecraftProfileTexture, String> duty$hashCache = CacheBuilder.newBuilder()
             .expireAfterAccess(60, TimeUnit.SECONDS)
             .concurrencyLevel(1)
             .build();
@@ -25,12 +25,12 @@ public class SkinManagerMixin {
         at = @At(value = "INVOKE", target = "Lcom/mojang/authlib/minecraft/MinecraftProfileTexture;getHash()Ljava/lang/String;", remap = false))
     private String useCachedHash(MinecraftProfileTexture texture) {
         // avoid lambda allocation for common case
-        String hash = mfix$hashCache.getIfPresent(texture);
+        String hash = duty$hashCache.getIfPresent(texture);
         if(hash != null)
             return hash;
 
         try {
-            return mfix$hashCache.get(texture, texture::getHash);
+            return duty$hashCache.get(texture, texture::getHash);
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }

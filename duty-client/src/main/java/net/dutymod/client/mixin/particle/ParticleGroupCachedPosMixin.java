@@ -13,8 +13,8 @@ import org.spongepowered.asm.mixin.injection.At;
 public class ParticleGroupCachedPosMixin {
 
 	@WrapOperation(method = "tickParticle", at = @At(value = "INVOKE", target = "net/minecraft/client/particle/Particle.tick ()V"))
-    private void particle_core_tickParticlePositions(Particle instance, Operation<Void> original) {
-        ((BlockPosStorer) instance).particle_core_tickCachedPos();
+    private void duty$tickParticlePositions(Particle instance, Operation<Void> original) {
+        ((BlockPosStorer) instance).duty$tickCachedPos();
         original.call(instance);
     }
 }

@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public class LivingEntityMixin {
 
     @WrapWithCondition(method = "tickEffects", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V"))
-    private boolean particle_core_turnOffPotionParticles(Level instance, ParticleOptions parameters, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
+    private boolean duty$turnOffPotionParticles(Level instance, ParticleOptions parameters, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
         if (PcConfig.INSTANCE.shouldDisablePotionParticle(PcConfig.PotionDisableType.NONE)) return true;
         if (PcConfig.INSTANCE.shouldDisablePotionParticle(PcConfig.PotionDisableType.ALL)) return false;
         if ((Object)this instanceof RemotePlayer) {

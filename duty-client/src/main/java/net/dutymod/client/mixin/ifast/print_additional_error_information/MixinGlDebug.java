@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MixinGlDebug {
 
     @Unique
-    private static long immediatelyFast$lastTime;
+    private static long duty$lastTime;
 
     @ModifyVariable(method = "enableDebugCallback", at = @At("HEAD"), index = 1, argsOnly = true)
     private static boolean enableSyncDebug(boolean sync) {
@@ -38,8 +38,8 @@ public abstract class MixinGlDebug {
 
     @Redirect(method = "printDebugLog", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;info(Ljava/lang/String;Ljava/lang/Object;)V"))
     private void appendStackTrace(Logger instance, String message, Object argument) {
-        if (System.currentTimeMillis() - immediatelyFast$lastTime > 1000) {
-            immediatelyFast$lastTime = System.currentTimeMillis();
+        if (System.currentTimeMillis() - duty$lastTime > 1000) {
+            duty$lastTime = System.currentTimeMillis();
             instance.info(message, argument, new Exception());
         } else {
             instance.info(message, argument);

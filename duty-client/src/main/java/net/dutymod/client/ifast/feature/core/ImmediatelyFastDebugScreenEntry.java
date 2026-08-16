@@ -43,7 +43,7 @@ public class ImmediatelyFastDebugScreenEntry implements DebugScreenEntry {
         lines.add("ImmediatelyFast " + ImmediatelyFast.VERSION);
         lines.add("Buffer Pool: " + ByteBufferBuilderPool.getSize() + " buffers (" + MathUtil.formatBytes(ByteBufferBuilderPool.getAllocatedBytes()) + ")");
         if (Minecraft.getInstance().getMapTextureManager() instanceof IMapTextureManager mapTextureManager) {
-            final Collection<MapAtlasTexture> atlasTextures = mapTextureManager.immediatelyFast$getAllMapAtlasTextures();
+            final Collection<MapAtlasTexture> atlasTextures = mapTextureManager.duty$getAllMapAtlasTextures();
             final int totalMapCount = atlasTextures.stream().mapToInt(MapAtlasTexture::getMapCount).sum();
             lines.add("Map Atlas: " + atlasTextures.size() + "x" + MapAtlasTexture.ATLAS_SIZE + "x" + MapAtlasTexture.ATLAS_SIZE + " (" + totalMapCount + " maps)");
         }

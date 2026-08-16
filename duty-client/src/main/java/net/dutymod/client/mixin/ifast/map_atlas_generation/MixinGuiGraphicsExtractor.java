@@ -37,12 +37,12 @@ public abstract class MixinGuiGraphicsExtractor {
 
     @WrapOperation(method = "map", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;innerBlit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lcom/mojang/blaze3d/textures/GpuTextureView;Lcom/mojang/blaze3d/textures/GpuSampler;IIIIFFFFI)V", ordinal = 0))
     private void modifyTextureCoordinates(GuiGraphicsExtractor instance, RenderPipeline pipeline, GpuTextureView textureView, GpuSampler sampler, int x1, int y1, int x2, int y2, float u1, float u2, float v1, float v2, int color, Operation<Void> original, @Local(argsOnly = true) MapRenderState renderState) {
-        final IMapRenderState immediatelyFast$renderState = (IMapRenderState) renderState;
-        if (immediatelyFast$renderState.immediatelyFast$getAtlasTexture() != null && immediatelyFast$renderState.immediatelyFast$getAtlasTexture().getTextureId().equals(renderState.texture)) {
-            u1 = (float) immediatelyFast$renderState.immediatelyFast$getAtlasX() / ATLAS_SIZE;
-            u2 = (float) (immediatelyFast$renderState.immediatelyFast$getAtlasX() + MAP_SIZE) / ATLAS_SIZE;
-            v1 = (float) immediatelyFast$renderState.immediatelyFast$getAtlasY() / ATLAS_SIZE;
-            v2 = (float) (immediatelyFast$renderState.immediatelyFast$getAtlasY() + MAP_SIZE) / ATLAS_SIZE;
+        final IMapRenderState duty$renderState = (IMapRenderState) renderState;
+        if (duty$renderState.duty$getAtlasTexture() != null && duty$renderState.duty$getAtlasTexture().getTextureId().equals(renderState.texture)) {
+            u1 = (float) duty$renderState.duty$getAtlasX() / ATLAS_SIZE;
+            u2 = (float) (duty$renderState.duty$getAtlasX() + MAP_SIZE) / ATLAS_SIZE;
+            v1 = (float) duty$renderState.duty$getAtlasY() / ATLAS_SIZE;
+            v2 = (float) (duty$renderState.duty$getAtlasY() + MAP_SIZE) / ATLAS_SIZE;
         }
         original.call(instance, pipeline, textureView, sampler, x1, y1, x2, y2, u1, u2, v1, v2, color);
     }

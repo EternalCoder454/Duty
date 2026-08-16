@@ -13,5 +13,5 @@ import java.util.Map;
 @ClientOnlyMixin
 public interface ModelManagerAccessor {
     @Accessor("bakedItemStackModels")
-    Map<Identifier, ItemModel> mfix$getBakedItemModels();
+    Map<Identifier, ItemModel> duty$getBakedItemModels();
 }

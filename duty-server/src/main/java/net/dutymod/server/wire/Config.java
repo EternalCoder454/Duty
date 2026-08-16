@@ -21,7 +21,7 @@ public interface Config {
 		if (level.dimension() == Level.OVERWORLD) {
 			return new Primary(storage);
 		} else {
-			return new Derived(((IServerLevel) level.getServer().overworld()).alternate_current$getWireHandler().getConfig());
+			return new Derived(((IServerLevel) level.getServer().overworld()).duty$getWireHandler().getConfig());
 		}
 	}
 

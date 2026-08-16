@@ -20,23 +20,23 @@ import java.util.function.Supplier;
 @ClientOnlyMixin
 public class SessionSearchTreesMixin {
     @Shadow private CompletableFuture<SearchTree<RecipeCollection>> recipeSearch;
-    private Supplier<SearchTree<RecipeCollection>> mfix$deferredSearchTreeSupplier;
+    private Supplier<SearchTree<RecipeCollection>> duty$deferredSearchTreeSupplier;
 
     @ModifyArg(method = { "lambda$updateRecipes$0" }, at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"))
-    private Supplier<SearchTree<RecipeCollection>> mfix$deferProcessing(Supplier<SearchTree<RecipeCollection>> supplier) {
-        this.mfix$deferredSearchTreeSupplier = supplier;
+    private Supplier<SearchTree<RecipeCollection>> duty$deferProcessing(Supplier<SearchTree<RecipeCollection>> supplier) {
+        this.duty$deferredSearchTreeSupplier = supplier;
         return SearchTree::empty;
     }
 
     @WrapMethod(method = "recipes")
-    private SearchTree<RecipeCollection> mfix$processDeferredBuild(Operation<SearchTree<RecipeCollection>> original) {
+    private SearchTree<RecipeCollection> duty$processDeferredBuild(Operation<SearchTree<RecipeCollection>> original) {
         synchronized (this) {
-            if (mfix$deferredSearchTreeSupplier != null) {
+            if (duty$deferredSearchTreeSupplier != null) {
                 Stopwatch watch = Stopwatch.createStarted();
-                this.recipeSearch = CompletableFuture.completedFuture(mfix$deferredSearchTreeSupplier.get());
+                this.recipeSearch = CompletableFuture.completedFuture(duty$deferredSearchTreeSupplier.get());
                 watch.stop();
                 ModernFix.LOGGER.info("Building recipe book search tree took {}", watch);
-                mfix$deferredSearchTreeSupplier = null;
+                duty$deferredSearchTreeSupplier = null;
             }
             return original.call();
         }

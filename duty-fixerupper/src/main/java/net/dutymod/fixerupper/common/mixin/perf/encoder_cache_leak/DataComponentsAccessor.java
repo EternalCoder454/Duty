@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(DataComponents.class)
 public interface DataComponentsAccessor {
     @Accessor("ENCODER_CACHE")
-    static EncoderCache mfix$getCache() {
+    static EncoderCache duty$getCache() {
         throw new AssertionError();
     }
 }

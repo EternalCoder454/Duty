@@ -8,5 +8,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(EncoderCache.class)
 public interface EncoderCacheAccessor {
     @Accessor("cache")
-    LoadingCache<?, ?> mfix$getCache();
+    LoadingCache<?, ?> duty$getCache();
 }

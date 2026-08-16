@@ -165,7 +165,7 @@ public class DynamicModelSystem {
                 UnbakedModel unbaked = inputModels.get(id);
                 if (unbaked != null) {
                     var wrapper = discovery.createAndQueueWrapper(id, unbaked);
-                    ((ModelDiscoveryAccessor)discovery).mfix$getModelWrappers().put(id, wrapper);
+                    ((ModelDiscoveryAccessor)discovery).duty$getModelWrappers().put(id, wrapper);
                 } else {
                     ModernFix.LOGGER.warn("Cannot find the root model for {}", id);
                 }

@@ -27,18 +27,18 @@ import java.util.Map;
 public class ServerFunctionManagerMixin implements IProfilingServerFunctionManager {
     @Shadow @Final private static Identifier TICK_FUNCTION_TAG;
 
-    private final Map<Identifier, Stopwatch> mfix$functionWatches = new Object2ObjectOpenHashMap<>();
+    private final Map<Identifier, Stopwatch> duty$functionWatches = new Object2ObjectOpenHashMap<>();
 
     @Inject(method = "executeTagFunctions", at = @At("HEAD"))
     private void resetWatches(Collection<CommandFunction<CommandSourceStack>> functionObjects, Identifier identifier, CallbackInfo ci) {
-        mfix$functionWatches.values().forEach(Stopwatch::reset);
+        duty$functionWatches.values().forEach(Stopwatch::reset);
     }
 
     @Inject(method = "executeTagFunctions", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/ServerFunctionManager;execute(Lnet/minecraft/commands/functions/CommandFunction;Lnet/minecraft/commands/CommandSourceStack;)V"))
     private void startWatch(Collection<CommandFunction<CommandSourceStack>> functionObjects, Identifier identifier, CallbackInfo ci, @Local(ordinal = 0) CommandFunction<CommandSourceStack> function, @Share("stopwatch") LocalRef<Stopwatch> watchRef) {
         watchRef.set(null);
         if (identifier == TICK_FUNCTION_TAG) {
-            var watch = mfix$functionWatches.computeIfAbsent(function.id(), i -> Stopwatch.createUnstarted());
+            var watch = duty$functionWatches.computeIfAbsent(function.id(), i -> Stopwatch.createUnstarted());
             watch.start();
             watchRef.set(watch);
         }
@@ -54,12 +54,12 @@ public class ServerFunctionManagerMixin implements IProfilingServerFunctionManag
 
     @Inject(method = "executeTagFunctions", at = @At("RETURN"))
     private void pruneUnusedWatches(Collection<CommandFunction<CommandSourceStack>> functionObjects, Identifier identifier, CallbackInfo ci) {
-        mfix$functionWatches.values().removeIf(watch -> watch.elapsed().isZero());
+        duty$functionWatches.values().removeIf(watch -> watch.elapsed().isZero());
     }
 
     @Override
-    public String mfix$getProfilingResults() {
-        var list = new ArrayList<>(mfix$functionWatches.entrySet());
+    public String duty$getProfilingResults() {
+        var list = new ArrayList<>(duty$functionWatches.entrySet());
         list.sort(Comparator.<Map.Entry<Identifier, Stopwatch>, Duration>comparing(e -> e.getValue().elapsed()).reversed());
         StringBuilder sb = new StringBuilder();
         for (var entry : list) {

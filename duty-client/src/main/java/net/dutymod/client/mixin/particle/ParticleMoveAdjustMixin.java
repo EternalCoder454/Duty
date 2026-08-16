@@ -30,8 +30,8 @@ public class ParticleMoveAdjustMixin {
 	@Shadow protected double z;
 
 	@WrapOperation(method = "move(DDD)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;collideBoundingBox(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Lnet/minecraft/world/level/Level;Ljava/util/List;)Lnet/minecraft/world/phys/Vec3;"), require = 0)
-	private Vec3 particle_core_optimizeOpenAirParticleCollisions(@Nullable Entity entity, Vec3 movement, AABB entityBoundingBox, Level world, List<VoxelShape> collisions, Operation<Vec3> original) {
-		if (((BlockPosStorer)this).particle_core_getCachedEmpty()) {
+	private Vec3 duty$optimizeOpenAirParticleCollisions(@Nullable Entity entity, Vec3 movement, AABB entityBoundingBox, Level world, List<VoxelShape> collisions, Operation<Vec3> original) {
+		if (((BlockPosStorer)this).duty$getCachedEmpty()) {
 			AABB movedBox = entityBoundingBox.move(movement);
 			double fY = Mth.floor(y);
 			if (fY <= movedBox.minY) { //y ok

@@ -26,7 +26,7 @@ public class ParticleEngineCachedLightMixin implements CachedLightProvider {
     private volatile ConcurrentHashMap<BlockPos, Integer> cachedLightMap = new ConcurrentHashMap<>(64, 0.75f);
 
     @Override
-    public ConcurrentHashMap<BlockPos, Integer> particle_core_getCache() {
+    public ConcurrentHashMap<BlockPos, Integer> duty$getCache() {
         return cachedLightMap;
     }
 
@@ -42,7 +42,7 @@ public class ParticleEngineCachedLightMixin implements CachedLightProvider {
      * a player standing somewhere without particles is the common case, not the rare one.
      */
     @Inject(method = "tick", at = @At("HEAD"))
-    private void particle_core_clearCache(CallbackInfo ci) {
+    private void duty$clearCache(CallbackInfo ci) {
         int size = cachedLightMap.size();
         if (size == 0) {
             return;

@@ -21,9 +21,9 @@ public class MinecraftServerMixin {
 			value = "HEAD"
 		)
 	)
-	private void alternate_current$save(boolean silent, boolean bl2, boolean bl3, CallbackInfoReturnable<Boolean> cir) {
+	private void duty$save(boolean silent, boolean bl2, boolean bl3, CallbackInfoReturnable<Boolean> cir) {
 		ServerLevel overworld = ((MinecraftServer) (Object) this).overworld();
-		WireHandler wireHandler = ((IServerLevel) overworld).alternate_current$getWireHandler();
+		WireHandler wireHandler = ((IServerLevel) overworld).duty$getWireHandler();
 
 		wireHandler.getConfig().save(silent);
 	}

@@ -29,21 +29,21 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class MixinFont_GlyphVisitor {
 
     @Unique
-    private RenderType immediatelyFast$lastRenderType;
+    private RenderType duty$lastRenderType;
 
     @Unique
-    private VertexConsumer immediatelyFast$lastVertexConsumer;
+    private VertexConsumer duty$lastVertexConsumer;
 
     @SuppressWarnings("UnresolvedMixinReference")
     @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/MultiBufferSource;getBuffer(Lnet/minecraft/client/renderer/rendertype/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;"))
     private VertexConsumer reduceGetBufferCalls(MultiBufferSource instance, RenderType renderType) {
-        if (this.immediatelyFast$lastRenderType == renderType) {
-            return this.immediatelyFast$lastVertexConsumer;
+        if (this.duty$lastRenderType == renderType) {
+            return this.duty$lastVertexConsumer;
         }
 
-        this.immediatelyFast$lastRenderType = renderType;
-        this.immediatelyFast$lastVertexConsumer = instance.getBuffer(renderType);
-        return this.immediatelyFast$lastVertexConsumer;
+        this.duty$lastRenderType = renderType;
+        this.duty$lastVertexConsumer = instance.getBuffer(renderType);
+        return this.duty$lastVertexConsumer;
     }
 
 }

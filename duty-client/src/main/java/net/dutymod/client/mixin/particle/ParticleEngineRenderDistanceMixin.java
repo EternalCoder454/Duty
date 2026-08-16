@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ParticleEngineRenderDistanceMixin {
 
 	@Inject(method = "extract", at = @At("HEAD"))
-	private void particle_core_setupViewDistance(ParticlesRenderState batch, Frustum frustum, Camera camera, float tickProgress, CallbackInfo ci) {
+	private void duty$setupViewDistance(ParticlesRenderState batch, Frustum frustum, Camera camera, float tickProgress, CallbackInfo ci) {
 		PcConfig.INSTANCE.getImpl().setupParticleViewDistance();
 	}
 }

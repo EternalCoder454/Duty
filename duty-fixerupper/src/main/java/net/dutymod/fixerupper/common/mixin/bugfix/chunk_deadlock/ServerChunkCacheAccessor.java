@@ -7,5 +7,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(ServerChunkCache.class)
 public interface ServerChunkCacheAccessor {
     @Accessor("mainThreadProcessor")
-    ServerChunkCache.MainThreadExecutor mfix$getMainThreadProcessor();
+    ServerChunkCache.MainThreadExecutor duty$getMainThreadProcessor();
 }

@@ -23,22 +23,22 @@ public class CompressionConnectionMixin {
     private Channel channel;
 
     @Unique
-    private static boolean kreno$isKryptonOrVanillaDecompressor(Object o) {
+    private static boolean duty$isKryptonOrVanillaDecompressor(Object o) {
         return o instanceof CompressionEncoder || o instanceof MinecraftCompressDecoder;
     }
 
     @Unique
-    private static boolean kreno$isKryptonOrVanillaCompressor(Object o) {
+    private static boolean duty$isKryptonOrVanillaCompressor(Object o) {
         return o instanceof CompressionDecoder || o instanceof MinecraftCompressEncoder;
     }
 
     @Inject(method = "setupCompression", at = @At("HEAD"), cancellable = true)
     public void setCompressionThreshold(int threshold, boolean validateDecompressed, CallbackInfo ci) {
         if (threshold < 0) {
-            if (kreno$isKryptonOrVanillaDecompressor(this.channel.pipeline().get("decompress"))) {
+            if (duty$isKryptonOrVanillaDecompressor(this.channel.pipeline().get("decompress"))) {
                 this.channel.pipeline().remove("decompress");
             }
-            if (kreno$isKryptonOrVanillaCompressor(this.channel.pipeline().get("compress"))) {
+            if (duty$isKryptonOrVanillaCompressor(this.channel.pipeline().get("compress"))) {
                 this.channel.pipeline().remove("compress");
             }
 

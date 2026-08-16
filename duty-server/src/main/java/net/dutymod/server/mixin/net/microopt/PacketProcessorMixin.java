@@ -29,25 +29,25 @@ import java.util.Queue;
 @Mixin(PacketProcessor.class)
 public class PacketProcessorMixin {
     /**
-     * Carries the element polled in {@link #kreno$pollInsteadOfIsEmpty} over to {@link #kreno$reusePolled}.
+     * Carries the element polled in {@link #duty$pollInsteadOfIsEmpty} over to {@link #duty$reusePolled}.
      * PacketProcessor only ever drains the queue from its owning thread, so no synchronization is needed.
      */
     @Unique
     @Nullable
-    private Object kreno$polled;
+    private Object duty$polled;
 
     @Redirect(method = "processQueuedPackets", at = @At(value = "INVOKE", target = "Ljava/util/Queue;isEmpty()Z"))
-    private boolean kreno$pollInsteadOfIsEmpty(Queue<Object> queue) {
+    private boolean duty$pollInsteadOfIsEmpty(Queue<Object> queue) {
         Object polled = queue.poll();
-        this.kreno$polled = polled;
+        this.duty$polled = polled;
         return polled == null;
     }
 
     @Redirect(method = "processQueuedPackets", at = @At(value = "INVOKE", target = "Ljava/util/Queue;poll()Ljava/lang/Object;"))
-    private Object kreno$reusePolled(Queue<Object> queue) {
-        Object polled = this.kreno$polled;
+    private Object duty$reusePolled(Queue<Object> queue) {
+        Object polled = this.duty$polled;
         if (polled != null) {
-            this.kreno$polled = null;
+            this.duty$polled = null;
             return polled;
         }
         return queue.poll();

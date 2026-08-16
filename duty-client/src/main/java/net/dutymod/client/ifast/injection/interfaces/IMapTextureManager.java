@@ -23,10 +23,10 @@ import java.util.Collection;
 
 public interface IMapTextureManager {
 
-    MapAtlasTexture immediatelyFast$getMapAtlasTexture(final int id);
+    MapAtlasTexture duty$getMapAtlasTexture(final int id);
 
-    int immediatelyFast$getAtlasMapping(final int mapId);
+    int duty$getAtlasMapping(final int mapId);
 
-    Collection<MapAtlasTexture> immediatelyFast$getAllMapAtlasTextures();
+    Collection<MapAtlasTexture> duty$getAllMapAtlasTextures();
 
 }

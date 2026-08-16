@@ -11,8 +11,8 @@ import java.util.zip.ZipFile;
 @Mixin(FilePackResources.SharedZipFileAccess.class)
 public interface SharedZipFileAccessAccessor {
     @Invoker("getOrCreateZipFile")
-    ZipFile mfix$getOrCreateZipFile();
+    ZipFile duty$getOrCreateZipFile();
 
     @Accessor("file")
-    File mfix$getFile();
+    File duty$getFile();
 }

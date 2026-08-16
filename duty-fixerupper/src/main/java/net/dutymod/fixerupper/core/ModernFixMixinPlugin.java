@@ -315,10 +315,10 @@ public class ModernFixMixinPlugin implements IMixinConfigPlugin {
             if(needInjection) {
                 ModernFixMixinPlugin.instance.logger.info("Injecting BlockStateBase cache population hook into {} from {}",
                         name, injectorMixinSource.getOrDefault(name, "[unknown mixin]"));
-                // inject this.mfix$generateCache() at method head
+                // inject this.duty$generateCache() at method head
                 InsnList injection = new InsnList();
                 injection.add(new VarInsnNode(Opcodes.ALOAD, 0));
-                injection.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, targetClass.name, "mfix$generateCache", "()V"));
+                injection.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, targetClass.name, "duty$generateCache", "()V"));
                 method.instructions.insert(injection);
             }
         });

@@ -98,7 +98,7 @@ public class ModernFixForge {
                     ctx.enqueueWork(() -> {
                         Minecraft mc = Minecraft.getInstance();
                         if (mc.hasSingleplayerServer()) {
-                            ((IDeferrableIntegratedServer)mc.getSingleplayerServer()).mfix$markClientLoadFinished();
+                            ((IDeferrableIntegratedServer)mc.getSingleplayerServer()).duty$markClientLoadFinished();
                         }
                     });
                 });

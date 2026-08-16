@@ -21,16 +21,16 @@ import net.dutymod.client.ifast.feature.map_atlas_generation.MapAtlasTexture;
 
 public interface IMapRenderState {
 
-    int immediatelyFast$getAtlasX();
+    int duty$getAtlasX();
 
-    void immediatelyFast$setAtlasX(final int x);
+    void duty$setAtlasX(final int x);
 
-    int immediatelyFast$getAtlasY();
+    int duty$getAtlasY();
 
-    void immediatelyFast$setAtlasY(final int y);
+    void duty$setAtlasY(final int y);
 
-    MapAtlasTexture immediatelyFast$getAtlasTexture();
+    MapAtlasTexture duty$getAtlasTexture();
 
-    void immediatelyFast$setAtlasTexture(final MapAtlasTexture atlasTexture);
+    void duty$setAtlasTexture(final MapAtlasTexture atlasTexture);
 
 }

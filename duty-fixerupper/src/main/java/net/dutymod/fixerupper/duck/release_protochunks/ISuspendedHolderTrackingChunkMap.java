@@ -5,7 +5,7 @@ import net.minecraft.world.level.ChunkPos;
 import java.util.concurrent.Executor;
 
 public interface ISuspendedHolderTrackingChunkMap {
-    void mfix$markForSuspensionCheck(ChunkPos pos);
+    void duty$markForSuspensionCheck(ChunkPos pos);
 
-    Executor mfix$getMainThreadExecutor();
+    Executor duty$getMainThreadExecutor();
 }

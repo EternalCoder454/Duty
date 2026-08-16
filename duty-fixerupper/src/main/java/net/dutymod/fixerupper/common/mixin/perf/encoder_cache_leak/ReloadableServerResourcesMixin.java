@@ -21,7 +21,7 @@ public class ReloadableServerResourcesMixin {
     @ModifyReturnValue(method = "loadResources", at = @At("RETURN"))
     private static CompletableFuture<ReloadableServerResources> resetEncoderCache(CompletableFuture<ReloadableServerResources> future) {
         return future.whenComplete((r, t) -> {
-            ((EncoderCacheAccessor)DataComponentsAccessor.mfix$getCache()).mfix$getCache().invalidateAll();
+            ((EncoderCacheAccessor)DataComponentsAccessor.duty$getCache()).duty$getCache().invalidateAll();
         });
     }
 }

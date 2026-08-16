@@ -32,8 +32,8 @@ public abstract class IntegratedServerMixin extends MinecraftServer implements I
     @Shadow
     private boolean paused;
 
-    private int mfix$numTickServerCalls = 0;
-    private final AtomicBoolean mfix$hasPrimaryClientJoined = new AtomicBoolean(false);
+    private int duty$numTickServerCalls = 0;
+    private final AtomicBoolean duty$hasPrimaryClientJoined = new AtomicBoolean(false);
 
     public IntegratedServerMixin(Thread serverThread, LevelStorageSource.LevelStorageAccess storageSource, PackRepository packRepository, WorldStem worldStem, Optional<GameRules> gameRules, Proxy proxy, DataFixer fixerUpper, Services services, LevelLoadListener levelLoadListener, boolean propagatesCrashes) {
         super(serverThread, storageSource, packRepository, worldStem, gameRules, proxy, fixerUpper, services, levelLoadListener, propagatesCrashes);
@@ -46,7 +46,7 @@ public abstract class IntegratedServerMixin extends MinecraftServer implements I
      */
     @WrapOperation(method = "tickServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/Minecraft;isPaused()Z", ordinal = 0))
     private boolean preventTicks(Minecraft instance, Operation<Boolean> original) {
-        return !mfix$hasPrimaryClientJoined.get() || original.call(instance);
+        return !duty$hasPrimaryClientJoined.get() || original.call(instance);
     }
 
     /**
@@ -55,8 +55,8 @@ public abstract class IntegratedServerMixin extends MinecraftServer implements I
      * to increment.
      */
     @Inject(method = "tickServer", at = @At("HEAD"))
-    private void mfix$countTicks(CallbackInfo ci) {
-        this.mfix$numTickServerCalls++;
+    private void duty$countTicks(CallbackInfo ci) {
+        this.duty$numTickServerCalls++;
     }
 
     /**
@@ -68,7 +68,7 @@ public abstract class IntegratedServerMixin extends MinecraftServer implements I
      */
     @WrapWithCondition(method = "tickServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;tickServer(Ljava/util/function/BooleanSupplier;)V", ordinal = 0))
     private boolean preventRunningFullServerTick(MinecraftServer server, BooleanSupplier hasTimeLeft) {
-        if (this.mfix$numTickServerCalls >= 2 && this.paused && !mfix$hasPrimaryClientJoined.get()) {
+        if (this.duty$numTickServerCalls >= 2 && this.paused && !duty$hasPrimaryClientJoined.get()) {
             var conn = this.getConnection();
             if (conn != null) {
                 conn.tick();
@@ -79,7 +79,7 @@ public abstract class IntegratedServerMixin extends MinecraftServer implements I
     }
 
     @Override
-    public void mfix$markClientLoadFinished() {
-        mfix$hasPrimaryClientJoined.set(true);
+    public void duty$markClientLoadFinished() {
+        duty$hasPrimaryClientJoined.set(true);
     }
 }

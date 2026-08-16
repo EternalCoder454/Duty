@@ -37,26 +37,26 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinFontTexture {
 
     @Unique
-    private boolean immediatelyFast$shouldResizeFontAtlas;
+    private boolean duty$shouldResizeFontAtlas;
 
     @Unique
-    private int immediatelyFast$fontAtlasSize;
+    private int duty$fontAtlasSize;
 
     @Inject(method = "<init>", at = @At(value = "CTOR_HEAD", unsafe = true))
     private void cacheConfigState(CallbackInfo ci) {
-        this.immediatelyFast$shouldResizeFontAtlas = ImmediatelyFast.runtimeConfig.font_atlas_resizing;
-        this.immediatelyFast$fontAtlasSize = ImmediatelyFast.config.font_atlas_size;
+        this.duty$shouldResizeFontAtlas = ImmediatelyFast.runtimeConfig.font_atlas_resizing;
+        this.duty$fontAtlasSize = ImmediatelyFast.config.font_atlas_size;
     }
 
     @ModifyConstant(method = "*", constant = @Constant(intValue = 256))
     private int modifyTextureSize(int original) {
-        return this.immediatelyFast$shouldResizeFontAtlas ? this.immediatelyFast$fontAtlasSize : 256;
+        return this.duty$shouldResizeFontAtlas ? this.duty$fontAtlasSize : 256;
     }
 
     @SuppressWarnings("MixinAnnotationTarget")
     @ModifyConstant(method = "*", constant = @Constant(floatValue = 256F))
     private float modifyTextureSize(float original) {
-        return this.immediatelyFast$shouldResizeFontAtlas ? this.immediatelyFast$fontAtlasSize : 256F;
+        return this.duty$shouldResizeFontAtlas ? this.duty$fontAtlasSize : 256F;
     }
 
 }

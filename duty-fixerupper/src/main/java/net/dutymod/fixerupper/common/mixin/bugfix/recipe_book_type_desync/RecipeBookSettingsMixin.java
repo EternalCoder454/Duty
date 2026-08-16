@@ -11,7 +11,7 @@ import java.lang.reflect.Modifier;
 @Mixin(RecipeBookSettings.class)
 @ClientOnlyMixin
 public class RecipeBookSettingsMixin {
-    private static int mfix$maxVanillaOrdinal;
+    private static int duty$maxVanillaOrdinal;
 
     static {
         int ord = 0;
@@ -28,7 +28,7 @@ public class RecipeBookSettingsMixin {
                 }
             }
         }
-        mfix$maxVanillaOrdinal = ord;
+        duty$maxVanillaOrdinal = ord;
     }
     /*
     // require = 0: RecipeBookSettings.read is gone in 26.1.2, replaced by STREAM_CODEC /
@@ -36,7 +36,7 @@ public class RecipeBookSettingsMixin {
     // than deleted so the fix returns if the method ever comes back.
     @Redirect(method = "read(Lnet/minecraft/network/FriendlyByteBuf;)Lnet/minecraft/stats/RecipeBookSettings;", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/FriendlyByteBuf;readBoolean()Z"), require = 0)
     private static boolean useDefaultBooleanIfVanilla(FriendlyByteBuf buf, @Local(ordinal = 0) RecipeBookType type) {
-        if(type.ordinal() >= (mfix$maxVanillaOrdinal + 1)) {
+        if(type.ordinal() >= (duty$maxVanillaOrdinal + 1)) {
             ModernFix.LOGGER.warn("Not reading recipe book data for type '{}' as we are using vanilla connection", type.name());
             return false; // skip actually reading buffer
         }

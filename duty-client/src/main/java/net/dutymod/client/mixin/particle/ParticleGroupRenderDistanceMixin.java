@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class ParticleGroupRenderDistanceMixin {
 
 	@WrapWithCondition(method = "extractRenderState", at = @At(value = "INVOKE", target = "net/minecraft/client/particle/SingleQuadParticle.extract (Lnet/minecraft/client/renderer/state/level/QuadParticleRenderState;Lnet/minecraft/client/Camera;F)V"))
-	private boolean particle_core_buildGeoIfWithinRenderDistance(SingleQuadParticle instance, net.minecraft.client.renderer.state.level.QuadParticleRenderState particleTypeRenderState, Camera camera, float partialTickTime) {
+	private boolean duty$buildGeoIfWithinRenderDistance(SingleQuadParticle instance, net.minecraft.client.renderer.state.level.QuadParticleRenderState particleTypeRenderState, Camera camera, float partialTickTime) {
 		return PcConfig.INSTANCE.shouldRenderParticle(
 				((ParticleAccessor)instance).getX(),
 				((ParticleAccessor)instance).getY(),

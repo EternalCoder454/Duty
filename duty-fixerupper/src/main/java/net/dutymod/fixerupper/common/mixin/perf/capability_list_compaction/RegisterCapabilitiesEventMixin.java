@@ -22,30 +22,30 @@ import java.util.Set;
 
 @Mixin(value = RegisterCapabilitiesEvent.class, remap = false)
 public class RegisterCapabilitiesEventMixin implements ITrackingCapEvent {
-    private final Set<BaseCapability<?, ?>> mfix$trackedCapabilities = new HashSet<>();
+    private final Set<BaseCapability<?, ?>> duty$trackedCapabilities = new HashSet<>();
 
     @Inject(method = "registerBlock", at = @At("HEAD"))
     private void trackBlockCap(BlockCapability<?, ?> capability, IBlockCapabilityProvider<?, ?> provider, Block[] blocks, CallbackInfo ci) {
-        mfix$trackedCapabilities.add(capability);
+        duty$trackedCapabilities.add(capability);
     }
 
     @Inject(method = "registerBlockEntity", at = @At("HEAD"))
     private void trackBlockEntityCap(BlockCapability<?, ?> capability, BlockEntityType<?> type, ICapabilityProvider<?, ?, ?> provider, CallbackInfo ci) {
-        mfix$trackedCapabilities.add(capability);
+        duty$trackedCapabilities.add(capability);
     }
 
     @Inject(method = "registerItem", at = @At("HEAD"))
     private void trackItemCap(ItemCapability<?, ?> capability, ICapabilityProvider<?, ?, ?> provider, ItemLike[] items, CallbackInfo ci) {
-        mfix$trackedCapabilities.add(capability);
+        duty$trackedCapabilities.add(capability);
     }
 
     @Inject(method = "registerEntity", at = @At("HEAD"))
     private void trackEntityCap(EntityCapability<?, ?> capability, EntityType<?> type, ICapabilityProvider<?, ?, ?> provider, CallbackInfo ci) {
-        mfix$trackedCapabilities.add(capability);
+        duty$trackedCapabilities.add(capability);
     }
 
     @Override
-    public Set<BaseCapability<?, ?>> mfix$getTrackedCaps() {
-        return mfix$trackedCapabilities;
+    public Set<BaseCapability<?, ?>> duty$getTrackedCaps() {
+        return duty$trackedCapabilities;
     }
 }

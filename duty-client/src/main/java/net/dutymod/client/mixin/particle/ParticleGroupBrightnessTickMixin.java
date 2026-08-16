@@ -12,8 +12,8 @@ import org.spongepowered.asm.mixin.injection.At;
 public class ParticleGroupBrightnessTickMixin {
 
 	@WrapOperation(method = "tickParticle", at = @At(value = "INVOKE", target = "net/minecraft/client/particle/Particle.tick ()V"))
-	private void particle_core_tickParticleLightUpdates(Particle instance, Operation<Void> original) {
-		((CachedLightPreparer) instance).particle_core_tickLightUpdate();
+	private void duty$tickParticleLightUpdates(Particle instance, Operation<Void> original) {
+		((CachedLightPreparer) instance).duty$tickLightUpdate();
 		original.call(instance);
 	}
 

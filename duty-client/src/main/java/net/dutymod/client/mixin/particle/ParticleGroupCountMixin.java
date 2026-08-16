@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 public class ParticleGroupCountMixin {
 
 	@ModifyConstant(method = "<init>", constant = @Constant(intValue = 16384))
-	private int particle_core_modifyParticleMaxCount(int original) {
+	private int duty$modifyParticleMaxCount(int original) {
 		return PcConfig.INSTANCE.getImpl().getMaxParticlesPerSheet().get();
 	}
 }

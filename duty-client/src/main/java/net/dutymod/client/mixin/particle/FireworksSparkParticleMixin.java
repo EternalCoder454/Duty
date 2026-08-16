@@ -14,8 +14,8 @@ import org.spongepowered.asm.mixin.injection.At;
 public class FireworksSparkParticleMixin {
 
 	@WrapOperation(method = "createParticle", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/ParticleEngine;createParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)Lnet/minecraft/client/particle/Particle;"))
-	private Particle particle_core_handleParticleNullability(ParticleEngine instance, ParticleOptions parameters, double x, double y, double z, double velocityX, double velocityY, double velocityZ, Operation<Particle> original) {
-		Particle particle = ((ParticleCreator)instance).particle_core_createSafe(parameters, x, y, z, velocityX, velocityY, velocityZ);
+	private Particle duty$handleParticleNullability(ParticleEngine instance, ParticleOptions parameters, double x, double y, double z, double velocityX, double velocityY, double velocityZ, Operation<Particle> original) {
+		Particle particle = ((ParticleCreator)instance).duty$createSafe(parameters, x, y, z, velocityX, velocityY, velocityZ);
 		instance.add(particle);
 		return particle;
 	}

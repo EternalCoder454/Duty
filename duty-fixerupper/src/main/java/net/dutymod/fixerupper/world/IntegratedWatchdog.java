@@ -28,7 +28,7 @@ public class IntegratedWatchdog extends Thread {
         MinecraftServer server = this.server.get();
         if(server == null || !server.isRunning())
             return OptionalLong.empty();
-        return OptionalLong.of(((ITimeTrackingServer)server).mfix$getLastTickStartTime());
+        return OptionalLong.of(((ITimeTrackingServer)server).duty$getLastTickStartTime());
     }
 
     public void run() {

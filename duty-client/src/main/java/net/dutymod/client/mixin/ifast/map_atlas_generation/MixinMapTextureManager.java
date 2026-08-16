@@ -39,50 +39,50 @@ import java.util.Collection;
 public abstract class MixinMapTextureManager implements IMapTextureManager {
 
     @Unique
-    private final Int2ObjectMap<MapAtlasTexture> immediatelyFast$mapAtlasTextures = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<MapAtlasTexture> duty$mapAtlasTextures = new Int2ObjectOpenHashMap<>();
 
     @Unique
-    private final Int2IntMap immediatelyFast$mapIdToAtlasMapping = new Int2IntOpenHashMap();
+    private final Int2IntMap duty$mapIdToAtlasMapping = new Int2IntOpenHashMap();
 
     @Inject(method = "resetData", at = @At("RETURN"))
     private void clearMapAtlas(final CallbackInfo ci) {
-        for (MapAtlasTexture texture : this.immediatelyFast$mapAtlasTextures.values()) {
+        for (MapAtlasTexture texture : this.duty$mapAtlasTextures.values()) {
             texture.close();
         }
 
-        this.immediatelyFast$mapAtlasTextures.clear();
-        this.immediatelyFast$mapIdToAtlasMapping.clear();
+        this.duty$mapAtlasTextures.clear();
+        this.duty$mapIdToAtlasMapping.clear();
     }
 
     @Inject(method = "getOrCreateMapInstance", at = @At("HEAD"))
     private void createMapAtlasTexture(MapId mapId, MapItemSavedData data, CallbackInfoReturnable<MapTextureManager.MapInstance> cir) {
-        this.immediatelyFast$mapIdToAtlasMapping.computeIfAbsent(mapId.id(), k -> {
-            for (MapAtlasTexture atlasTexture : this.immediatelyFast$mapAtlasTextures.values()) {
+        this.duty$mapIdToAtlasMapping.computeIfAbsent(mapId.id(), k -> {
+            for (MapAtlasTexture atlasTexture : this.duty$mapAtlasTextures.values()) {
                 final int location = atlasTexture.getNextMapLocation();
                 if (location != -1) {
                     return location;
                 }
             }
 
-            final MapAtlasTexture atlasTexture = new MapAtlasTexture(this.immediatelyFast$mapAtlasTextures.size());
-            this.immediatelyFast$mapAtlasTextures.put(atlasTexture.getId(), atlasTexture);
+            final MapAtlasTexture atlasTexture = new MapAtlasTexture(this.duty$mapAtlasTextures.size());
+            this.duty$mapAtlasTextures.put(atlasTexture.getId(), atlasTexture);
             return atlasTexture.getNextMapLocation();
         });
     }
 
     @Override
-    public MapAtlasTexture immediatelyFast$getMapAtlasTexture(final int id) {
-        return this.immediatelyFast$mapAtlasTextures.get(id);
+    public MapAtlasTexture duty$getMapAtlasTexture(final int id) {
+        return this.duty$mapAtlasTextures.get(id);
     }
 
     @Override
-    public int immediatelyFast$getAtlasMapping(final int mapId) {
-        return this.immediatelyFast$mapIdToAtlasMapping.getOrDefault(mapId, -1);
+    public int duty$getAtlasMapping(final int mapId) {
+        return this.duty$mapIdToAtlasMapping.getOrDefault(mapId, -1);
     }
 
     @Override
-    public Collection<MapAtlasTexture> immediatelyFast$getAllMapAtlasTextures() {
-        return this.immediatelyFast$mapAtlasTextures.values();
+    public Collection<MapAtlasTexture> duty$getAllMapAtlasTextures() {
+        return this.duty$mapAtlasTextures.values();
     }
 
 }
