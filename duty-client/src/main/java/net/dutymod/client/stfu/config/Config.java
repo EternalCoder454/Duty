@@ -37,12 +37,10 @@ public final class Config {
     public final boolean disableWorldAdvice;
 
     // -- rendering --------------------------------------------------------------------------
-    public final boolean fixModelGaps;
     public final boolean nightVisionFlicker;
     public final boolean disableParticles;
     public final boolean animateTextures;
     public final boolean renderWeather;
-    public final boolean combineBars;
 
     // -- misc -------------------------------------------------------------------------------
     public final boolean deleteToTrash;
@@ -67,13 +65,10 @@ public final class Config {
         disableLoadingTerrain = DutyConfig.get(ClientOptions.DISABLE_LOADING_TERRAIN);
         disableWorldAdvice = DutyConfig.get(ClientOptions.DISABLE_WORLD_ADVICE);
 
-        fixModelGaps = DutyConfig.get(ClientOptions.FIX_MODEL_GAPS);
         nightVisionFlicker = DutyConfig.get(ClientOptions.NIGHT_VISION_FLICKER);
         disableParticles = DutyConfig.get(ClientOptions.STFU_DISABLE_PARTICLES);
         animateTextures = DutyConfig.get(ClientOptions.ANIMATE_TEXTURES);
         renderWeather = DutyConfig.get(ClientOptions.RENDER_WEATHER);
-        // The mixin that used this was not ported; see NOTICE. Kept so the field still resolves.
-        combineBars = false;
 
         deleteToTrash = DutyConfig.get(ClientOptions.DELETE_TO_TRASH);
         // Stored as a percentage because the config file is text and whole numbers survive

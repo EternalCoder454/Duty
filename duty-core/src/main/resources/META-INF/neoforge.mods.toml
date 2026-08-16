@@ -13,6 +13,7 @@ license = "MIT"
 modId = "duty_core"
 version = "${mod_version}"
 displayName = "Duty Core"
+logoFile = "icon.png"
 authors = "Duty"
 description = '''
 Shared configuration and mixin gating for the Duty module family. Installed automatically.

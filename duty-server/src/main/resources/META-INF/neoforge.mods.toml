@@ -6,6 +6,7 @@ license = "GNU LGPL 3.0"
 modId = "duty_server"
 version = "${mod_version}"
 displayName = "Duty: Server"
+logoFile = "icon.png"
 authors = "Duty"
 credits = "Derived from BiomeSpy by MoePus (LGPL-3.0)."
 description = '''

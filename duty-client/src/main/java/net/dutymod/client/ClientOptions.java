@@ -76,7 +76,6 @@ public final class ClientOptions {
     public static final String DISABLE_SPLASH = "client.disable_splash";
     public static final String DISABLE_LOADING_TERRAIN = "client.disable_loading_terrain";
     public static final String DISABLE_WORLD_ADVICE = "client.disable_world_advice";
-    public static final String FIX_MODEL_GAPS = "client.fix_model_gaps";
     public static final String NIGHT_VISION_FLICKER = "client.night_vision_flicker";
     public static final String STFU_DISABLE_PARTICLES = "client.stfu_disable_particles";
     public static final String ANIMATE_TEXTURES = "client.animate_textures";
@@ -146,7 +145,10 @@ public final class ClientOptions {
                 "How much command feedback reaches chat. ENABLED, ONLY_PLAYERS or DISABLED.");
         DutyConfig.register(ANNOUNCE_ADVANCEMENTS, true,
                 "Announce advancements in chat.");
-        DutyConfig.register(ADVANCEMENT_TOASTS, true, "Show a toast when an advancement is earned.");
+        DutyConfig.register(ADVANCEMENT_TOASTS, true,
+                "Show a toast when an advancement is earned. Turning this off drops the whole\n"
+                        + "advancement update packet, not just the popup, so the advancement screen\n"
+                        + "stops tracking progress while it is off.");
         DutyConfig.register(RECIPE_TOASTS, false, "Show a toast when a recipe is unlocked.");
         DutyConfig.register(DISABLE_WIDGET_FADE, true, "Remove the fade on widgets.");
         DutyConfig.register(DISABLE_FADE, false, "Remove screen fade transitions.");
@@ -155,8 +157,6 @@ public final class ClientOptions {
                 "Skip the \"Loading terrain\" screen and drop straight into the world.");
         DutyConfig.register(DISABLE_WORLD_ADVICE, true,
                 "Skip the experimental-settings warning when opening a world.");
-        DutyConfig.register(FIX_MODEL_GAPS, true,
-                "Close the hairline gaps between item model layers.");
         DutyConfig.register(NIGHT_VISION_FLICKER, false,
                 "Let night vision flicker as it runs out. Off means it stays steady.");
         DutyConfig.register(STFU_DISABLE_PARTICLES, false,
