@@ -16,7 +16,7 @@ class PlatformHookLoader {
                 e.printStackTrace();
             }
         }
-        System.err.println("ModernFix has failed to load platform hooks. It cannot function, the game will now close");
+        System.err.println("Duty has failed to load platform hooks. It cannot function, the game will now close");
         Runtime.getRuntime().exit(1);
         throw new AssertionError("Somehow couldn't exit");
     }

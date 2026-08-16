@@ -21,7 +21,7 @@ public class IntegratedWatchdog extends Thread {
         this.server = new WeakReference<>(server);
         this.setDaemon(true);
         this.setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandlerWithName(LOGGER));
-        this.setName("ModernFix integrated server watchdog");
+        this.setName("Duty integrated server watchdog");
     }
 
     private OptionalLong getLastTickStart() {

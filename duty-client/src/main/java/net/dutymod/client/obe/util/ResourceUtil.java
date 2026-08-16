@@ -57,14 +57,6 @@ public class ResourceUtil{
         return transformedSpecialModelCache.get(new SpecialModelCacheKey(state, be));
     }
 
-    public static boolean cacheContains(BlockState state){
-        return transformedModelCache.containsKey(state);
-    }
-
-    public static boolean cacheContains(BlockState state, BlockEntity be){
-        return transformedSpecialModelCache.containsKey(new SpecialModelCacheKey(state, be));
-    }
-
     public static void cache(BlockState blockState, BlockStateModel model){
         transformedModelCache.put(blockState, model);
     }

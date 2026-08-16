@@ -18,7 +18,7 @@ public class AsyncLoadingScreen extends Thread implements AutoCloseable {
     private static GLCapabilities caps;
 
     public AsyncLoadingScreen() {
-        this.setName("ModernFix splash thread " + splashThreadNum++);
+        this.setName("Duty splash thread " + splashThreadNum++);
         this.theWindow = GLFW.glfwGetCurrentContext();
         if(caps == null)
             caps = GL.createCapabilities();

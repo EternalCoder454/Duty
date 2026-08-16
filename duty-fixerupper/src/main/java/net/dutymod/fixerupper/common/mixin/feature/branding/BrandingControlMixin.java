@@ -18,6 +18,6 @@ public class BrandingControlMixin {
     private static void addModernFixBranding(CallbackInfo ci, ImmutableList.Builder<String> builder) {
         Optional<? extends ModContainer> mfContainer = ModList.get().getModContainerById("duty_fixerupper");
         if(mfContainer.isPresent())
-            builder.add("ModernFix " + mfContainer.get().getModInfo().getVersion().toString());
+            builder.add("Duty " + mfContainer.get().getModInfo().getVersion().toString());
     }
 }

@@ -23,7 +23,7 @@ import java.util.*;
 public class ModernFixMixinPlugin implements IMixinConfigPlugin {
     private static final String MIXIN_PACKAGE_ROOT = "net.dutymod.fixerupper.mixin.";
 
-    public final Logger logger = LogManager.getLogger("ModernFix");
+    public final Logger logger = LogManager.getLogger("Duty");
     public ModernFixEarlyConfig config = null;
     public static ModernFixMixinPlugin instance;
 
@@ -36,14 +36,14 @@ public class ModernFixMixinPlugin implements IMixinConfigPlugin {
             try {
                 config = ModernFixEarlyConfig.load(new File("./config/duty_fixerupper-mixins.properties"));
             } catch (Exception e) {
-                throw new RuntimeException("Could not load configuration file for ModernFix", e);
+                throw new RuntimeException("Could not load configuration file for Duty", e);
             }
 
-            this.logger.info("Loaded configuration file for ModernFix {}: {} options available, {} override(s) found",
+            this.logger.info("Loaded configuration file for Duty {}: {} options available, {} override(s) found",
                     ModernFixPlatformHooks.INSTANCE.getVersionString(), config.getOptionCount(), config.getOptionOverrideCount());
 
             if(activeFeatureLevel() != FeatureLevel.GA) {
-                this.logger.warn("ModernFix stability level is set to {}. Features at this level may be unstable or cause crashes.",
+                this.logger.warn("Duty stability level is set to {}. Features at this level may be unstable or cause crashes.",
                         activeFeatureLevel());
             }
 
@@ -65,7 +65,7 @@ public class ModernFixMixinPlugin implements IMixinConfigPlugin {
 
 
             if(ModernFixEarlyConfig.OPTIFINE_PRESENT)
-                this.logger.fatal("OptiFine detected. Use of ModernFix with OptiFine is not supported due to its impact on launch time and breakage of Forge features.");
+                this.logger.fatal("OptiFine detected. Use of Duty with OptiFine is not supported due to its impact on launch time and breakage of Forge features.");
 
             try {
                 Class.forName("sun.misc.Unsafe").getDeclaredMethod("defineAnonymousClass", Class.class, byte[].class, Object[].class);

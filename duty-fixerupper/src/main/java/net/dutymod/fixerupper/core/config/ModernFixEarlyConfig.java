@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class ModernFixEarlyConfig {
-    private static final Logger LOGGER = LogManager.getLogger("ModernFixConfig");
+    private static final Logger LOGGER = LogManager.getLogger("DutyConfig");
 
     private final Map<String, Option<?>> options = new HashMap<>();
     private final Multimap<String, Option<?>> optionsByCategory = HashMultimap.create();

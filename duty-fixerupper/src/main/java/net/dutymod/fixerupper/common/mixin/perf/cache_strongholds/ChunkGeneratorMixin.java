@@ -28,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -118,11 +119,9 @@ public class ChunkGeneratorMixin implements IChunkGenerator {
         String data = placementKey + ";biomes=" + biomeSourceKey + ";seed=" + this.concentricRingsSeed;
         try {
             byte[] hash = MessageDigest.getInstance("SHA-256").digest(data.getBytes(StandardCharsets.UTF_8));
-            StringBuilder sb = new StringBuilder(64);
-            for (byte b : hash) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
+            // HexFormat parses no format string and allocates once; String.format in a loop
+            // re-parses "%02x" for all thirty-two bytes.
+            return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
             return null;
         }

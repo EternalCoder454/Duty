@@ -30,9 +30,23 @@ public class ParticleEngineCachedLightMixin implements CachedLightProvider {
         return cachedLightMap;
     }
 
+    /**
+     * Drops last tick's light values.
+     *
+     * <p>The map is replaced rather than cleared because particles tick on worker threads: swapping
+     * the reference hands readers a whole consistent map, where {@code clear()} would empty the one
+     * they are already walking. That part is upstream's design and is kept.
+     *
+     * <p>What is not kept is doing it unconditionally. Replacing an already-empty map allocates a
+     * {@link ConcurrentHashMap} and its backing table twenty times a second to discard nothing, and
+     * a player standing somewhere without particles is the common case, not the rare one.
+     */
     @Inject(method = "tick", at = @At("HEAD"))
     private void particle_core_clearCache(CallbackInfo ci) {
         int size = cachedLightMap.size();
+        if (size == 0) {
+            return;
+        }
         cachedLightMap = new ConcurrentHashMap<>(size, 0.75f);
     }
 }

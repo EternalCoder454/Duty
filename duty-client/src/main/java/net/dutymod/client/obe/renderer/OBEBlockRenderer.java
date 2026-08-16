@@ -56,7 +56,8 @@ public class OBEBlockRenderer {
         SpecialModelProvider customModelProvider = SpecialModelGetter.getSpecialModelProvider(state, group);
         if(ext.renderMode() == RenderMode.TERRAIN || ext.renderMode() == RenderMode.INTERMEDIATE){
             if(customModelProvider != null){
-                if(ResourceUtil.cacheContains(state, be)) return ResourceUtil.getModel(state, be);
+                BlockStateModel cached = ResourceUtil.getModel(state, be);
+                if(cached != null) return cached;
                 Object cacheKey = customModelProvider.getCacheKeyProvider().apply(be);
                 PoseStack poseStack = new PoseStack();
                 
@@ -82,7 +83,8 @@ public class OBEBlockRenderer {
     }
 
     public BlockStateModel getStandingSignModel(BlockState state, RandomSource random, BlockStateModel originalModel){
-        if(ResourceUtil.cacheContains(state)) return ResourceUtil.getModel(state);
+        BlockStateModel cached = ResourceUtil.getModel(state);
+        if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
 
         ModelLayerLocation layerLocation = ModelLayerLocationGetter.getModelLayerLocation(state, "sign");
@@ -96,7 +98,8 @@ public class OBEBlockRenderer {
     }
 
     public BlockStateModel getHangingSignModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
-        if(ResourceUtil.cacheContains(state)) return ResourceUtil.getModel(state);
+        BlockStateModel cached = ResourceUtil.getModel(state);
+        if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
 
         ModelLayerLocation layerLocation = ModelLayerLocationGetter.getModelLayerLocation(state, "hanging_sign");
@@ -108,7 +111,8 @@ public class OBEBlockRenderer {
     }
 
     public BlockStateModel getSkullBlockModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
-        if(ResourceUtil.cacheContains(state)) return ResourceUtil.getModel(state);
+        BlockStateModel cached = ResourceUtil.getModel(state);
+        if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
         
         ModelLayerLocation layerLocation = ModelLayerLocationGetter.getModelLayerLocation(state, "skull");
@@ -119,7 +123,8 @@ public class OBEBlockRenderer {
     }
 
     public BlockStateModel getBedModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
-        if(ResourceUtil.cacheContains(state)) return ResourceUtil.getModel(state);
+        BlockStateModel cached = ResourceUtil.getModel(state);
+        if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
         
         ModelLayerLocation layerLocation = ModelLayerLocationGetter.getModelLayerLocation(state, "bed");
@@ -137,7 +142,8 @@ public class OBEBlockRenderer {
     }
 
     public BlockStateModel getChestModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
-        if(ResourceUtil.cacheContains(state)) return ResourceUtil.getModel(state);
+        BlockStateModel cached = ResourceUtil.getModel(state);
+        if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
         
         ModelLayerLocation layerLocation = ModelLayerLocationGetter.getModelLayerLocation(state, "chest");
@@ -151,7 +157,8 @@ public class OBEBlockRenderer {
     }
 
     public BlockStateModel getBannerModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
-        if(ResourceUtil.cacheContains(state)) return ResourceUtil.getModel(state);
+        BlockStateModel cached = ResourceUtil.getModel(state);
+        if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
         
         ModelLayerLocation layerLocation = ModelLayerLocationGetter.getModelLayerLocation(state, "banner");
@@ -163,7 +170,8 @@ public class OBEBlockRenderer {
     }
 
     public BlockStateModel getCopperGolemStatueModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
-        if(ResourceUtil.cacheContains(state)) return ResourceUtil.getModel(state);
+        BlockStateModel cached = ResourceUtil.getModel(state);
+        if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
         
         ModelLayerLocation layerLocation = ModelLayerLocationGetter.getModelLayerLocation(state, "copper_golem_statue");
@@ -175,7 +183,8 @@ public class OBEBlockRenderer {
     }
 
     public BlockStateModel getShulkerBoxModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
-        if(ResourceUtil.cacheContains(state)) return ResourceUtil.getModel(state);
+        BlockStateModel cached = ResourceUtil.getModel(state);
+        if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
         
         ModelLayerLocation layerLocation = ModelLayerLocationGetter.getModelLayerLocation(state, "shulker_box");
@@ -193,7 +202,8 @@ public class OBEBlockRenderer {
     }
 
     public BlockStateModel getDecoratedPotModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
-        if(ResourceUtil.cacheContains(state)) return ResourceUtil.getModel(state);
+        BlockStateModel cached = ResourceUtil.getModel(state);
+        if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
         
         ModelLayerLocation layerLocation = ModelLayerLocationGetter.getModelLayerLocation(state, "decorated_pot");

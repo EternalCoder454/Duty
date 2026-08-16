@@ -27,7 +27,7 @@ public class ModernFixCommands {
 
                                 return 1;
                             } else {
-                                context.getSource().sendFailure(Component.literal("ModernFix mcfunction profiling is not enabled on this server."));
+                                context.getSource().sendFailure(Component.literal("Duty mcfunction profiling is not enabled on this server."));
                                 return 0;
                             }
                         }))

@@ -33,7 +33,7 @@ public abstract class ReloadableResourceManagerMixin {
         if (ModernFixForge.registryEventsFired && this.type == PackType.CLIENT_RESOURCES
                 && (Object)this == Minecraft.getInstance().getResourceManager()
                 && !Minecraft.getInstance().isSameThread()) {
-            ModernFix.LOGGER.error("A mod is calling registerReloadListener at the wrong time. This will cause random concurrency crashes when ModernFix is not installed. Please report this to them. If you are a modder, refer to https://github.com/embeddedt/ModernFix/wiki/registerReloadListener-called-on-wrong-thread for more information.", new Exception("registerReloadListener called on wrong thread"));
+            ModernFix.LOGGER.error("A mod is calling registerReloadListener at the wrong time. This will cause random concurrency crashes when Duty is not installed. Please report this to them. If you are a modder, refer to https://github.com/embeddedt/ModernFix/wiki/registerReloadListener-called-on-wrong-thread for more information.", new Exception("registerReloadListener called on wrong thread"));
             // Defer the call onto the main client thread. There is a decent chance the mod's listener will be
             // ignored in this case, but it is more predictable than allowing them to randomly crash the game.
             Minecraft.getInstance().schedule(() -> this.registerReloadListener(listener));

@@ -22,11 +22,11 @@ import java.lang.management.ManagementFactory;
 public class ModernFix {
 
     // Directly reference a log4j logger.
-    public static final Logger LOGGER = LogManager.getLogger("ModernFix");
+    public static final Logger LOGGER = LogManager.getLogger("Duty");
 
     public static final String MODID = "duty_fixerupper";
 
-    public static String NAME = "ModernFix";
+    public static String NAME = "Duty";
 
     public static ModernFix INSTANCE;
 
