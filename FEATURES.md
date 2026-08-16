@@ -506,3 +506,39 @@ Two version drifts caught by compiling rather than by reading:
 - `LightCoordsUtil.getLightCoords` does not exist in 26.1.2; it lives on `LevelRenderer` now. Four
   of that mixin's five overwrites still resolve, so those were kept and the moved one dropped --
   retargeting it would mean adding an `@Overwrite` to a class Duty's culling and Iris both patch.
+
+## Storage pass, 2026-08-16
+
+Measured before cutting. Installed footprint went from 2125 KB to 1559 KB, a 27% reduction, and
+`duty-all` from 2046 KB to 1442 KB.
+
+| | Before | After | How |
+|---|---|---|---|
+| `duty-server` | 719 KB | 343 KB | dropped natives for platforms this build cannot run |
+| `duty-fixerupper` | 566 KB | 451 KB | ships one locale instead of nine |
+| `duty-memory` | 163 KB | 125 KB | icon |
+| `duty-client` | 677 KB | 640 KB | icon |
+
+**Natives, 857 KB.** `velocity-native` carries 1141 KB of `.so`/`.dll`/`.dylib` across five
+platforms; only the 284 KB under `windows_x86_64` can ever execute here. The rest is Linux glibc
+and musl, macOS arm64, and Windows arm64. Safe to drop because the library degrades rather than
+fails -- `NativeCodeLoader` catches the load error and falls back to `JavaVelocityCompressor` and
+`JavaVelocityCipher`, both still in the jar. A build stripped for the wrong platform is slower, not
+broken. Override with `-Pduty.nativePlatforms=windows_x86_64,linux_x86_64`.
+
+This also shrinks the JarInJar extraction cache: `velocity-native` was 516 KB of
+`.cache/jij` and is now around 180 KB.
+
+**Icon, 45 KB per module.** It was 1010x1010 RGBA for something the mod list draws at roughly 64
+pixels. Rescaled to 256x256: 52478 bytes to 7234.
+
+**Languages, 115 KB.** FixerUpper's nine locales were 268 KB, the single largest content in that
+jar -- more than all of its classes together. Only `en_us` ships now. This one is a visible
+change rather than a free one: switching language shows raw keys. The translations stay in git and
+`-Pduty.languages=all` brings them back. Note the property is read at configuration time, so it
+needs a `clean` to take effect.
+
+**Looked at and left alone.** `duty-core` is extracted four times into the JarInJar cache, once per
+module, costing about 136 KB. That is the price of every module standing alone, which is a
+deliberate design decision recorded in HANDOFF, so it stays. The 38 MB `.cache/jij` is
+overwhelmingly other mods; Duty's share was 652 KB before this pass.

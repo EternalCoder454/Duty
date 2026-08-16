@@ -96,3 +96,26 @@ tasks.named<ProcessResources>("processResources") {
 tasks.named("sourcesJar") {
     dependsOn(tasks.named("compileJava"))
 }
+
+// FixerUpper carries nine locales, 268 KB of the jar and its single largest content by far --
+// more than every class in the module put together. Duty is a private single-language build, so
+// only en_us is shipped by default.
+//
+// This is a visible change, not a free one: a player switching language sees raw keys like
+// duty.option.category.performance instead of text. Restoring them is one property:
+//   -Pduty.languages=all       or   -Pduty.languages=en_us,de_de,ja_jp
+val shippedLanguages: String = (findProperty("duty.languages") as String? ?: "en_us")
+
+tasks.named<ProcessResources>("processResources") {
+    if (shippedLanguages != "all") {
+        val keep = shippedLanguages.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+        // exclude() rather than deleting sources: the translations stay in git, and a build that
+        // wants them back does not need the files restored.
+        eachFile {
+            if (path.contains("/lang/") && path.endsWith(".json")) {
+                val locale = name.removeSuffix(".json")
+                if (locale !in keep) exclude()
+            }
+        }
+    }
+}
