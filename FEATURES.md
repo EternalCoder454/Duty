@@ -635,3 +635,44 @@ registry-sync problem, and this instance does not hit it.
 Worth revisiting only if a dedicated server is ever set up and starts dropping clients during login
 — at which point the two pieces to take are the login timeout constant and the NBT quota, not the
 mod.
+
+## BetterChunkLoading — rejected on three independent grounds
+
+Reviewed on 2026-08-16 (`someaddons/betterchunkloading`). There is no 26.1 branch; the newest is
+`neo1.21`, so this would be a port rather than a merge. Duty takes nothing from it.
+
+### 1. The APIs it is built on are gone
+
+Checked every target against 26.1.2 before reading further:
+
+| What it needs | State in 26.1.2 |
+| --- | --- |
+| `ChunkTaskPriorityQueueSorter` | class removed |
+| `ChunkHolder.futures`, `scheduleChunkGenerationTask` | removed |
+| `TicketType.create(String, Comparator, long)`, generic `TicketType<T>` | removed -- `TicketType` is now a `record(long timeout, int flags)` |
+
+Those are not incidental. `ServerChunkCacheMixin`'s headline trick nulls a `ChunkHolder.futures`
+slot, schedules a duplicate generation task, restores the future and forces a resort -- all on
+state that no longer exists. The prediction feature allocates a `TicketType` per player, which the
+new record cannot express. This is a rewrite of the mod's foundations, not a port.
+
+### 2. C2ME already owns the whole domain
+
+C2ME 0.4.0-alpha.0.98 is installed and ships 27 nested modules. Its mixin packages include
+`task_scheduling`, `scheduler`, `mid_tick_chunk_tasks`, `MixinChunkHolder`, `MixinServerChunkManager`,
+`MixinThreadedAnvilChunkStorage`, `MixinStorageIoWorker`, `async_serialization`,
+`ordering/player_move`, `fluid_postprocessing` and `ext_render_distance`. Every BetterChunkLoading
+mixin lands inside one of those. The `ordering/player_move` module in particular already reorders
+chunk loading by player movement, which is BetterChunkLoading's prediction feature.
+
+Reaching into `ChunkHolder`'s future slots underneath a mod that has rewritten the scheduler is a
+way to deadlock or to corrupt chunk state, not a way to load chunks faster.
+
+### 3. ServerCore covers what is left
+
+ServerCore 1.5.19 is installed with `features.dynamic.ChunkMapMixin` (dynamic view distance, which
+is what `ChunkMapViewDistanceFixed` and its sibling do), a whole `optimizations.sync_loads.*` family
+preventing synchronous chunk loads, `optimizations.tickets.*`, and `optimizations.misc.PathFinderMixin`
+-- covering `PathRecomputeChunkLoadPrevention`, the two fluid mixins and `PlayerMovementNoUnloaded`.
+
+Nothing here is unique, portable, and safe at the same time.
