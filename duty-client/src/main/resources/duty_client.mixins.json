@@ -6,7 +6,8 @@
   "plugin": "net.dutymod.client.DutyClientMixinPlugin",
   "mixins": [
     "hash.InputKeyMixin",
-    "hash.VertexFormatMixin"
+    "hash.VertexFormatMixin",
+    "text.FontWidthMixin"
   ],
   "client": [
     "cull.BlockEntityRenderDispatcherMixin",

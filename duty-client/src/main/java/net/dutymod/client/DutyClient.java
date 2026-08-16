@@ -66,6 +66,13 @@ public class DutyClient {
                                 (net.minecraft.server.packs.resources.ResourceManagerReloadListener)
                                         manager -> ImmediatelyFast.signTextCache.onResourceManagerReload(manager));
                     }
+                    // Glyph metrics are re-derived on reload, so cached string widths stop being
+                    // true. This event covers all three ways that happens: a resource pack change,
+                    // a language change, and toggling forced unicode.
+                    event.addListener(
+                            net.minecraft.resources.Identifier.fromNamespaceAndPath(MOD_ID, "text_width_cache"),
+                            (net.minecraft.server.packs.resources.ResourceManagerReloadListener)
+                                    manager -> net.dutymod.client.text.TextWidths.cache().clear());
                 });
 
         DutyLog.info("Duty: Client reporting for duty.");

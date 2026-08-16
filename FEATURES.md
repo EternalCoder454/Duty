@@ -322,3 +322,34 @@ an integrated server talking to a client in the same process.
 hovering one item. Duty already ships ImmediatelyFast, which batches text and tooltip *draws*;
 whether layout is still rebuilt per frame on top of that was not verified, and that check is the
 prerequisite for taking any of it.
+
+## Java 25 runtime flags — measured
+
+Duty targets Java 25 but runs under whatever the launcher passes. Two production flags in 25.0.4
+are unset in the test pack and go directly at memory and startup.
+
+**`-XX:+UseCompactObjectHeaders`** shrinks the object header from 12 bytes to 8. Measured on the
+pack's own Temurin 25.0.4 JRE, three million two-int objects:
+
+```
+default headers : 25.2 bytes/object
+compact headers : 16.8 bytes/object      -33%
+```
+
+A real heap is a mix of shapes so the whole-heap figure is smaller, but Minecraft's heap is
+overwhelmingly small objects -- block states, chunk sections, entity data, the tag and component
+maps `duty-memory` already dedupes -- which is the shape this helps most. Verified to run with ZGC
+and `UseStringDeduplication` together on that exact JRE, no warning, clean exit. It was experimental
+in 24 and is `product` in 25.
+
+**`-XX:AOTCache`** (JEP 483, finalised in 25) records class loading and linking in a training run
+and replays it, which is aimed squarely at startup. Not measured here: it needs a training launch of
+the actual pack, and a cache produced from a different mod set is worse than none.
+
+**Worth removing rather than adding:** the instance currently launches with
+`-XX:StartFlightRecording=name=voxy,settings=profile,...,dumponexit=true`. That is the high-overhead
+JFR profile, on every launch, writing to disk. If the Voxy investigation it was for is finished,
+dropping it reclaims a few percent for free -- the cheapest performance change available here.
+
+These are launcher settings rather than mod code, so Duty cannot set them; they are recorded here
+because they outweigh several of the code-level wins above.
