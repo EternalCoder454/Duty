@@ -269,3 +269,56 @@ overwrites. On top of that `lithostitched` patches `SurfaceSystem`, `SurfaceRule
 `NoiseBasedChunkGenerator`, and `NoiseBasedChunkGenerator` is patched by four installed mods
 (lithium, lithostitched, tectonic, greatchasms). Upstream ships its `SurfaceSystemMixin` at
 `priority = 2000`, which is itself a sign of contention. Worldgen-only gain, high blast radius.
+
+## Six mods reviewed 2026-08-16
+
+Assessed for anything worth taking. One yielded code; the rest did not.
+
+| Mod | Licence | Target | Verdict |
+|---|---|---|---|
+| [Lomka](https://github.com/Starlevka/Lomka) | MIT | **26.1 NeoForge** | **two mixins taken**, rest deferred or rejected |
+| [Sodium-Relief](https://github.com/Etoryx/Sodium-Relief) | MIT | 1.21–26.2 Fabric | plausible, unverified — see below |
+| [PulseNet](https://github.com/Pulse-MC/PulseNet) | **unstated** | 1.26.1 Fabric | real idea, wrong shape for this pack |
+| [AudioThrottle](https://github.com/Noslw/AudioThrottle) | unclear | Fabric | idea has merit, claims do not |
+| [GPUBooster](https://github.com/ITsMrToad/GPUBooster) | GPL-3.0 | 1.21.1 Fabric | rejected — fights Sodium |
+| [Opticores](https://github.com/anibalmolina-debug/Opticores) | CC0 | NeoForge | rejected — 3 commits, template README |
+
+**Lomka is the only one that was a real fit**: MIT, actively maintained, and it ships a `26.1-neoforge`
+variant, so no version or loader translation. 47 mixin targets, of which 9 overlap Duty's own
+(`BlockStateBase$Cache`, `CompressionDecoder`, `FriendlyByteBuf`, `BitSetDiscreteVoxelShape`,
+`GameRenderer`, `IdMapper`, `Minecraft`, `PoseStack`, `SoundEngine`) and were left alone.
+
+Taken: `VertexFormat.hashCode` and `InputConstants$Key.hashCode` caching. Both hash only final
+fields of effectively immutable objects, both are consulted constantly as map keys, and both are
+about ten lines. Verified Iris's `MixinVertexFormat` — the only other installed mod on that class --
+touches neither `hashCode` nor the shadowed fields.
+
+Deferred rather than rejected: Lomka's sound, texture-atlas and mipmap work is aimed at exactly the
+memory and startup targets that matter here, but each needs the same per-target conflict check
+against Sodium and Iris before it can be trusted.
+
+Rejected outright from Lomka: `Lightmap.render` and the other whole-method `@Overwrite`s of the
+render pipeline. Iris rewrites lightmap handling for shaders, and an `@Overwrite` there is the
+Lithium-clash pattern.
+
+**GPUBooster** replaces Minecraft's GL layer with DSA and bindless textures. Sodium already owns
+that layer and is installed, its README states RBO is incompatible with shader packs while Iris is
+installed, and it targets 1.21.1 Fabric. It fails the project's first rule.
+
+**Opticores** is three commits with an unedited template README, and its one stated feature --
+async culling -- is what `duty-client` already does via EntityCulling.
+
+**AudioThrottle**'s underlying idea is sound: Minecraft's mixer has a hard channel count and sound
+floods cause stutter. Its headline claim is not: an audio cap does not raise average frame rate 11%,
+because sound mixing does not run on the render thread. If sound flooding becomes a real complaint,
+Lomka's `SoundEngine`/`Channel`/`Listener` allocation work is the better-evidenced starting point.
+
+**PulseNet** batches packet flushes per tick instead of per packet, which is genuinely distinct from
+KryptonReno's compression and encryption work already in `duty-server`. It is also Fabric-only, has
+no stated licence, and targets the syscall cost of flushing to remote clients -- close to nothing on
+an integrated server talking to a client in the same process.
+
+**Sodium-Relief** caches tooltip layouts and text widths, reporting 2429 rebuilds down to 2 while
+hovering one item. Duty already ships ImmediatelyFast, which batches text and tooltip *draws*;
+whether layout is still rebuilt per frame on top of that was not verified, and that check is the
+prerequisite for taking any of it.

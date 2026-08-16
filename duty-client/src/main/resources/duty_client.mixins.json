@@ -4,7 +4,10 @@
   "package": "net.dutymod.client.mixin",
   "compatibilityLevel": "JAVA_25",
   "plugin": "net.dutymod.client.DutyClientMixinPlugin",
-  "mixins": [],
+  "mixins": [
+    "hash.InputKeyMixin",
+    "hash.VertexFormatMixin"
+  ],
   "client": [
     "cull.BlockEntityRenderDispatcherMixin",
     "cull.ClientLevelMixin",
