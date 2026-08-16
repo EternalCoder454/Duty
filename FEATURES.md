@@ -747,3 +747,51 @@ either.
 If logging I/O ever does become a concern, the larger lever is that `debug.log` is on at all: it is
 five times the size of `latest.log`. It stays on for now because it is how Duty's mixin application
 gets verified.
+
+## Cupboard — rejected, it is a library not a feature set
+
+Reviewed on 2026-08-16 (`someaddons/cupboard`, branch `neo26.1` -- the only one of these that is
+current for 26.1). It is the shared dependency the other someaddons mods pull in, and it contains
+nothing Duty wants:
+
+* **Config plumbing** -- `CommonConfiguration`, `ICommonConfig`, `CupboardConfig`, `ConfigLoader`.
+  Duty has `DutyConfig`, which already generates the Cloth screen from registered options. Adopting
+  a second config system to run someone else's mixins is backwards.
+* **Five mixins, all diagnostic** -- `ChunkLoadDebug`, `CommandExceptionLoggingMixin`,
+  `EntityLoadMixin`, `ServerAddEntityMixin`, `ThreadingDetectorMixin`. The last was already
+  rejected earlier in this file: Lithium's equivalent is stricter.
+* **Utility classes with nothing in them.** `MathUtil` is six one-line wrappers around
+  `Math.min`/`Math.max` -- and `limitToMin(int, int)` is written `Math.min(value, min)` where it
+  plainly means `Math.max`, so it returns the wrong answer for every input above the minimum. That
+  is the state of the code being offered as shared infrastructure.
+
+`RegistryLookup` is the only class with a real job, and it exists to paper over Fabric/NeoForge
+registry differences, which Duty does not have because it targets one loader.
+
+## ChunkSending — rejected: this pack has one player
+
+Reviewed on 2026-08-16 (`someaddons/chunksending`, newest branch `neo1.21`, so a port).
+
+The headline is worth understanding because the idea is sound. Building a
+`ClientboundLevelChunkWithLightPacket` serialises the whole chunk -- every block state, the biomes,
+the light data. Vanilla does that once **per player per chunk**. ChunkSending caches the built
+packet on the `LevelChunk` and reuses it for the next player who needs the same chunk.
+
+That is a real win on a busy server. It is worth nothing here, and it costs.
+
+* **One player has ever joined this instance.** Every log, current and archived, contains exactly
+  one `joined the game` name. With a single recipient each chunk is sent once, so the cache is
+  never read: the code builds the packet, stores it, and later clears it. Pure overhead, and the
+  stored packet is a fully serialised chunk retained per recently-sent chunk -- straight against
+  the memory pass.
+* **Light is not invalidated.** The cache clears on `setBlockState`, `setBlockEntity` and
+  `removeBlockEntity`, but the packet also embeds the light data and two `BitSet`s. Light changes
+  that do not come with a block change in that chunk -- propagation from a neighbour, for one --
+  leave a cached packet carrying stale light. ScalableLux is installed and updates light
+  asynchronously, which widens that window rather than narrowing it.
+* **C2ME is in this code path.** Its `notickvd` module `@Overwrite`s `sendChunkToPlayer`, and the
+  chunk-system rewrite owns `ServerAccessibleChunkSending`.
+
+Nothing installed caches the chunk packet server-side, so the feature is genuinely unoccupied --
+it is just not worth occupying for one player. Revisit if a dedicated server with real player
+counts ever exists, and fix the light invalidation before shipping it if so.
