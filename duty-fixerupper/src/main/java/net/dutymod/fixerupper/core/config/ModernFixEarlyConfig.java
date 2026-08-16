@@ -249,7 +249,17 @@ public class ModernFixEarlyConfig {
             // Changes the wire format of identifiers, so both ends must run Duty. Safe in a
             // pack you control on both sides, broken when joining a server without it.
             .put("mixin.perf.compact_identifier_encoding", false)
-            .put("mixin.perf.dynamic_resources", false)
+            // Upstream ships this off because it is the most invasive thing ModernFix does. It is
+            // also the single largest memory and startup win available: models and their block
+            // state definitions are baked on demand instead of all of them at load, which on a
+            // pack this size is hundreds of megabytes of heap and a large slice of the load time.
+            // Duty turns it on -- that trade is the entire point of the module.
+            //
+            // The thing to watch is connected textures (Athena is installed here). Upstream's own
+            // connectedness warning is dead-coded to if(false) in ModernFixClientForge, so that
+            // conflict is stale rather than current, but missing or wrong block textures is the
+            // symptom to look for, and this one line is the revert.
+            .put("mixin.perf.dynamic_resources", true)
             .put("mixin.feature.direct_stack_trace", false)
             .put("mixin.feature.stalled_chunk_load_detection", false)
             .put("mixin.bugfix.restore_old_dragon_movement", false)

@@ -5,9 +5,8 @@ import net.dutymod.client.particle.interfaces.BlockPosStorer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.particle.Particle;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.util.Mth;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -31,9 +30,27 @@ public class ParticleCachePosMixin implements BlockPosStorer {
     @Unique
     private volatile TriState isEmpty = TriState.DEFAULT;
 
+    /**
+     * Runs once per particle per tick.
+     *
+     * <p>Upstream allocates a {@link BlockPos} unconditionally. A particle usually spends many
+     * ticks inside one block -- smoke drifting, flames idling, redstone dust sitting still -- so
+     * most of those allocations produce a position equal to the one already held. Comparing the
+     * three integers first keeps the object when it has not moved, which also avoids a volatile
+     * write and the memory barrier that comes with it.
+     *
+     * <p>The block state and collision flag are still invalidated every tick regardless, exactly as
+     * before: the particle staying in one block does not mean the block is still there.
+     */
     @Override
     public void particle_core_tickCachedPos() {
-        cachedPos = BlockPos.containing(this.x, this.y, this.z);
+        int blockX = Mth.floor(this.x);
+        int blockY = Mth.floor(this.y);
+        int blockZ = Mth.floor(this.z);
+        BlockPos current = cachedPos;
+        if (current.getX() != blockX || current.getY() != blockY || current.getZ() != blockZ) {
+            cachedPos = new BlockPos(blockX, blockY, blockZ);
+        }
         cachedState = null;
         isEmpty = TriState.DEFAULT;
     }
