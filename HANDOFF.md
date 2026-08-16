@@ -33,11 +33,28 @@ Rule 1 is not decorative. Four separate crashes came from breaking it.
 | `duty-fixerupper` | ModernFix, plus Resource-Trimmer's compact identifier encoding | LGPL-3.0 |
 | `duty-server` | BiomeSpy (`/locate` biome + structure search), KryptonReno network pipeline | LGPL-3.0 |
 | `duty-core` | shared config/logging, JarJar-nested into each of the above — **never installed separately** |
+| `duty-all` | nothing of its own; JarJars the four modules into one jar | container |
 | `duty-annotations`, `fixerupper-mixin-ap` | build-time only, never shipped |
 
 `duty-client` contains EntityCulling, whose licence permits use/modify/compile but not
 redistribution. The owner has assessed this, keeps builds private, and accepts responsibility.
 **Do not re-litigate it.** Do flag it if publishing, modpacks or sharing come up.
+
+
+### Two install shapes
+
+Duty builds both, and they are mutually exclusive:
+
+- **The four module jars.** Install any subset; each nests `duty-core` and works alone.
+- **`duty-all.jar`.** Nests all four through JarJar. Carries no classes of its own -- verified,
+  zero `.class` entries -- so it is packaging rather than a fifth implementation.
+
+Never both. The nested modules and the standalone jars are the same mod ids, so the loader
+rejects the duplicate rather than doing anything clever. `tools/deploy.sh` installs the four
+deliberately, and says so at the `MODULES` line.
+
+`duty-core` sits two levels deep in the aggregate (`duty-all` -> module -> core) and JarJar
+resolves it transitively; each nested module was checked to still carry its copy.
 
 ---
 

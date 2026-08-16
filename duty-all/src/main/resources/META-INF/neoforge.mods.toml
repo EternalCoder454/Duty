@@ -1,0 +1,37 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "GNU LGPL 3.0"
+
+[[mods]]
+modId = "duty_all"
+version = "${mod_version}"
+displayName = "Duty"
+logoFile = "icon.png"
+authors = "Duty"
+credits = "See NOTICE.md for the full attribution of every merged upstream."
+description = '''
+Duty does what it needs to do, perform its duty.
+
+All four modules in one jar: Memory, Client, FixerUpper and Server. They are nested
+rather than merged, so each still loads as its own mod with its own settings, and
+installing this is exactly equivalent to installing the four separately.
+
+Install this OR the individual jars, never both -- the nested copies and the standalone
+ones are the same mod ids, and the loader will refuse the duplicate.
+'''
+
+# Nothing depends on this jar; it is a container. The real dependency declarations live in
+# each nested module, which is why there are no mixin configs here either.
+[[dependencies.duty_all]]
+modId = "neoforge"
+type = "required"
+versionRange = "[26.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.duty_all]]
+modId = "minecraft"
+type = "required"
+versionRange = "[26.1.2,26.2)"
+ordering = "NONE"
+side = "BOTH"

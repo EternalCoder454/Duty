@@ -27,6 +27,10 @@ PACK="${DUTY_PACK:-/c/Users/Zachary Smith/AppData/Roaming/PrismLauncher/instance
 
 # Only these ship. duty-core is nested inside each via JarJar and must not be installed
 # separately; duty-annotations and fixerupper-mixin-ap are build-time only.
+# Deliberately the four modules, not duty-all. Duty ships two install shapes: these four
+# jars, or the single duty-all jar that nests them. They carry the same mod ids, so having
+# both present is a duplicate-mod error rather than a double dose of anything. The pack uses
+# the separate jars because that is what it already has installed.
 MODULES=(duty-memory duty-client duty-fixerupper duty-server)
 VERSION="0.1.0"
 
