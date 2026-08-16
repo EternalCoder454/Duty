@@ -596,3 +596,42 @@ crash workaround that hides a real error, not a performance change) and `LegacyR
 which makes `compareAndSet` always report success to drop the CAS retry loop. That removes the
 atomicity of the random source; with C2ME generating chunks in parallel, that is not a trade worth
 taking for a contended-CAS saving.
+
+## Connectivity — rejected, nothing in it is a performance change
+
+Reviewed on 2026-08-16 (`someaddons/connectivity`, branch `neo26.1`, 57 source files, 26 mixins).
+Duty takes nothing from it.
+
+The name suggests a network optimization mod. It is not one. Categorising every injection in the
+mod by what it does:
+
+* **Six `@ModifyConstant` limit raises** — custom payload size, chunk packet size, login timeout
+  ticks, keepalive. These make a heavy pack survive registry sync; they do not make it faster.
+* **Diagnostics** — per-packet-type traffic accounting with commands to dump it, packet hexdumps on
+  decode errors, Gson type handlers that produce better messages for malformed datapack JSON.
+* **Reliability guards** — a longer `ReadTimeoutHandler`, a raised `NbtAccounter` quota, and a
+  redirect that skips a zero-byte chunk section read rather than throwing on a desync.
+
+Not one hot-path change, no caching, no allocation work. Several of the injections make things
+marginally *slower*: `CompressionDecoderMixin` wraps every `decode` call in a HEAD and a RETURN
+inject to toggle a validation flag, and the traffic accounting adds work per packet encoded.
+
+### It also overlaps what Duty already has
+
+Duty's KryptonReno work already covers the frame layer — `Varint21FrameDecoderMixin` and
+`PrependerConnectionMixin` handle the 5-byte length prefix, and `server.permit_oversized_packets`
+relaxes the same decompressed-size bounds check Connectivity's `disablePacketLimits` relaxes. What
+would be genuinely new is the *content* limits: the NBT quota and the per-payload caps. Those are
+complementary rather than duplicative — but they are still reliability, not performance.
+
+### And this pack has never needed it
+
+Checked every log in the instance, current and archived. No `Payload may not be larger than`, no
+`Badly compressed packet`, no NBT quota failure, no network read timeout. The three `timed out`
+lines are Xaero's HTTP version check against its own update server, and the single disconnect is a
+normal quit. The failure class Connectivity exists to prevent is a dedicated-server-with-large-
+registry-sync problem, and this instance does not hit it.
+
+Worth revisiting only if a dedicated server is ever set up and starts dropping clients during login
+— at which point the two pieces to take are the login timeout constant and the NBT quota, not the
+mod.
