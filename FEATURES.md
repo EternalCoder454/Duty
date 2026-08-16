@@ -676,3 +676,74 @@ preventing synchronous chunk loads, `optimizations.tickets.*`, and `optimization
 -- covering `PathRecomputeChunkLoadPrevention`, the two fluid mixins and `PlayerMovementNoUnloaded`.
 
 Nothing here is unique, portable, and safe at the same time.
+
+## RecipeEssentials — one mixin taken, the rest superseded
+
+Reviewed on 2026-08-16 (`someaddons/recipeessentials`, newest branch `neo1.21`, 31 files).
+
+### Rejected: the recipe cache, because Duty already has a better one
+
+Both mods ship a class called `CachedRecipeList`, and they are not the same idea:
+
+* **RecipeEssentials memoizes.** It remembers the input stacks of the last lookup and replays the
+  result when the input looks the same. Its own class carries a `report(...)` method that logs
+  "caching errors" behind a config flag -- the author knew it can return the wrong recipe and
+  shipped a diagnostic for it rather than a fix.
+* **Duty indexes.** The FastSuite work already merged into `duty-fixerupper` builds a static index
+  at recipe load, filing each recipe under the items its most-selective ingredient accepts, with
+  unindexable recipes kept in a small always-checked list. There is no invalidation problem because
+  nothing is remembered between lookups, and it narrows the candidate set for *any* input, not just
+  a repeated one.
+
+A memoization layer on top of an index that already narrows to a handful of candidates buys
+approximately nothing and reintroduces a correctness hazard. The recipe book sorting and hiding
+mixins are UI features, not performance.
+
+### Taken: caching the component prototype's hash
+
+Vanilla's `PatchedDataComponentMap.hashCode()` is `prototype.hashCode() + patch.hashCode() * 31`.
+Confirmed in bytecode. The prototype is the item's default component set: `final`, written exactly
+once in the constructor, and shared by every stack of that item -- so hashing it again on every
+call is pure repetition, and component maps are hashed constantly by anything that puts an
+`ItemStack` in a hash-based collection.
+
+Duty caches the prototype's hash in the constructor and redirects only that half of the expression.
+The value produced is bit-identical to vanilla's; only the time to reach it changes. The patch's
+hash stays live because the patch is mutable.
+
+Two deliberate departures from upstream:
+
+* **No `@Overwrite` of `hashCode`.** A `@Redirect` on the one `DataComponentMap.hashCode()` call
+  leaves vanilla's arithmetic in place, which matters on a class three mods now touch.
+* **The `equals` half is not taken.** Upstream also short-circuits `equals` on the cached hash,
+  which needs a duck-interface cast on the `other` argument. Vanilla does guard that call with an
+  `instanceof PatchedDataComponentMap`, so the cast is safe -- but the check only pays when two
+  *different* prototypes are compared, and `ItemStack` filters on the item before it ever compares
+  components. It would add an int compare to the common case to speed up a case that rarely occurs.
+
+It went into `duty-memory`, which already owns the only other mixin on this class. One owner per
+target class avoids two Duty modules injecting into the same method.
+
+## AsyncLogger — rejected, not a feature Duty can hold
+
+Reviewed on 2026-08-16 (`decce6/AsyncLogger`). It is not a mixin mod. It works by being a
+`TransformationService`, `ModLocator`, `ImmediateWindowProvider` and `LanguageAdapter` that run
+*before* mod loading, then: expanding module reads between the log4j-api and log4j-core modules,
+loading a bundled LMAX Disruptor into the game's classloader, removing its own classes from the
+service layer, and reconfiguring Log4j2 to async loggers.
+
+Duty is a normal `@Mod`. By the time any Duty constructor runs, Log4j is long since configured and
+most of a startup's log lines are already written. Taking this would mean adopting the mod's entire
+launch-time architecture -- classloader surgery and module-system reflection that breaks on
+NeoForge updates -- rather than a feature. Note also that the NeoForge half of its bootstrapper is
+Stonecutter-commented in the checked-out branch, so what is on screen is inert.
+
+And the evidence does not support the need. A full session of this pack produces a 2.4 MB
+`debug.log` and a 511 KB `latest.log`, with archived sessions at 1,200-2,400 lines. That is not a
+logging-bound workload. LMAX Disruptor is not present anywhere in the instance either, so the
+mod-free route -- `-Dlog4j2.contextSelector=...AsyncLoggerContextSelector` -- would not work as-is
+either.
+
+If logging I/O ever does become a concern, the larger lever is that `debug.log` is on at all: it is
+five times the size of `latest.log`. It stays on for now because it is how Duty's mixin application
+gets verified.
