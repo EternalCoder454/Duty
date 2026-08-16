@@ -3,7 +3,10 @@ package net.dutymod.server;
 import net.dutymod.core.DutyLog;
 import net.dutymod.core.screen.DutyConfigScreens;
 import net.dutymod.server.net.NetOptions;
+import net.dutymod.server.save.AsyncWorldSave;
 import net.dutymod.server.wire.RedstoneWire;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 
@@ -26,6 +29,14 @@ public final class DutyServer {
     public DutyServer(ModContainer container) {
         NetOptions.init();
         RedstoneWire.init();
+        AsyncWorldSave.init();
+
+        // Drain outstanding save writes when the server stops. Without this the last autosave can
+        // still be in flight when the process goes away, which is the save most worth keeping.
+        // AsyncWorldSave also registers a JVM shutdown hook, but that only covers the paths that
+        // reach it; this is the one that fires on a normal world exit.
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> AsyncWorldSave.flush());
+
         DutyConfigScreens.register(container);
         DutyLog.info("Duty: Server reporting for duty.");
     }

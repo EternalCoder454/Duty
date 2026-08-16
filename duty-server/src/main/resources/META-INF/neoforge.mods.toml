@@ -36,6 +36,13 @@ config = "duty_server_wire.mixins.json"
 [[mixins]]
 config = "duty_server_worldmath.mixins.json"
 
+# Asynchronous world saving. No plugin: the feature is gated inside the mixins by
+# AsyncWorldSave.enabled(), because the fallback has to stay reachable -- turning it off must
+# still write, just synchronously.
+[[mixins]]
+config = "duty_server_save.mixins.json"
+
+
 
 
 [[dependencies.duty_server]]
