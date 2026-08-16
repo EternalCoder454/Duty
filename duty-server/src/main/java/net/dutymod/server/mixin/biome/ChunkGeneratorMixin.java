@@ -2,6 +2,7 @@ package net.dutymod.server.mixin.biome;
 
 import net.dutymod.server.biome.biome.BiomeEnvelopeSelector;
 import net.dutymod.server.biome.structure.StructureChecker;
+import net.dutymod.server.structure.StructureSearchBudget;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -57,6 +58,13 @@ public abstract class ChunkGeneratorMixin {
                 boolean flag1 = k == -pZ || k == pZ;
 
                 if (!flag && !flag1) continue;
+
+                // The watchdog lives here rather than in vanilla's loop because this loop is the
+                // one that runs: the HEAD cancel above means vanilla's never executes.
+                if (StructureSearchBudget.expired()) {
+                    cir.setReturnValue(null);
+                    return;
+                }
 
                 int regionX = pX + spacing * j;
                 int regionZ = pY + spacing * k;

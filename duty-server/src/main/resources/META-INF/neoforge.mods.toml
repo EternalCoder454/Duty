@@ -42,6 +42,11 @@ config = "duty_server_worldmath.mixins.json"
 [[mixins]]
 config = "duty_server_save.mixins.json"
 
+# Watchdog on structure searches. No plugin: the timeout is read per search from the config, so
+# setting it to 0 has to leave the injections in place and simply never fire them.
+[[mixins]]
+config = "duty_server_structure.mixins.json"
+
 
 
 

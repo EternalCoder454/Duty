@@ -4,6 +4,7 @@ import net.dutymod.core.DutyLog;
 import net.dutymod.core.screen.DutyConfigScreens;
 import net.dutymod.server.net.NetOptions;
 import net.dutymod.server.save.AsyncWorldSave;
+import net.dutymod.server.structure.StructureSearchBudget;
 import net.dutymod.server.wire.RedstoneWire;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -30,6 +31,7 @@ public final class DutyServer {
         NetOptions.init();
         RedstoneWire.init();
         AsyncWorldSave.init();
+        StructureSearchBudget.init();
 
         // Drain outstanding save writes when the server stops. Without this the last autosave can
         // still be in flight when the process goes away, which is the save most worth keeping.

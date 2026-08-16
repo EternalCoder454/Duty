@@ -104,7 +104,10 @@ public final class ClothConfigScreen {
             Map.entry("encryption", "Encryption"),
             Map.entry("varint", "Packet codec"),
             Map.entry("varlong", "Packet codec"),
-            Map.entry("packet", "Packet codec"));
+            Map.entry("packet", "Packet codec"),
+            Map.entry("structure_search", "World generation"),
+            Map.entry("alternate_current", "Redstone"),
+            Map.entry("async_world_save", "Saving"));
 
     /** {@return the sub-category {@code name} belongs to} */
     private static String subCategoryOf(String name) {

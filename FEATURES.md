@@ -542,3 +542,57 @@ needs a `clean` to take effect.
 module, costing about 136 KB. That is the price of every module standing alone, which is a
 deliberate design decision recorded in HANDOFF, so it stays. The 38 MB `.cache/jij` is
 overwhelmingly other mods; Duty's share was 652 KB before this pass.
+
+## Structure Essentials — one feature taken, the headline one rejected
+
+Reviewed on 2026-08-16 (`someaddons/structureessentials`, branch `neo26.1`, 19 mixins). Most of it
+is worldgen *tuning* — minimum distance between structures, spacing overrides, `/locate` radius —
+or diagnostic logging and timing. Neither is a performance change, and the tuning half alters what
+generates, which is not something a performance mod should be doing quietly.
+
+### Rejected: `StructureSearchSpeedupMixin`
+
+This is the mod's headline feature, and it is the one thing here Duty cannot use.
+
+It injects into `ChunkGenerator.getStructureGeneratingAt` and, before vanilla can load the chunk to
+`STRUCTURE_STARTS`, samples the biome at four diagonal positions across a handful of Y levels. If
+none of the target structures list any sampled biome, it returns "nothing here" and skips the chunk
+load. That is a sound idea — the chunk load is the entire cost — but:
+
+* **Duty already does this, better, on the path that matters.** BiomeSpy's `ChunkGeneratorMixin`
+  cancels the scattered-grid overload at HEAD and runs its own loop against proper biome envelopes
+  derived from the `MultiNoiseBiomeSource` parameter list. Vanilla's `getStructureGeneratingAt` is
+  never reached there at all, so the injection would apply and then never execute.
+* **What is left is the stronghold path, where the filter cannot pay.** Strongholds are valid in
+  very nearly every overworld land biome, so a biome probe rejects almost nothing.
+* **It is a heuristic with false negatives.** Four sample columns cannot see a structure whose
+  biome only occupies a corner of the chunk. On the grid path Duty's envelope test is exact.
+* It hard-casts the `LevelReader` parameter to `ServerLevel`, and depends on a duck interface fed
+  by the min-distance tuning feature, which Duty does not take.
+
+### Taken: the search watchdog, rewritten
+
+`server.structure_search_timeout`, default 60 seconds, in `net.dutymod.server.structure`.
+
+Nothing in the pack bounds a structure search. `findNearestMapStructure` walks outwards in rings
+and can force a chunk load per candidate; when the structure is genuinely not in range the walk
+runs to the full radius and the world is frozen until it finishes. Treasure map generation takes
+the same path, so this is not only a `/locate` problem. Timing out returns "not found", which is
+what an exhausted search returns anyway — the change is that it takes a bounded time to say so.
+
+Two corrections to upstream's version:
+
+* **Its deadline is a `static` field.** Structure searches are not confined to the server thread —
+  loot generation runs on workers, and dimensions search independently — so two overlapping
+  searches clobber each other's start time and whichever armed last decides when the other gives
+  up. Duty's is a `ThreadLocal`, read once per ring rather than per block.
+* **Its enforcement is half-dead here.** Of its two check sites, the scattered-grid one sits inside
+  the method BiomeSpy cancels at HEAD, so it would never fire. Duty arms at
+  `findNearestMapStructure`, enforces the stronghold path by mixin, and checks the budget directly
+  inside BiomeSpy's own loop — the loop that actually runs for ordinary structures.
+
+Also rejected: `MappedRegistryMixin` (forces `freeze()` to succeed and logs unbound entries — a
+crash workaround that hides a real error, not a performance change) and `LegacyRandomSourceMixin`,
+which makes `compareAndSet` always report success to drop the CAS retry loop. That removes the
+atomicity of the random source; with C2ME generating chunks in parallel, that is not a trade worth
+taking for a contended-CAS saving.
