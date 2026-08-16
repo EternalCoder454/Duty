@@ -40,6 +40,7 @@ public class DutyMemoryMixinPlugin implements IMixinConfigPlugin {
         GATES.put("mixin.blockstate.StateHolderAccessor", MemoryOptions.BLOCK_STATE_DEDUPLICATION);
         GATES.put("mixin.blockstatecache.", MemoryOptions.BLOCK_STATE_CACHE_DEDUPLICATION);
         GATES.put("mixin.datacomponents.", MemoryOptions.DATA_COMPONENT_DEDUPLICATION);
+        GATES.put("mixin.holderset.", MemoryOptions.SMALL_HOLDER_SET_SCAN);
         GATES.put("mixin.tags.TagKeyMixin", MemoryOptions.TAG_KEY_INTERNING);
         GATES.put("mixin.tags.ResourceKeyMixin", MemoryOptions.TAG_KEY_INTERNING);
     }

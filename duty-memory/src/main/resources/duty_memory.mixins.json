@@ -17,6 +17,7 @@
     "blockstatecache.SubShapeAccess",
     "blockstatecache.VoxelShapeAccess",
     "datacomponents.PatchedDataComponentMapMixin",
+    "holderset.DirectHolderSetMixin",
     "tags.ResourceKeyMixin",
     "tags.TagKeyMixin"
   ],

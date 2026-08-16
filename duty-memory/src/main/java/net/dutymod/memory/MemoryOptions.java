@@ -27,6 +27,9 @@ public final class MemoryOptions {
     /** Log every Enum.values() call site that was rewritten. Very noisy; for debugging only. */
     public static final String ENUM_VALUES_LOG_REWRITES = "memory.enum_values_log_rewrites";
 
+    /** Skip the retained Set that small tag/holder sets would otherwise build. */
+    public static final String SMALL_HOLDER_SET_SCAN = "memory.small_holder_set_scan";
+
     /** Share the collision shapes and face-sturdy tables held by the block state cache. */
     public static final String BLOCK_STATE_CACHE_DEDUPLICATION = "memory.block_state_cache_deduplication";
 
@@ -41,10 +44,15 @@ public final class MemoryOptions {
         DutyConfig.register(PROPERTY_MAP_COMPACTION, true,
                 "Drop each block state's own array of property values and read them back from\n"
                         + "its position in the shared table instead. Requires the option above.");
-        DutyConfig.register(COMPACT_STATE_ENCODING, false,
-                "Pack block state indices with no wasted slots. Uses slightly less memory than\n"
-                        + "the default bit-range encoding, but every property lookup costs an\n"
-                        + "integer division instead of a shift and a mask.");
+        DutyConfig.register(COMPACT_STATE_ENCODING, true,
+                "Pack block state indices with no wasted slots. Uses less memory than the default\n"
+                        + "bit-range encoding, at the cost of an integer division per property\n"
+                        + "lookup instead of a shift and a mask.\n"
+                        + "\n"
+                        + "Upstream FerriteCore leaves this off because it trades CPU for memory.\n"
+                        + "Duty turns it on: that is the trade this module exists to make, and the\n"
+                        + "division lands on block state property reads rather than on a render or\n"
+                        + "tick path. Turn it off if you would rather have the cycles back.");
         DutyConfig.register(ENUM_VALUES_CACHING, true,
                 "Rewrite Enum.values() calls to return a shared array where it is provably safe\n"
                         + "to do so. Enum.values() clones its array on every call; almost every\n"
@@ -56,6 +64,12 @@ public final class MemoryOptions {
                         + "of these during datapack loading.");
         DutyConfig.register(ENUM_VALUES_LOG_REWRITES, false,
                 "Log every rewritten Enum.values() call site. Extremely noisy. Debugging only.");
+        DutyConfig.register(SMALL_HOLDER_SET_SCAN, true,
+                "Scan small tag and holder sets instead of building a hash set for them. Vanilla\n"
+                        + "materialises a Set on first membership test and keeps it forever; for a\n"
+                        + "handful of entries the retained set costs more than the lookup saves, and\n"
+                        + "a modded registry has thousands of them. The answer is identical either\n"
+                        + "way; larger sets keep the cache.");
         DutyConfig.register(BLOCK_STATE_CACHE_DEDUPLICATION, true,
                 "Share the collision shape and face-sturdy table between block states whose cached\n"
                         + "values are identical. Every block state builds its own cache at startup,\n"
