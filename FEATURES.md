@@ -214,3 +214,58 @@ Three things needed doing beyond the package rename:
   and to reach `MapTextureManager$MapInstance`. Bundled via JarJar, as upstream bundles it.
 - The `@Mod` entrypoint's resource-reload listener moved into `DutyClient`; its config file is now
   `duty-immediatelyfast.json` and its version lookup asks for `duty_client`.
+
+## Duty: Memory — coverage audit
+
+Audited 2026-08-15. Duty carried three of upstream FerriteCore's six options; the other three were
+never ported. Two are now in, one is deliberately out.
+
+| FerriteCore option | Duty | Note |
+|---|---|---|
+| `replaceNeighborLookup` | had it | `memory.block_state_deduplication` |
+| `replacePropertyMap` | had it | `memory.property_map_compaction` |
+| `compactFastMap` | had it | `memory.compact_state_encoding`, opt-in upstream and here |
+| `blockstateCacheDeduplication` | **added** | `memory.block_state_cache_deduplication`, default on |
+| `dataComponentPatch` | **added** | `memory.data_component_deduplication`, default on |
+| `useSmallThreadingDetector` | **rejected** | Lithium already does it, and harder — see below |
+
+**Block state cache dedup** shares the collision shape and face-sturdy table between block states
+whose caches are equal, which across a large modpack is nearly all of them. It also rewrites the
+internals of discarded shapes to point at the kept one, because mods routinely hold shape
+references outside the block state cache. Verified against 26.1.2: `BlockStateBase.cache`,
+`Cache.collisionShape`, `Cache.faceSturdy`, `ArrayVoxelShape.xs/ys/zs`, `VoxelShape.shape/faces`
+and all six accessor targets still exist. Upstream resolves the `cache` field name through a
+per-loader hook; Duty targets one loader with Mojang mappings, so it is the literal `"cache"`.
+
+**Threading detector: rejected.** It `@Overwrite`s `PalettedContainer.acquire()`/`release()` and
+nulls `threadingDetector`. Lithium's `chunk.no_locking.PalettedContainerMixin` does exactly that
+already — same field nulled, same two methods — and removes the locking entirely rather than just
+shrinking the detector. Two `@Overwrite`s of one method is the Lithium crash profile, for a
+benefit Lithium has already delivered.
+
+**No conflict with ModernFix.** Its `cache_blockstate_cache_arrays` only avoids `values()` array
+clones inside the `Cache` constructor; FerriteCore dedupes the contents afterwards. The two are
+designed to coexist — ModernFix warns when FerriteCore is absent.
+
+## Duty: FixerUpper — coverage audit
+
+Audited 2026-08-15 against upstream ModernFix `26.1` (last commit 2026-07-18). Coverage was
+already near-complete: of ~55 feature packages only five were missing, and three of those target
+mods that are not in the pack (`cofh_core_crash`, `ctm_resourceutil_cme`,
+`spark_profile_world_join` — CTM and spark appear in `gradle.properties` as compile-only deps for
+compat code, not as installed mods).
+
+**`capability_list_compaction` — added.** This one was **half-ported**: `CapProviderGetter` and
+`ITrackingCapEvent` were already in the tree under `neoforge/caps`, but the two mixins that drive
+them were never brought across, so both classes were dead code and the feature did nothing. Adding
+`CapabilityHooksMixin` and `RegisterCapabilitiesEventMixin` completes it. It dedupes capability
+provider lists after registration, which matters in proportion to how many mods register
+capabilities. Verified `CapabilityHooks.init()` and all four `RegisterCapabilitiesEvent.register*`
+overloads against NeoForge 26.1.2.95.
+
+**`optimize_surface_rules` — rejected.** Duty already `@Overwrite`s `SurfaceRules$Context` through
+`perf/worldgen_allocation`, so this would put a second Duty mixin on a class Duty already
+overwrites. On top of that `lithostitched` patches `SurfaceSystem`, `SurfaceRules$Context` and
+`NoiseBasedChunkGenerator`, and `NoiseBasedChunkGenerator` is patched by four installed mods
+(lithium, lithostitched, tectonic, greatchasms). Upstream ships its `SurfaceSystemMixin` at
+`priority = 2000`, which is itself a sign of contention. Worldgen-only gain, high blast radius.

@@ -28,7 +28,7 @@ Rule 1 is not decorative. Four separate crashes came from breaking it.
 
 | Jar | Contains | Licence |
 |---|---|---|
-| `duty-memory` | Jasione (`Enum.values()`), FerriteCore (block-state tables), Fast-Tag (TagKey/ResourceKey interning) | LGPL-3.0 |
+| `duty-memory` | Jasione (`Enum.values()`), FerriteCore (block-state tables, block state cache dedup, data component dedup), Fast-Tag (TagKey/ResourceKey interning) | LGPL-3.0 |
 | `duty-client` | EntityCulling, Particle Core, OptimisedBlockEntities, OcclusionCulling, Stfu, ImmediatelyFast | **not distributable** |
 | `duty-fixerupper` | ModernFix, plus Resource-Trimmer's compact identifier encoding | LGPL-3.0 |
 | `duty-server` | BiomeSpy (`/locate` biome + structure search), KryptonReno network pipeline | LGPL-3.0 |
