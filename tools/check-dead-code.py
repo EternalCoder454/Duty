@@ -59,7 +59,11 @@ for module in sys.argv[1:] or ["duty-memory", "duty-client", "duty-fixerupper", 
             continue
         if pattern.search(res):
             continue
-        dead.append(path.relative_to(src).as_posix())
+        # Relative to the module, not `src` -- there are several source roots now (the loader
+        # split), so there is no single `src` to be relative to. Naming one crashed this line, and
+        # because it only runs when something IS dead, the checker looked like it passed for every
+        # module that happened to be clean and died on the first that was not.
+        dead.append(path.relative_to(pathlib.Path(module)).as_posix())
 
     print(f"\n{module}: {len(paths)} files, {len(dead)} unreachable")
     for d in dead:

@@ -67,13 +67,12 @@ public class FixerUpperMixinPlugin extends DutyMixinPlugin {
             if(FixerUpperEarlyConfig.OPTIFINE_PRESENT)
                 this.logger.fatal("OptiFine detected. Use of Duty with OptiFine is not supported due to its impact on launch time and breakage of Forge features.");
 
-            try {
-                Class.forName("sun.misc.Unsafe").getDeclaredMethod("defineAnonymousClass", Class.class, byte[].class, Object[].class);
-            } catch(ReflectiveOperationException | NullPointerException e) {
-                this.logger.info("Applying Nashorn fix");
-                Properties properties = System.getProperties();
-                properties.setProperty("nashorn.args", properties.getProperty("nashorn.args", "") + " --anonymous-classes=false");
-            }
+            // The Nashorn fix used to sit here. It probed for
+            // sun.misc.Unsafe.defineAnonymousClass and, when that was missing, told Nashorn not to
+            // use anonymous classes. Both halves are gone on Java 25: defineAnonymousClass was
+            // removed in Java 17 and Nashorn itself left the JDK in Java 15. So the probe always
+            // threw, the catch always ran, and every launch logged "Applying Nashorn fix" while
+            // setting a system property for a script engine that is not there.
 
             /* We abuse the constructor of a mixin plugin as a safe location to start modifying the classloader */
             FixerUpperPlatformHooks.INSTANCE.injectPlatformSpecificHacks();
