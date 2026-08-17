@@ -50,6 +50,12 @@ config = "duty_server_save.mixins.json"
 [[mixins]]
 config = "duty_server_structure.mixins.json"
 
+# Jigsaw structure assembly. No plugin: the octree replaces vanilla's shape unconditionally because
+# it answers the same question and generates identical structures, and the one option that does
+# change output is read inside the mixins rather than gating them.
+[[mixins]]
+config = "duty_server_jigsaw.mixins.json"
+
 
 
 

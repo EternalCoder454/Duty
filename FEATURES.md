@@ -1240,3 +1240,64 @@ time with low hidden means the tracing is not paying for itself.
 
 Revisit if a depth-buffer path ever becomes reachable -- that version of the idea is sound, and it
 is the one Sodium and the shader mods already use.
+
+## FastNoise — rejected: C2ME owns this ground
+
+Reviewed on 2026-08-16 (`ZenXArch/FastNoise`, branch `ver/neoforge/26.1`). A genuinely current
+mod -- 26.1 branch, `JAVA_25` compatibility level, 43 files -- optimizing noise generation, biome
+population and surface rules.
+
+Duty cannot take it, and the reason is not subtle. Its three core targets are C2ME's core targets:
+
+| FastNoise mixes into | Also patched by |
+| --- | --- |
+| `ChunkNoiseSampler` | **C2ME, alone** |
+| `NoiseChunkGenerator` | **C2ME, alone** |
+| `Aquifer` | **C2ME, alone** |
+| `NoiseBasedChunkGenerator` | greatchasms, lithium, lithostitched, tectonic |
+| `NoiseChunk` | YungsApi, C2ME, duty-fixerupper, lithostitched |
+
+The first three are the whole point of both mods. FastNoise and C2ME are two answers to the same
+question -- make chunk noise generation faster -- and they answer it by rewriting the same methods.
+Running both is not a merge, it is two mods fighting over the generation path, and the failure mode
+is not a crash but subtly different terrain.
+
+C2ME is installed, is the more established of the two, and already parallelises far more than noise.
+FastNoise would be worth revisiting only on a pack without it.
+
+## StructureLayoutOptimizer — taken, into duty-server
+
+Reviewed and merged on 2026-08-16 (`TelepathicGrunt/StructureLayoutOptimizer`, branch `26.1`,
+MIT, ~1,100 lines).
+
+### What it fixes
+
+Vanilla assembles a jigsaw structure -- villages, ancient cities, trial chambers, bastions -- by
+tracking the space already claimed as a `VoxelShape` and calling `Shapes.join` once for every piece
+placed. The shape gets more complex with each join, so placing the hundredth piece is far more
+expensive than the first, and a large village is quadratic in the number of pieces.
+
+The replacement is a `BoxOctree` behind a `TrojanVoxelShape`: the same containment and overlap
+questions, asked of a spatial index instead of a composite shape, in log time. It also cuts the
+work of assembling structure templates through a paletted block-info list.
+
+**It generates identical structures.** This is the same test asked of a better index, not a
+different rule, so it needs no toggle and gets none.
+
+### It is uncontested here, which is why it is takeable at all
+
+`JigsawPlacement` -- the class the main optimization targets -- is patched by **no installed mod**.
+Of the secondary targets, what YungsApi and Lithostitched contribute are *accessors*, which expose
+fields rather than inject, and AE2's `StructureTemplateMixin` does not touch any method this uses.
+Checked against the installed jars rather than assumed.
+
+### The one option, and why it is off
+
+`server.jigsaw_deduplicate_pool_elements`, default off. Template pools express weighting by
+repeating an entry, so collapsing duplicates changes which piece gets picked: structures stay valid
+and complete but are laid out differently from vanilla for the same seed. It is a real saving for
+packs whose structure mods use very high pool weights, and it is not the sort of thing to turn on
+by default in a performance mod. The registered comment says all of that.
+
+Upstream's platform service and config library did not come across -- the service existed to answer
+"is this Fabric", which a branch that targets one loader does not need to ask.
