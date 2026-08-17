@@ -482,7 +482,48 @@ public final class StarLightInterface {
     /** Rate limit: a bad region should report once a minute, not once a chunk. */
     private static final long SLOW_CHUNK_INTERVAL_NANOS = 60_000_000_000L;
 
-    private static volatile long duty$lastSlowChunkReport = Long.MIN_VALUE;
+    /**
+     * The worst chunk of the session, kept so the report can name it.
+     *
+     * <p>A log line is the wrong place for this on its own. It scrolls, it is rate limited, and
+     * it is gone by the time anybody asks what happened -- and when the rate limiter turned out
+     * to be broken, there was nothing at all. Holding the worst case means the report can always
+     * answer "which chunk", which is the question a spike finding raises and could not answer.
+     */
+    private static volatile long duty$worstChunkNanos = 0L;
+    private static volatile String duty$worstChunkPos = null;
+    private static volatile int duty$slowChunkCount = 0;
+
+    static {
+        net.dutymod.framework.DutyReport.contributor(findings -> {
+            final String where = duty$worstChunkPos;
+            if (where == null) {
+                return;
+            }
+            findings.add(new net.dutymod.framework.DutyReport.Finding(
+                    net.dutymod.framework.DutyReport.Severity.INFO,
+                    "Slowest chunk to light",
+                    String.format(java.util.Locale.ROOT,
+                            "%s took %.1fms, and %d chunk(s) went over %.0fms this session. "
+                                    + "One slow chunk is normally a dense build or a first light "
+                                    + "of a heavily modified region; a steady stream of them is "
+                                    + "not, and the count is what tells them apart.",
+                            where, duty$worstChunkNanos / 1.0e6, duty$slowChunkCount,
+                            SLOW_CHUNK_NANOS / 1.0e6)));
+        });
+    }
+
+    /**
+     * When the last slow chunk was reported, and whether there has been one.
+     *
+     * <p>The flag is not redundant. This was {@code = Long.MIN_VALUE} as a "never" sentinel, and
+     * {@code now - Long.MIN_VALUE} overflows for any positive {@link System#nanoTime()} -- which
+     * is every value it takes on this platform. The subtraction went negative, negative is always
+     * below the interval, and the warning was therefore unreachable for the life of the process.
+     * It was written to explain lighting spikes and had never once fired while they happened.
+     */
+    private static volatile boolean duty$slowChunkReported = false;
+    private static volatile long duty$lastSlowChunkReport = 0L;
 
     public void lightChunk(final ChunkAccess chunk, final Boolean[] emptySections) {
         // Timed unconditionally rather than through the metrics gate, because the slow-chunk
@@ -504,10 +545,19 @@ public final class StarLightInterface {
         if (elapsedNanos < SLOW_CHUNK_NANOS) {
             return;
         }
+        // Recorded before the rate limit, so the report's answer does not depend on whether this
+        // particular chunk happened to fall inside a quiet minute.
+        ++duty$slowChunkCount;
+        if (elapsedNanos > duty$worstChunkNanos) {
+            duty$worstChunkNanos = elapsedNanos;
+            duty$worstChunkPos = String.valueOf(chunk.getPos());
+        }
         final long now = System.nanoTime();
-        if (now - duty$lastSlowChunkReport < SLOW_CHUNK_INTERVAL_NANOS) {
+        // Only ever subtracts two real nanoTime readings, so there is nothing to overflow.
+        if (duty$slowChunkReported && now - duty$lastSlowChunkReport < SLOW_CHUNK_INTERVAL_NANOS) {
             return;
         }
+        duty$slowChunkReported = true;
         duty$lastSlowChunkReport = now;
         ScalableLuxEntrypoint.LOGGER.warn(
                 "Lighting {} took {}ms, far above the usual sub-millisecond. One slow chunk is "

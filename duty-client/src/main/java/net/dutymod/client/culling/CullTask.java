@@ -133,7 +133,17 @@ public final class CullTask implements Runnable {
     /** Rate limit, so a genuinely bad situation reports once a minute rather than every pass. */
     private static final long SLOW_PASS_REPORT_INTERVAL_NANOS = 60_000_000_000L;
 
-    private long lastSlowReportNanos = Long.MIN_VALUE;
+    /**
+     * When the last slow pass was reported, and whether there has been one.
+     *
+     * <p>The flag is not redundant. This was {@code = Long.MIN_VALUE} as a "never" sentinel,
+     * and {@code now - Long.MIN_VALUE} overflows for any positive {@link System#nanoTime()},
+     * which is every value it takes here. The result went negative, negative is always below
+     * the interval, and the warning was unreachable for the life of the process -- so the one
+     * thing written to explain culling spikes never fired while they were happening.
+     */
+    private boolean slowReported = false;
+    private long lastSlowReportNanos = 0L;
 
     /**
      * Logs a slow pass, at most once a minute, with what it was given to work with.
@@ -147,9 +157,11 @@ public final class CullTask implements Runnable {
             return;
         }
         long now = System.nanoTime();
-        if (now - lastSlowReportNanos < SLOW_PASS_REPORT_INTERVAL_NANOS) {
+        // Only ever subtracts two real nanoTime readings, so there is nothing to overflow.
+        if (slowReported && now - lastSlowReportNanos < SLOW_PASS_REPORT_INTERVAL_NANOS) {
             return;
         }
+        slowReported = true;
         lastSlowReportNanos = now;
         DutyLog.warn(String.format(java.util.Locale.ROOT,
                 "Culling pass took %.1fms (%d candidates, %d traced, %d hidden). This runs on its "
