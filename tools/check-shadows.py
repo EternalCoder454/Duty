@@ -19,6 +19,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _minecraft_jar import patched_minecraft_jar
+
 ROOT = Path(__file__).resolve().parent.parent
 JAVAP = Path(r"C:\Program Files\Java\jdk-25.0.4\bin\javap.exe")
 
@@ -115,7 +118,7 @@ def collect_shadows(text: str) -> list[str]:
 
 
 def main() -> int:
-    jar = next(ROOT.glob("duty-*/build/moddev/artifacts/minecraft-patched-*-merged.jar"), None)
+    jar = patched_minecraft_jar()
     if jar is None:
         print("No patched Minecraft jar found. Run a Gradle build first.")
         return 1

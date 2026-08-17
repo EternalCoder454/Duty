@@ -21,6 +21,9 @@ import sys
 import zipfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _minecraft_jar import patched_minecraft_jar
+
 ROOT = Path(__file__).resolve().parent.parent
 MODULES = sys.argv[1:] or [
     "duty-memory", "duty-client", "duty-fixerupper", "duty-server", "duty-essentials",
@@ -69,7 +72,26 @@ def packages_in(names: set[str]) -> set[str]:
     return {name.rsplit(".", 1)[0] for name in names}
 
 
+def minecraft_classes() -> set[str]:
+    """Every class in the patched Minecraft jar, for checking access transformer targets."""
+    jar = patched_minecraft_jar()
+    if jar is None:
+        return set()
+    with zipfile.ZipFile(jar) as zf:
+        return {
+            name[:-len(".class")].replace("/", ".")
+            for name in zf.namelist() if name.endswith(".class")
+        }
+
+
+MINECRAFT_CLASSES: set[str] = set()
+
+
 def main() -> int:
+    global MINECRAFT_CLASSES
+    MINECRAFT_CLASSES = minecraft_classes()
+    if not MINECRAFT_CLASSES:
+        print("  no patched Minecraft jar found; access transformers not checked")
     problems: list[str] = []
     checked = 0
 
@@ -103,7 +125,32 @@ def main() -> int:
                         problems.append(
                             f"{module}: service {service} lists {impl}, which is not in the jar")
 
-        # 2. String literals in source that name a Duty class or package.
+        # 2. Access transformer entries. These name Minecraft classes and descriptors as text,
+        # so a version port leaves them pointing at classes that no longer exist -- and the AT is
+        # applied at load time, long after any compiler could have complained. Porting to 1.21.1
+        # left six entries naming net/minecraft/resources/Identifier, which 1.21.1 calls
+        # ResourceLocation. Verified against the Minecraft jar rather than the module's own.
+        at_path = ROOT / module / "src/main/resources/META-INF/accesstransformer.cfg"
+        if at_path.is_file() and MINECRAFT_CLASSES:
+            for lineno, line in enumerate(at_path.read_text(encoding="utf-8").splitlines(), 1):
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split()
+                if len(parts) < 2:
+                    continue
+                named = [parts[1]] + re.findall(r"L([\w/$]+);", line)
+                for raw in named:
+                    binary = raw.replace("/", ".")
+                    if not binary.startswith("net.minecraft"):
+                        continue
+                    checked += 1
+                    if binary not in MINECRAFT_CLASSES:
+                        problems.append(
+                            f"{module}: accesstransformer.cfg:{lineno} names {binary}, "
+                            f"which is not in the Minecraft jar")
+
+        # 3. String literals in source that name a Duty class or package.
         # Both source sets: loader-specific code moved out of src/main and must still be checked.
         for src in source_files(ROOT / module):
             text = src.read_text(encoding="utf-8", errors="ignore")
