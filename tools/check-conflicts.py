@@ -105,8 +105,12 @@ def main() -> int:
         pack = Path(sys.argv[sys.argv.index("--pack") + 1])
     mods = pack / "mods"
     if not mods.is_dir():
-        print(f"No mods folder at {mods}")
-        return 1
+        # Not a failure. This check reports which installed mods share a target class with Duty,
+        # which is context for a person rather than a verdict on the code -- and on a CI runner
+        # there is no modpack to compare against. Saying so and exiting cleanly keeps a green
+        # build honest; returning 1 here would train everyone to ignore the result.
+        print(f"No mods folder at {mods}; nothing to compare against, skipping.")
+        return 0
 
     targets = duty_targets()
     print(f"Duty mixes into {len(targets)} Minecraft classes\n")

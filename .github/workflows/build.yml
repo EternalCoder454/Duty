@@ -1,0 +1,96 @@
+# Builds whichever branch was pushed, then runs the checker suite against it.
+#
+# Duty carries one target per branch, so this workflow deliberately does not fan out into a matrix
+# of versions: each branch already knows its Minecraft version, loader and Java level from
+# gradle.properties, and the job reads them from there. Pushing to `main` builds 26.1.2 on Java 25;
+# pushing to `forge-1.20.1` builds 1.20.1 on Java 17. One workflow file, no per-branch copies to
+# keep in step.
+#
+# The port branches do not compile yet and are expected to fail here. That is the point: the run is
+# the porting to-do list, and it turns green exactly when the port is done.
+
+name: Build
+
+on:
+  push:
+    branches: [main, 'neoforge-*', 'fabric-*', 'forge-*']
+  pull_request:
+  workflow_dispatch:
+
+# A second push to the same branch makes the first run irrelevant.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Every version-specific value comes from the branch's own gradle.properties, so this file
+      # never needs to know which branches exist.
+      - name: Read the branch's target
+        id: target
+        run: |
+          get() { grep -E "^$1=" gradle.properties | head -1 | cut -d= -f2- | tr -d ' \r'; }
+          echo "java=$(get java_version)"           >> "$GITHUB_OUTPUT"
+          echo "minecraft=$(get minecraft_version)" >> "$GITHUB_OUTPUT"
+          echo "loader=$(get duty.loader)"          >> "$GITHUB_OUTPUT"
+
+      - name: Summarise
+        run: |
+          echo "### ${{ github.ref_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| | |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Loader | ${{ steps.target.outputs.loader }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Minecraft | ${{ steps.target.outputs.minecraft }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Java | ${{ steps.target.outputs.java }} |" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ steps.target.outputs.java }}
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          # Keyed by branch: the targets download different Minecraft artifacts, and one shared
+          # cache would mean each branch evicting the others.
+          cache-read-only: ${{ github.ref_name != 'main' }}
+
+      - name: Build
+        run: ./gradlew build --no-daemon --stacktrace
+
+      # The checkers are the reason a green build means anything here. Each compares source against
+      # the patched Minecraft jar for this branch -- tools/_minecraft_jar.py refuses to run against
+      # another version's jar, so a cache leaking one in cannot silently produce a wrong answer.
+      - name: Verify against Minecraft ${{ steps.target.outputs.minecraft }}
+        run: |
+          set -e
+          for check in shadows descriptors mixin-configs orphan-mixins class-strings; do
+            echo "::group::check-$check"
+            python3 "tools/check-$check.py"
+            echo "::endgroup::"
+          done
+
+      - name: Report which mods Duty would collide with
+        # Informational: it lists overlaps with mods in a reference pack. There is no pack on a
+        # runner, so it says so and exits cleanly rather than needing continue-on-error -- a step
+        # that is always allowed to fail is a step nobody reads.
+        run: python3 tools/check-conflicts.py
+
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: duty-${{ steps.target.outputs.loader }}-${{ steps.target.outputs.minecraft }}
+          path: |
+            duty-*/build/libs/*.jar
+            !duty-*/build/libs/*-sources.jar
+          if-no-files-found: error
+          retention-days: 14
