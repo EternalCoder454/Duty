@@ -15,6 +15,12 @@ import json
 import pathlib
 import sys
 
+import os
+
+# Shared copy. MODULE_GLOB selects which subdirectories count as modules, so this runs
+# against any project rather than only Duty. Default keeps the original behaviour.
+MODULE_GLOB = os.environ.get('MODULE_GLOB', 'duty-*')
+
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 
@@ -46,11 +52,14 @@ def check(config: pathlib.Path, module: pathlib.Path) -> list[str]:
 def main() -> int:
     problems = []
     checked = 0
-    for config in sorted(ROOT.glob("duty-*/src/*/resources/**/*.mixins.json")):
-        # Walk up from src/<set>/resources/... to the module directory.
+    for config in sorted(ROOT.glob(MODULE_GLOB + "/src/*/resources/**/*.mixins.json")):
+        # Walk up to the directory holding src. Walking down from ROOT instead only works when
+        # ROOT is the project itself. From a shared tools folder it stops at the project name
+        # and every source lookup misses, which read as 329 missing mixins that all existed.
         module = config
-        while module.parent != ROOT:
+        while module.parent != module and module.name != "src":
             module = module.parent
+        module = module.parent
         problems.extend(check(config, module))
         checked += 1
 
