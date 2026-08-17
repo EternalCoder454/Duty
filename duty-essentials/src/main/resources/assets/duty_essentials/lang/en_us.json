@@ -237,5 +237,9 @@
   "yamlconfig.duty_essentials.commands.thunder.aliases": "Aliases",
   "yamlconfig.duty_essentials.commands.weather": "Weather",
   "yamlconfig.duty_essentials.commands.weather.enabled": "Enabled",
-  "yamlconfig.duty_essentials.commands.weather.aliases": "Aliases"
+  "yamlconfig.duty_essentials.commands.weather.aliases": "Aliases",
+  "duty_essentials.commands.flyspeed.set": "Your flying speed is now %sx normal.",
+  "duty_essentials.commands.flyspeed.other": "Set %s's flying speed to %sx normal.",
+  "duty_essentials.commands.walkspeed.set": "Your walking speed is now %sx normal.",
+  "duty_essentials.commands.walkspeed.other": "Set %s's walking speed to %sx normal."
 }

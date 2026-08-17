@@ -939,3 +939,45 @@ this thousands of times.
 Checked against the installed pack: five mods ship biome data, but all five use NeoForge's
 `biome_modifier` system, which does not wrap the source. Nothing uses Lithostitched's
 `biome_injector`, so BiomeSpy is active today. The report is there for the mod that changes that.
+
+## Speed and gamemode commands, added 2026-08-16
+
+Six commands added to Duty: Essentials, none of them from an upstream mod.
+
+### /flyspeed and /walkspeed
+
+Both take a multiplier of vanilla, 1 to 10, rather than a raw speed. Vanilla's values are 0.05 and
+0.1, which are not numbers anyone wants to type; a multiplier of 1 is exactly vanilla and is how the
+command is undone.
+
+**The two are implemented through different mechanisms, and the obvious one is a trap.**
+
+`Abilities` has both a `flyingSpeed` and a `walkingSpeed` field with public setters, so setting both
+looks correct. Flying is: `Abilities.flyingSpeed` feeds
+`LivingEntity.getFrictionInfluencedSpeed`, which is the movement calculation. Walking is not. In
+26.1.2 the only readers of `Abilities.walkingSpeed` are
+`AbstractClientPlayer.getFieldOfViewModifier` and the save/load path, so setting it changes the
+player's field of view and nothing else. It moves the player on Bukkit-derived servers, which is
+where the belief that it works comes from.
+
+So `/walkspeed` goes through the `minecraft:movement_speed` attribute instead, with a permanent
+`ADD_MULTIPLIED_BASE` modifier under a fixed id. The fixed id matters: it makes the command
+idempotent, so running it ten times leaves one modifier rather than ten stacked. A multiplier of 1
+removes the modifier outright rather than leaving one that adds zero.
+
+Neither needs Duty to persist anything. `Abilities` is serialised by vanilla through
+`Abilities.Packed`, and permanent attribute modifiers are written into the player's saved data, so
+both survive a relog on their own. `/flyspeed` calls `onUpdateAbilities()` because the client is
+what actually moves the player and has to be told.
+
+### /gmc, /gms, /gma, /gmsp
+
+Gamemode switches with the mode already chosen. Deliberately not aliases: an alias in
+`CommandManager` redirects to the same Brigadier node and would still demand the argument
+(`/gmc creative`), which defeats the point. Each is its own command calling
+`GamemodeCommand.setMode` directly, so the messages, the command-feedback game rule and the
+"other player" wording stay in one place rather than being copied four times.
+
+All six take an optional player argument like the commands they sit beside, all six have a config
+switch, and `/gmc` and friends share `/gamemode`'s permission node because they are the same act
+spelled shorter.

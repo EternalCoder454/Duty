@@ -68,6 +68,12 @@ public final class CommandConfig {
         register("feed");
         register("fly");
         register("gamemode", "gm");
+        register("gmc");
+        register("gms");
+        register("gma");
+        register("gmsp");
+        register("flyspeed");
+        register("walkspeed");
         register("god");
         register("heal");
         register("nick");

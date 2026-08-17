@@ -56,7 +56,8 @@ public class GamemodeCommand implements Command {
         }
     }
 
-    private static int setMode(CommandContext<CommandSourceStack> commandContext, Collection<ServerPlayer> collection, GameType gameType) {
+    /** Package-visible so {@link GameModeShortcutCommand} can reuse it rather than copy it. */
+    static int setMode(CommandContext<CommandSourceStack> commandContext, Collection<ServerPlayer> collection, GameType gameType) {
         int i = 0;
 
         for (ServerPlayer serverPlayer : collection) {

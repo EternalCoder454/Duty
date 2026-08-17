@@ -5,6 +5,7 @@ import net.dutymod.essentials.command.chat.ReplyCommand;
 import net.dutymod.essentials.command.inventory.EnderChestCommand;
 import net.dutymod.essentials.command.inventory.InvseeCommand;
 import net.dutymod.essentials.command.player.*;
+import net.minecraft.world.level.GameType;
 import net.dutymod.essentials.command.teleportation.level.RTPCommand;
 import net.dutymod.essentials.command.teleportation.level.spawn.SetSpawnCommand;
 import net.dutymod.essentials.command.teleportation.level.spawn.SpawnCommand;
@@ -79,6 +80,14 @@ public interface CommandRegistry {
 
     Command GOD = register(new GodCommand());
     Command GAMEMODE = register(new GamemodeCommand());
+
+    Command GAMEMODE_CREATIVE = register(new GameModeShortcutCommand("gmc", GameType.CREATIVE));
+    Command GAMEMODE_SURVIVAL = register(new GameModeShortcutCommand("gms", GameType.SURVIVAL));
+    Command GAMEMODE_ADVENTURE = register(new GameModeShortcutCommand("gma", GameType.ADVENTURE));
+    Command GAMEMODE_SPECTATOR = register(new GameModeShortcutCommand("gmsp", GameType.SPECTATOR));
+
+    Command FLY_SPEED = register(new FlySpeedCommand());
+    Command WALK_SPEED = register(new WalkSpeedCommand());
 
 
     static Command register(Command command) {
