@@ -1140,3 +1140,49 @@ ships those modules with those features absent rather than reimplemented.
    and `check-descriptors` are only meaningful against the jar they were run for, so each target
    needs its own pass. Without that, a 1.20.1 build would be green and unverified, which is the
    state this project has repeatedly found to be worse than a red one.
+
+## Second CPU pass, 2026-08-16 — allocation on the hottest paths
+
+The first CPU pass took Lomka's micro-optimisations in vanilla classes. This one looked at Duty's
+own merged code, on the paths that actually run continuously, and found allocation rather than
+arithmetic.
+
+### The occlusion tracer, which is the hottest code Duty has
+
+`LevelDataProvider.isOpaqueFullCube` is the innermost call in the culling system -- once per block,
+per ray, per entity, per pass -- and it allocated a `BlockPos` every time. It now reuses one
+`MutableBlockPos`.
+
+That is only safe because the object is confined to a single thread, and it is: exactly one
+`LevelDataProvider` is built in `EntityCulling.start`, handed to one `OcclusionCullingInstance`,
+used by one `CullTask`, on the single "Duty Culling" thread. The comment on the field records that,
+because it is the whole argument for the change being correct.
+
+`OcclusionCullingInstance` allocated twice more per target point, of which there are up to fourteen
+per entity per pass:
+
+* `rayIntersection` built a `Vec3d` purely to hold three reciprocals. It now takes the direction as
+  three doubles and computes them as locals -- no allocation, no shared state.
+* Its caller built a `Vec3d` to normalise the direction. It now normalises into three doubles.
+
+**The second one nearly shipped as a behaviour change.** The direction is normalised by dividing by
+its length, and when the viewer sits exactly on the target that length is zero. I added a
+zero-length guard, reasoned that the old `normalize()` produced NaN and that NaN comparisons are
+false so `rayIntersection` returned false, and concluded the guard was equivalent. It was not:
+reading the whole method, *both* of its early returns are also skipped by NaN, so it returned
+**true** and the point was skipped. The guard would have inverted that. The fix is to not guard at
+all -- with a zero length all three components are zero, so plain division yields the same NaN the
+old code produced, and the behaviour is identical by construction rather than by argument.
+
+### Recipe matching
+
+`CachedRecipeList.getRecipesFor` replaces `RecipeMap.getRecipesFor`, so it runs on every craft,
+every furnace tick that checks a smelting recipe, and every AE2 pattern. It built a `Comparator`
+per call from a `final` field that never changes. Hoisted to a field.
+
+### Looked at and left alone
+
+`WallBlockMixin` and `CubeDefinitionMixin` build boxed `List.of(...)` cache keys, which the scan
+flagged as per-call allocation. Both are wrong to change: `makeShapes` and model `bake` run at
+startup and resource reload, not per tick, and the boxing is the price of a deduplication cache
+that already pays for itself in memory. Optimising cold code is how a pass makes something worse.

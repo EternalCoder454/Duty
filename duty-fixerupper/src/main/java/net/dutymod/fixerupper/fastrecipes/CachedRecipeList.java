@@ -45,6 +45,17 @@ public class CachedRecipeList<C extends RecipeInput, T extends Recipe<C>> {
     // The effective priorities are the iteration order, so we preserve it to re-order results after matching.
     private final Object2IntMap<RecipeHolder<T>> effectivePriorities = new Object2IntOpenHashMap<>();
 
+    /**
+     * The ordering used to sort candidates, built once.
+     *
+     * <p>It reads only {@link #effectivePriorities}, which is final and never replaced, so the
+     * comparator is the same object on every call. Building it inside {@code getRecipesFor} meant
+     * an allocation per recipe lookup -- and this class exists because recipe lookup is hot enough
+     * to index for, so it is the last place to allocate something constant.
+     */
+    private final Comparator<RecipeHolder<T>> byPriority =
+            Comparator.comparingInt(this.effectivePriorities);
+
     /** Indexable recipes, filed under each item their pivot (most-selective) ingredient accepts. */
     private final Reference2ObjectMap<Item, List<RecipeHolder<T>>> byPivotItem = new Reference2ObjectOpenHashMap<>();
 
@@ -77,7 +88,7 @@ public class CachedRecipeList<C extends RecipeInput, T extends Recipe<C>> {
      */
     public Stream<RecipeHolder<T>> getRecipesFor(C inv, Level level) {
         List<RecipeHolder<T>> candidates = new ArrayList<>(this.gatherCandidates(inv));
-        candidates.sort(Comparator.comparingInt(this.effectivePriorities));
+        candidates.sort(this.byPriority);
 
         return this.mergeByPriority(candidates, this.alwaysCheck)
             .filter(rh -> rh.value().matches(inv, level));

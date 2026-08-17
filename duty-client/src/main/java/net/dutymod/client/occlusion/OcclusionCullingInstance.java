@@ -231,15 +231,24 @@ public class OcclusionCullingInstance {
         return isVisible(viewerPosition, targetPoints, targetSize);
     }
 
-    private boolean rayIntersection(int[] b, Vec3d rayOrigin, Vec3d rayDir) {
-        Vec3d rInv = new Vec3d(1, 1, 1).div(rayDir);
+    /**
+     * Slab test against the block at {@code b}.
+     *
+     * <p>Takes the direction as three components rather than a {@link Vec3d}: the only thing it did
+     * with the vector was read three reciprocals, and building one to hold them allocated on the
+     * innermost path in the culling system.
+     */
+    private boolean rayIntersection(int[] b, Vec3d rayOrigin, double dirX, double dirY, double dirZ) {
+        double rInvX = 1.0 / dirX;
+        double rInvY = 1.0 / dirY;
+        double rInvZ = 1.0 / dirZ;
 
-        double t1 = (b[0] - rayOrigin.x) * rInv.x;
-        double t2 = (b[0] + 1 - rayOrigin.x) * rInv.x;
-        double t3 = (b[1] - rayOrigin.y) * rInv.y;
-        double t4 = (b[1] + 1 - rayOrigin.y) * rInv.y;
-        double t5 = (b[2] - rayOrigin.z) * rInv.z;
-        double t6 = (b[2] + 1 - rayOrigin.z) * rInv.z;
+        double t1 = (b[0] - rayOrigin.x) * rInvX;
+        double t2 = (b[0] + 1 - rayOrigin.x) * rInvX;
+        double t3 = (b[1] - rayOrigin.y) * rInvY;
+        double t4 = (b[1] + 1 - rayOrigin.y) * rInvY;
+        double t5 = (b[2] - rayOrigin.z) * rInvZ;
+        double t6 = (b[2] + 1 - rayOrigin.z) * rInvZ;
 
         double tmin = Math.max(Math.max(Math.min(t1, t2), Math.min(t3, t4)), Math.min(t5, t6));
         double tmax = Math.min(Math.min(Math.max(t1, t2), Math.max(t3, t4)), Math.max(t5, t6));
@@ -278,7 +287,18 @@ public class OcclusionCullingInstance {
             double relativeY = start.y - target.getY();
             double relativeZ = start.z - target.getZ();
 
-            if(allowRayChecks && rayIntersection(lastHitBlock, start, new Vec3d(relativeX, relativeY, relativeZ).normalize())) {
+            // Normalised here rather than by building a vector: this runs once per target point,
+            // of which there are up to fourteen per entity, per culling pass.
+            //
+            // Deliberately unguarded against a zero length. When the viewer sits exactly on the
+            // target, all three components are zero and every division yields NaN -- which is
+            // precisely what Vec3d.normalize() produced before, and rayIntersection's comparisons
+            // against NaN are all false, so it returns true and this point is skipped. Adding a
+            // zero check here would look tidier and would quietly change that.
+            double dirLength = Math.sqrt(
+                    relativeX * relativeX + relativeY * relativeY + relativeZ * relativeZ);
+            if (allowRayChecks && rayIntersection(lastHitBlock, start,
+                    relativeX / dirLength, relativeY / dirLength, relativeZ / dirLength)) {
                 continue;
             }
             
