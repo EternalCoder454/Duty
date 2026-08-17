@@ -264,6 +264,56 @@ public final class DutyConfig {
         return raw.trim();
     }
 
+    /**
+     * Re-reads the file from disk, so an edit made while the game is running takes effect.
+     *
+     * <p>Only meaningful for options whose readers go through {@link #get} and friends every time
+     * rather than caching the value at startup. Duty's own transformer-time options are read once
+     * during class loading and cannot be changed by this; Liteminer's are read through on every
+     * access and can.
+     *
+     * <p>Keys absent from the edited file fall back to their registered defaults rather than
+     * keeping the previously loaded value, which is what makes deleting a line mean "put it back to
+     * default" instead of "leave it as it is".
+     *
+     * @return the number of options whose value changed
+     */
+    public static synchronized int reload() {
+        ensureLoaded();
+
+        Properties fresh = new Properties();
+        Path path = configPath();
+        if (Files.isRegularFile(path)) {
+            try (InputStream in = Files.newInputStream(path)) {
+                fresh.load(in);
+            } catch (IOException e) {
+                DutyLog.warn("Could not re-read " + path + "; keeping the values already loaded: " + e);
+                return 0;
+            }
+        }
+
+        int changed = 0;
+        for (Option option : OPTIONS.values()) {
+            String before = LOADED.getProperty(option.key(), option.defaultValue());
+            String after = fresh.getProperty(option.key(), option.defaultValue());
+            if (!before.trim().equals(after.trim())) {
+                changed++;
+            }
+        }
+
+        LOADED.clear();
+        for (String name : fresh.stringPropertyNames()) {
+            LOADED.setProperty(name, fresh.getProperty(name));
+        }
+
+        // Any option the edited file omitted is missing from LOADED now, so write it back with its
+        // default. Without this the next read would rewrite the file on its own anyway; doing it
+        // here keeps the file complete and the "unknown keys are preserved" guarantee intact.
+        dirty = true;
+        writeIfDirty();
+        return changed;
+    }
+
     private static void ensureLoaded() {
         if (initialized) {
             return;
