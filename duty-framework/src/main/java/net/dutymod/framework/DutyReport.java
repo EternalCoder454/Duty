@@ -134,11 +134,31 @@ public final class DutyReport {
             // Said carefully, because the previous wording ("nothing below was collected") sat
             // directly above findings that had plainly collected something. Counters, heap and GC
             // do not depend on measurement being on; only the timings do.
-            out.add(new Finding(Severity.INFO, "Timings are off",
-                    "No timer is running, so nothing below reports how long anything took. "
-                            + "Counters, heap and garbage collection are still recorded and any "
-                            + "findings about them are real. For timings, run /duty metrics on, "
-                            + "play for a few minutes, then ask again."));
+            // Off does not mean empty. Turning measurement off keeps whatever it already
+            // collected, so a session that measured and then stopped has a full table of
+            // timings sitting under a finding that used to announce there were none. Saying
+            // "nothing below reports how long anything took" above four populated timers is
+            // how a report teaches people to stop reading it.
+            boolean anyTimings = false;
+            for (DutyMetrics.Timer timer : DutyMetrics.timers()) {
+                if (timer.count() > 0L) {
+                    anyTimings = true;
+                    break;
+                }
+            }
+            if (anyTimings) {
+                out.add(new Finding(Severity.INFO, "Timings stopped before this report",
+                        "Measurement is off now, but it was on earlier, so the timings below are "
+                                + "real and cover only the part of the session it was on for. The "
+                                + "window figure is what they should be read against."));
+            } else {
+                out.add(new Finding(Severity.INFO, "Timings are off",
+                        "No timer is running and none has collected anything, so nothing below "
+                                + "reports how long anything took. Counters, heap and garbage "
+                                + "collection are recorded regardless and any findings about them "
+                                + "are real. For timings, run /duty metrics on, play for a few "
+                                + "minutes, then ask again."));
+            }
         }
 
         long windowNanos = DutyMetrics.windowNanos();
