@@ -795,3 +795,45 @@ That is a real win on a busy server. It is worth nothing here, and it costs.
 Nothing installed caches the chunk packet server-side, so the feature is genuinely unoccupied --
 it is just not worth occupying for one player. Revisit if a dedicated server with real player
 counts ever exists, and fix the light invalidation before shipping it if so.
+
+## LightLoad — rejected, it is ModernFix's territory and Duty already holds it
+
+Reviewed on 2026-08-16 (`mynamexiaopiao/LightLoad`, branch `neoforge`, targeting 1.21.1 -- the
+`master` branch is 1.20.1). 39 mixins, all client, all about startup and resource loading.
+
+### The distinctive feature is the same mixin Duty already ships
+
+LightLoad's resource-pack work injects into `FilePackResources`, `PathPackResources` and
+`FilePackResources.SharedZipFileAccess` to avoid rescanning zips on every `listResources` call.
+Duty: FixerUpper's `perf/resourcepacks` feature contains `FilePackResourcesMixin`,
+`PathPackResourcesMixin` and `SharedZipFileAccessAccessor` -- the same three classes, for the same
+reason. Duty's builds a dedicated `ZipPackIndex` behind double-checked locking; LightLoad's sorts
+every entry name into a `List<String>` and binary-searches it. Duty's is at least as good and is
+already installed.
+
+That is not a coincidence. FixerUpper *is* ModernFix, and LightLoad ships
+`compat.ModernFixModelBakeEventHelperMixin` and `compat.ModernFixResourceNodeMixin` -- it is built
+to run alongside ModernFix and patch around it. Its whole feature list maps onto FixerUpper's:
+`resourcepacks`, `model_optimizations`, `dynamic_resources`, `cache_blockstate_cache_arrays`,
+`deduplicate_wall_shapes`, `dedicated_reload_executor`, `lazy_search_tree_registry`, `tag_id_caching`.
+
+### The hash caching is a net loss
+
+`ResourceLocationHashMixin` `@Overwrite`s `Identifier.hashCode()` to cache the result. Vanilla's, in
+26.1.2 bytecode, is `31 * namespace.hashCode() + path.hashCode()` -- and `String.hashCode()` already
+caches internally. So vanilla is two field reads, two cached-hash reads, a multiply and an add, all
+of which the JIT inlines. Caching that saves a multiply and an add in exchange for four bytes on
+*every* `Identifier` -- hundreds of thousands of them in a pack this size -- plus a branch. That is
+the wrong direction immediately after a memory pass, and doubly so under
+`-XX:+UseCompactObjectHeaders`, where the point is object density. `MaterialHashMixin` has the same
+shape and the same problem.
+
+(For contrast, the prototype-hash cache taken from RecipeEssentials above *is* worth it: the thing
+being cached is a walk over a whole component map, not two already-cached string hashes. The test is
+what the cache replaces, not that caching sounds fast.)
+
+### A third of it targets mods that are not here
+
+Thirteen of the 39 mixins are in `compat/`, patching AdAstra, CableFacades, Lightspeed, ModernFix,
+ProbeJS, WaterMedia, FramedBlocks, Titanium, TravelersBackpack, YACL and Embeddium. **None of those
+eleven mods is installed.** They are inert weight that has to be maintained across every update.
