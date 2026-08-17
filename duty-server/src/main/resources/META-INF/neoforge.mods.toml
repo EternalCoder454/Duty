@@ -12,16 +12,19 @@ credits = "Derived from BiomeSpy by MoePus (LGPL-3.0)."
 description = '''
 Duty does what it needs to do, perform its duty.
 
-Server: work that runs on the logical server. Replaces the brute-force scan behind
-/locate biome and /locate structure with a targeted search.
+Server: work that runs on the logical server. A targeted search behind /locate instead
+of a brute-force scan, a faster redstone update order, native compression and encryption
+on the network path, and autosaves written off the server thread.
 '''
 
 [[mixins]]
 config = "duty_server.mixins.json"
 
-# Kept separate from the config above rather than merged into it. A mixin config names exactly
-# one plugin, and BiomeSpy's gates TerraBlender compat while this one gates the pipeline
-# features -- folding them together would silently drop one of the two.
+# Kept separate from the config above rather than merged into it. A mixin config names exactly one
+# plugin, and this one has NetMixinPlugin gating the pipeline features on their options and on
+# e4mc's presence. The biome config no longer has a plugin at all -- its only job was gating a
+# TerraBlender compat package that was never ported -- but merging the two would still mean one
+# config's mixins silently inheriting the other's gate.
 [[mixins]]
 config = "duty_server_net.mixins.json"
 
