@@ -47,10 +47,14 @@ public abstract class LivingEntityMixin extends Entity {
         original.call(level, source, playerKilled);
     }
 
-    @WrapMethod(method = "knockback(DDDLnet/minecraft/world/damagesource/DamageSource;FZ)V")
-    private void knockback(double power, double xd, double zd, DamageSource source, float damage, boolean comesFromEffect, Operation<Void> original) {
+    // 26.1.2 takes three doubles. Upstream targets 26.2's six-argument form, which also carries
+    // the damage source, the amount and whether an effect caused it -- none of which this wrapper
+    // reads. It exists only to hold the monitor across the call, so narrowing the signature costs
+    // nothing.
+    @WrapMethod(method = "knockback(DDD)V")
+    private void knockback(double power, double xd, double zd, Operation<Void> original) {
         synchronized (this) {
-            original.call(power, xd, zd, source, damage, comesFromEffect);
+            original.call(power, xd, zd);
         }
     }
 
