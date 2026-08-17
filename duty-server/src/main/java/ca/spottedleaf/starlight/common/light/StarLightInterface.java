@@ -470,14 +470,50 @@ public final class StarLightInterface {
     private static final net.dutymod.framework.DutyMetrics.Counter CHUNKS_LIT =
             net.dutymod.framework.DutyMetrics.counter("server.lighting.chunks_lit");
 
+    /**
+     * A single chunk taking longer than this is worth a line, with where it was.
+     *
+     * <p>Lighting a chunk has a median around 0.4ms. A measured session produced a 23.5ms worst --
+     * sixty times that -- and nothing anywhere said which chunk or why. The report could see the
+     * outlier existed and had nothing to point at, which is the least useful kind of finding.
+     */
+    private static final long SLOW_CHUNK_NANOS = 10_000_000L;
+
+    /** Rate limit: a bad region should report once a minute, not once a chunk. */
+    private static final long SLOW_CHUNK_INTERVAL_NANOS = 60_000_000_000L;
+
+    private static volatile long duty$lastSlowChunkReport = Long.MIN_VALUE;
+
     public void lightChunk(final ChunkAccess chunk, final Boolean[] emptySections) {
-        final long duty$started = LIGHT_CHUNK.begin();
+        // Timed unconditionally rather than through the metrics gate, because the slow-chunk
+        // warning below has to work whether or not anyone switched measuring on -- which is
+        // precisely when an unexplained stall gets noticed.
+        final long duty$start = System.nanoTime();
         CHUNKS_LIT.increment();
         try {
             this.duty$lightChunk(chunk, emptySections);
         } finally {
-            LIGHT_CHUNK.end(duty$started);
+            final long duty$elapsed = System.nanoTime() - duty$start;
+            LIGHT_CHUNK.record(duty$elapsed);
+            duty$reportIfSlow(duty$elapsed, chunk);
         }
+    }
+
+    /** Logs a chunk that took far longer than usual, at most once a minute. */
+    private static void duty$reportIfSlow(final long elapsedNanos, final ChunkAccess chunk) {
+        if (elapsedNanos < SLOW_CHUNK_NANOS) {
+            return;
+        }
+        final long now = System.nanoTime();
+        if (now - duty$lastSlowChunkReport < SLOW_CHUNK_INTERVAL_NANOS) {
+            return;
+        }
+        duty$lastSlowChunkReport = now;
+        ScalableLuxEntrypoint.LOGGER.warn(
+                "Lighting {} took {}ms, far above the usual sub-millisecond. One slow chunk is "
+                        + "normally a dense build or a first-time light of a heavily modified "
+                        + "region; a steady stream of these is not.",
+                chunk.getPos(), String.format(java.util.Locale.ROOT, "%.1f", elapsedNanos / 1.0e6));
     }
 
     private void duty$lightChunk(final ChunkAccess chunk, final Boolean[] emptySections) {

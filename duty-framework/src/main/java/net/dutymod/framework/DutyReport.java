@@ -168,6 +168,9 @@ public final class DutyReport {
             }
         }
 
+        appendHeapFinding(out);
+        appendCounterOnlyFindings(out);
+
         for (Contributor contributor : CONTRIBUTORS) {
             try {
                 contributor.contribute(out);
@@ -185,6 +188,70 @@ public final class DutyReport {
 
         out.sort(Comparator.comparingInt(f -> f.severity().ordinal()));
         return out;
+    }
+
+    /**
+     * Flags heap pressure, which colours everything else in the report.
+     *
+     * <p>Worth stating outright because a heap near its ceiling makes every timer look worse: GC
+     * pauses land inside whatever happened to be running and show up as spikes in unrelated
+     * measurements. Somebody reading a spike finding should know whether to believe it.
+     */
+    private static void appendHeapFinding(List<Finding> out) {
+        Runtime runtime = Runtime.getRuntime();
+        long max = runtime.maxMemory();
+        if (max <= 0 || max == Long.MAX_VALUE) {
+            return;
+        }
+        long used = runtime.totalMemory() - runtime.freeMemory();
+        double share = (double) used / max;
+        if (share < 0.85d) {
+            return;
+        }
+        out.add(new Finding(Severity.PROBLEM, "Heap is nearly full",
+                String.format(Locale.ROOT,
+                        "%d MiB used of %d MiB (%.0f%%). Treat every spike below with suspicion: "
+                                + "at this level a collection pause lands inside whatever was "
+                                + "running and is measured as that thing being slow. Raise the "
+                                + "maximum before chasing any of them.",
+                        used >> 20, max >> 20, share * 100.0d)));
+    }
+
+    /**
+     * Explains a counter that moved while its timer did not.
+     *
+     * <p>Counters always count; timers only run while measurement is on. So a session that enables
+     * measurement partway through leaves pairs like {@code server.save.count} at five with
+     * {@code server.save.write} absent entirely -- which reads as a bug and is not one. Saying so
+     * costs a line and saves the reader working it out.
+     */
+    private static void appendCounterOnlyFindings(List<Finding> out) {
+        List<String> orphans = new ArrayList<>();
+        for (DutyMetrics.Counter counter : DutyMetrics.counters()) {
+            String base = counter.name();
+            int dot = base.lastIndexOf('.');
+            if (dot <= 0) {
+                continue;
+            }
+            String group = base.substring(0, dot);
+            boolean anyTimer = false;
+            for (DutyMetrics.Timer timer : DutyMetrics.timers()) {
+                if (timer.name().startsWith(group + ".")) {
+                    anyTimer = true;
+                    break;
+                }
+            }
+            if (!anyTimer) {
+                orphans.add(base);
+            }
+        }
+        if (orphans.isEmpty()) {
+            return;
+        }
+        out.add(new Finding(Severity.INFO, "Some counters have no timings",
+                "Counters run always; timers only while measurement is on, so anything that "
+                        + "happened before it was switched on is counted but not timed. Not a "
+                        + "fault: " + String.join(", ", orphans)));
     }
 
     /** {@return the whole report: findings, then the numbers behind them, then the environment} */

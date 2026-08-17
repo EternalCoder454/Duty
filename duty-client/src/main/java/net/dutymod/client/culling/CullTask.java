@@ -119,8 +119,16 @@ public final class CullTask implements Runnable {
         });
     }
 
-    /** A pass slower than this is worth a line in the log, with the context to explain it. */
-    private static final long SLOW_PASS_NANOS = 20_000_000L;
+    /**
+     * A pass slower than this is worth a line in the log, with the context to explain it.
+     *
+     * <p>Was 20ms, chosen before there was any data. A real session then produced a 12.6ms worst
+     * against a 0.655ms median -- a nineteen-fold outlier that the report flagged and this
+     * diagnostic sat silently through, which is the wrong way round: the report noticed and the
+     * thing that could have explained it did not fire. 10ms is still an order of magnitude above
+     * the median, so it stays quiet in normal play.
+     */
+    private static final long SLOW_PASS_NANOS = 10_000_000L;
 
     /** Rate limit, so a genuinely bad situation reports once a minute rather than every pass. */
     private static final long SLOW_PASS_REPORT_INTERVAL_NANOS = 60_000_000_000L;
