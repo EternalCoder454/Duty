@@ -48,11 +48,31 @@ public abstract class ParticleEngineAsyncMixin {
 	}
 
 	@SuppressWarnings({"SynchronizeOnNonFinalField"})
+	/**
+	 * Both arms of the particle tick, so the async path can be compared against what it replaced.
+	 */
+	@Unique
+	private static final net.dutymod.framework.DutyMetrics.Timer TICK_ASYNC =
+			net.dutymod.framework.DutyMetrics.timer("client.particle.tick_async");
+	@Unique
+	private static final net.dutymod.framework.DutyMetrics.Timer TICK_SYNC =
+			net.dutymod.framework.DutyMetrics.timer("client.particle.tick_sync");
+
 	@WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "java/util/Map.forEach (Ljava/util/function/BiConsumer;)V"))
 	private void duty$asyncParticleTicking(Map<ParticleRenderType, Queue<Particle>> instance, BiConsumer<? super ParticleRenderType, ? extends Queue<Particle>> v, Operation<Void> original) {
+		// Both arms are timed, under different names, so the two are directly comparable. Timing
+		// only the async path would show what it costs without showing what it replaced, which is
+		// the question worth asking about a feature whose whole job is to be faster than vanilla.
 		if (!PcConfig.INSTANCE.getImpl().getAsynchronousTicking().get()) {
-			original.call(instance, v);
+			long started = TICK_SYNC.begin();
+			try {
+				original.call(instance, v);
+			} finally {
+				TICK_SYNC.end(started);
+			}
 		} else {
+			long duty$started = TICK_ASYNC.begin();
+			try {
 			try {
 				var entries = this.particles.entrySet();
 				synchronized (this.particles) {
@@ -84,6 +104,9 @@ public abstract class ParticleEngineAsyncMixin {
 			} catch (Exception e) {
 				PcConfig.INSTANCE.getLogger().error("Asynchronous particle ticking may have encountered a concurrency problem; disabling", e);
 				PcConfig.INSTANCE.getImpl().getAsynchronousTicking().validateAndSet(false);
+			}
+			} finally {
+				TICK_ASYNC.end(duty$started);
 			}
 		}
 	}

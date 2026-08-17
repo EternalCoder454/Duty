@@ -463,7 +463,23 @@ public final class StarLightInterface {
         }
     }
 
+    /** Time spent lighting chunks, which is the reason this engine is here at all. */
+    private static final net.dutymod.framework.DutyMetrics.Timer LIGHT_CHUNK =
+            net.dutymod.framework.DutyMetrics.timer("server.lighting.chunk");
+    private static final net.dutymod.framework.DutyMetrics.Counter CHUNKS_LIT =
+            net.dutymod.framework.DutyMetrics.counter("server.lighting.chunks_lit");
+
     public void lightChunk(final ChunkAccess chunk, final Boolean[] emptySections) {
+        final long duty$started = LIGHT_CHUNK.begin();
+        CHUNKS_LIT.increment();
+        try {
+            this.duty$lightChunk(chunk, emptySections);
+        } finally {
+            LIGHT_CHUNK.end(duty$started);
+        }
+    }
+
+    private void duty$lightChunk(final ChunkAccess chunk, final Boolean[] emptySections) {
         final SkyStarLightEngine skyEngine = this.getSkyLightEngine();
         final BlockStarLightEngine blockEngine = this.getBlockLightEngine();
 

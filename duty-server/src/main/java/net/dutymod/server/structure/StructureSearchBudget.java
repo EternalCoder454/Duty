@@ -1,6 +1,7 @@
 package net.dutymod.server.structure;
 
 import net.dutymod.framework.DutyConfig;
+import net.dutymod.framework.DutyMetrics;
 import net.dutymod.framework.DutyLog;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
@@ -61,15 +62,28 @@ public final class StructureSearchBudget {
     /** Forces the registration above to run. */
     public static void init() {}
 
+    /**
+     * How long searches take, and how many ran out of budget.
+     *
+     * <p>A search is the most expensive single thing this module does to the server thread, and
+     * until now the only visible trace of one was the give-up line -- so a search that finished in
+     * 4 seconds looked exactly like one that finished in 40.
+     */
+    private static final DutyMetrics.Timer SEARCH = DutyMetrics.timer("server.structure.search");
+    private static final DutyMetrics.Counter TIMED_OUT =
+            DutyMetrics.counter("server.structure.search_timed_out");
+
     /** Starts the clock for a search on this thread. Cheap enough to call unconditionally. */
     public static void arm(HolderSet<Structure> targets) {
         int seconds = DutyConfig.getInt(TIMEOUT_SECONDS, 0, 3600);
         Budget budget = STATE.get();
+        // Stamped before the timeout check, not after: with the watchdog switched off there is no
+        // deadline to arm, but the search still happens and is still worth timing.
+        budget.startedNanos = System.nanoTime();
         if (seconds <= 0) {
             budget.armed = false;
             return;
         }
-        budget.startedNanos = System.nanoTime();
         budget.deadlineNanos = budget.startedNanos + seconds * 1_000_000_000L;
         budget.armed = true;
         budget.reported = false;
@@ -78,7 +92,12 @@ public final class StructureSearchBudget {
 
     /** Ends the search on this thread, whether it found anything or not. */
     public static void disarm() {
-        STATE.get().armed = false;
+        Budget budget = STATE.get();
+        budget.armed = false;
+        if (budget.startedNanos != 0L) {
+            SEARCH.record(System.nanoTime() - budget.startedNanos);
+            budget.startedNanos = 0L;
+        }
     }
 
     /**
@@ -94,6 +113,7 @@ public final class StructureSearchBudget {
         }
         if (!budget.reported) {
             budget.reported = true;
+            TIMED_OUT.increment();
             long millis = (System.nanoTime() - budget.startedNanos) / 1_000_000L;
             DutyLog.info("Structure search for " + budget.target + " gave up after " + millis
                     + "ms; it would have kept the server thread busy for longer still. Raise "

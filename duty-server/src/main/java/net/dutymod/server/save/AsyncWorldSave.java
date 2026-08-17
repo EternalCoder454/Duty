@@ -2,6 +2,7 @@ package net.dutymod.server.save;
 
 import net.dutymod.framework.DutyConfig;
 import net.dutymod.framework.DutyLog;
+import net.dutymod.framework.DutyMetrics;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,6 +43,17 @@ public final class AsyncWorldSave {
     private static final AtomicLong SUBMITTED = new AtomicLong();
     private static final AtomicLong COMPLETED = new AtomicLong();
 
+    /**
+     * What the writes cost, off-thread.
+     *
+     * <p>The counters above exist to answer "is anything outstanding at shutdown"; these answer a
+     * different question -- whether the single worker can keep up. If the mean write approaches the
+     * autosave interval, moving the work off the server thread has only moved where the backlog
+     * forms.
+     */
+    private static final DutyMetrics.Timer WRITE = DutyMetrics.timer("server.save.write");
+    private static final DutyMetrics.Counter SAVES = DutyMetrics.counter("server.save.count");
+
     private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(runnable -> {
         Thread thread = new Thread(runnable, "Duty world save");
         // Not a daemon: a daemon dies with the JVM mid-write, which is exactly the save you most
@@ -79,15 +91,22 @@ public final class AsyncWorldSave {
      */
     public static void submit(String what, Runnable write) {
         SUBMITTED.incrementAndGet();
+        SAVES.increment();
         DutyLog.infoOnce("async_save.live",
                 "Async world save is live; " + what + " is now written off the server thread.");
         WORKER.execute(() -> {
+            long started = WRITE.begin();
             try {
                 write.run();
             } catch (Throwable t) {
                 // Never let a save failure kill the worker; the next save must still get through.
                 DutyLog.warn("Async save of " + what + " failed: " + t);
             } finally {
+                // Timed here rather than around submit(): submit returns the moment the
+                // work is queued, so timing it would measure the handoff and report that
+                // saving is free. What matters is how long the write actually takes, which
+                // is what decides whether the queue can keep up with autosave.
+                WRITE.end(started);
                 COMPLETED.incrementAndGet();
             }
         });

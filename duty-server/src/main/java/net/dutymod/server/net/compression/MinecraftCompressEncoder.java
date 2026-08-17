@@ -17,8 +17,21 @@ public class MinecraftCompressEncoder extends MessageToByteEncoder<ByteBuf> {
         this.compressor = compressor;
     }
 
+    /** Native compression is the reason this class exists; this is what it costs. */
+    private static final net.dutymod.framework.DutyMetrics.Timer ENCODE =
+            net.dutymod.framework.DutyMetrics.timer("server.net.compress");
+
     @Override
     protected void encode(ChannelHandlerContext ctx, ByteBuf msg, ByteBuf out) throws Exception {
+        final long duty$started = ENCODE.begin();
+        try {
+            duty$encode(ctx, msg, out);
+        } finally {
+            ENCODE.end(duty$started);
+        }
+    }
+
+    private void duty$encode(ChannelHandlerContext ctx, ByteBuf msg, ByteBuf out) throws Exception {
         int uncompressed = msg.readableBytes();
         if (uncompressed < threshold) {
             VarIntUtil.writeVarInt(out, 0);

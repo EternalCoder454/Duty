@@ -19,6 +19,19 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class BlockStateCacheImpl {
+    /**
+     * How much sharing actually happened.
+     *
+     * <p>This module's whole claim is "the same shape is stored once instead of thousands of
+     * times", and until now that claim was untestable from inside the game. These count the times
+     * a state's shape or face-sturdy array was replaced by one that already existed -- every
+     * increment is an object that did not stay on the heap.
+     */
+    private static final net.dutymod.framework.DutyMetrics.Counter SHAPES_SHARED =
+            net.dutymod.framework.DutyMetrics.counter("memory.blockstate.shapes_shared");
+    private static final net.dutymod.framework.DutyMetrics.Counter FACE_STURDY_SHARED =
+            net.dutymod.framework.DutyMetrics.counter("memory.blockstate.face_sturdy_shared");
+
     public static final Map<ArrayVSAccess, ArrayVSAccess> CACHE_COLLIDE = new Object2ObjectOpenCustomHashMap<>(
             ArrayVoxelShapeHash.INSTANCE
     );
@@ -86,6 +99,12 @@ public class BlockStateCacheImpl {
                 dedupedCollisionShape = (VoxelShape) CACHE_COLLIDE.computeIfAbsent(access, Function.identity());
             }
         }
+        // A different instance coming back means this state's shape is now shared with one that
+        // already existed, which is the entire point of the module and the one number that says so.
+        // Counters always count, so this works without turning measurement on.
+        if (dedupedCollisionShape != newCache.getCollisionShape()) {
+            SHAPES_SHARED.increment();
+        }
         replaceInternals(dedupedCollisionShape, newCache.getCollisionShape());
         newCache.setCollisionShape(dedupedCollisionShape);
     }
@@ -98,6 +117,9 @@ public class BlockStateCacheImpl {
             dedupedFaceSturdy = oldCache.getFaceSturdy();
         } else {
             dedupedFaceSturdy = CACHE_FACE_STURDY.computeIfAbsent(newCache.getFaceSturdy(), Function.identity());
+        }
+        if (dedupedFaceSturdy != newCache.getFaceSturdy()) {
+            FACE_STURDY_SHARED.increment();
         }
         newCache.setFaceSturdy(dedupedFaceSturdy);
     }

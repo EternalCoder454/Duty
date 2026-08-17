@@ -17,7 +17,25 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class BiomeFinder {
+    /** What a /locate biome actually costs. The whole point of this module is that it is
+     *  cheaper than vanilla's scan, and that claim was never measured. */
+    private static final net.dutymod.framework.DutyMetrics.Timer SEARCH =
+            net.dutymod.framework.DutyMetrics.timer("server.biome.search");
+
     public static Pair<BlockPos, Holder<Biome>> findClosestBiome3d(@NotNull BlockPos pos, int radius, int horizontalStep,
+                                                                   int verticalStep, Predicate<Holder<Biome>> biomePredicate,
+                                                                   Climate.Sampler sampler, LevelReader level,
+                                                                   MultiNoiseBiomeSource biomeSource) {
+        long duty$started = SEARCH.begin();
+        try {
+            return findClosestBiome3dReal(pos, radius, horizontalStep, verticalStep, biomePredicate,
+                    sampler, level, biomeSource);
+        } finally {
+            SEARCH.end(duty$started);
+        }
+    }
+
+    private static Pair<BlockPos, Holder<Biome>> findClosestBiome3dReal(@NotNull BlockPos pos, int radius, int horizontalStep,
                                                                    int verticalStep, Predicate<Holder<Biome>> biomePredicate,
                                                                    Climate.Sampler sampler, LevelReader level,
                                                                    MultiNoiseBiomeSource biomeSource) {

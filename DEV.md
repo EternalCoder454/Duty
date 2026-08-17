@@ -165,6 +165,25 @@ server thread and its own workers, sometimes on the same timer. The rolling aver
 unsynchronised `volatile double`: two threads finishing at once lose one sample, which is
 not worth a CAS loop on a number whose only job is to be displayed.
 
+### What is measured
+
+| name | what it tells you |
+|---|---|
+| `client.culling.pass` / `.traced` / `.hidden` | whether occlusion tracing earns its thread |
+| `client.particle.tick_async` / `.tick_sync` | both arms, so async can be compared against what it replaced |
+| `server.lighting.chunk` / `.chunks_lit` | what the light engine costs per chunk |
+| `server.structure.search` / `.search_timed_out` | how long `/locate` really takes, and how often the watchdog fires |
+| `server.biome.search` | the same for `/locate biome` |
+| `server.save.write` / `.count` | whether the single save worker keeps up with autosave |
+| `server.net.compress` / `.decompress` | what native compression costs per packet |
+| `memory.blockstate.shapes_shared` / `.face_sturdy_shared` | objects that did not stay on the heap |
+
+Two of those are deliberately paired against a baseline rather than measured alone. Timing
+only the async particle path would show what it costs without showing what it replaced, and
+the save timer sits around the write itself rather than around `submit()` — `submit` returns
+the moment work is queued, so timing it would measure the handoff and report that saving is
+free.
+
 Where a module already keeps a last-value field for its own display, it keeps it — the F3
 culling line needs the last pass exactly, and has to work whether or not measurement is on.
 The metrics call sits alongside and adds the shape over time.

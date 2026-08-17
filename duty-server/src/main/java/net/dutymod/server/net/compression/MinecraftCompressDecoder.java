@@ -37,8 +37,20 @@ public class MinecraftCompressDecoder extends MessageToMessageDecoder<ByteBuf> {
         this.validate = validate;
     }
 
+    private static final net.dutymod.framework.DutyMetrics.Timer DECODE =
+            net.dutymod.framework.DutyMetrics.timer("server.net.decompress");
+
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+        final long duty$started = DECODE.begin();
+        try {
+            duty$decode(ctx, in, out);
+        } finally {
+            DECODE.end(duty$started);
+        }
+    }
+
+    private void duty$decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         int claimedUncompressedSize = VarIntUtil.readVarInt(in);
 
         if (claimedUncompressedSize == 0) {
