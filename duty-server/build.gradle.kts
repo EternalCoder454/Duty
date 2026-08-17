@@ -23,6 +23,9 @@ neoForge {
         create("server") { server() }
         create("client") { client() }
     }
+    // The light engine indexes chunk sections' palettes directly and hands work back to the chunk
+    // map's thread; neither is reachable at vanilla's visibility.
+    accessTransformers.from("src/main/resources/META-INF/accesstransformer.cfg")
 }
 
 repositories {

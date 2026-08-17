@@ -13,7 +13,7 @@ Duty is five separate jars. Install the ones you want — none of them requires 
 | **Duty: Memory** | Uses less RAM. Deduplicates the tables Minecraft keeps per block state, and removes an array copy the game performs constantly. |
 | **Duty: Client** | Higher frame rate. Bakes chests, signs and banners into the chunk mesh instead of redrawing them every frame, hides entities behind walls so they cost nothing, and speeds up particles. |
 | **Duty: FixerUpper** | Faster startup. Trims datafixer work and makes resource and registry loading lazy, cutting the long tail of loading stalls. |
-| **Duty: Server** | Smoother worlds. Faster `/locate`, faster redstone, a quicker network path, and autosaves that no longer stall the game. |
+| **Duty: Server** | Smoother worlds. Faster `/locate`, faster redstone, a quicker network path, autosaves that no longer stall the game, and a rewritten light engine so chunks generate faster and stop filling in dark. |
 | **Duty: Essentials** | Homes, warps, `/back`, random teleport, teleport requests, and the usual moderation commands. The one module that is not about performance. |
 
 > [!IMPORTANT]

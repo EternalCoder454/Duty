@@ -183,3 +183,24 @@ not in use.
 with Mojang mappings. Its Fabric entrypoint became a NeoForge one, YACL config became DutyConfig,
 and its access widener was translated to an access transformer. `CombineBars` was not carried
 over: it is dense with 26.1-versus-26.2 conditionals and is a cosmetic HUD change.
+
+**ScalableLux** (`ca.spottedleaf.starlight`, LGPL-3.0) replaces the light engine in
+`duty-server`. Derived from PaperMC's Starlight by Spottedleaf, forked and maintained by
+RelativityMC after Starlight stopped being maintained in March 2024; taken from that fork's
+`port/neoforge/26.1.2` NeoForge patch. It ships with `FlowSched` (RelativityMC), vendored
+under `net.dutymod.server.flowsched`.
+
+Two packaging decisions worth recording, because they look inconsistent and are not:
+
+- The engine **keeps** its `ca.spottedleaf.starlight` package rather than moving into
+  `net.dutymod`. C2ME's `threading-lighting` module ships a mixin targeting
+  `ca/spottedleaf/starlight/common/thread/SchedulingUtil` by literal name, which hands the
+  engine's scheduling to C2ME's prioritised scheduler. Renaming would silently cost that
+  integration and leave both mods scheduling lighting independently.
+- FlowSched **is** relocated, because C2ME shades its own copy of
+  `com.ishland.flowsched` and two copies on one classloader is a real conflict. Nothing
+  outside the engine references it by name, so moving it costs nothing.
+
+One upstream bug was fixed in the process: `BlockStarLightEngine.getSources` set
+`mutablePos4` to the block being tested and then read light emission at `mutablePos1`,
+which that method never writes. See the comment at the call site.

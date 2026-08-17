@@ -8,13 +8,14 @@ version = "${mod_version}"
 displayName = "Duty: Server"
 logoFile = "icon.png"
 authors = "Duty"
-credits = "Derived from BiomeSpy by MoePus (LGPL-3.0)."
+credits = "Derived from BiomeSpy by MoePus, and ScalableLux by RelativityMC (from PaperMC's Starlight by Spottedleaf). Both LGPL-3.0."
 description = '''
 Duty does what it needs to do, perform its duty.
 
 Server: work that runs on the logical server. A targeted search behind /locate instead
 of a brute-force scan, a faster redstone update order, native compression and encryption
-on the network path, and autosaves written off the server thread.
+on the network path, autosaves written off the server thread, and a rewritten light
+engine, which is a large part of what chunk generation actually spends its time on.
 '''
 
 [[mixins]]
@@ -61,6 +62,14 @@ config = "duty_server_jigsaw.mixins.json"
 [[mixins]]
 config = "duty_server_spawn.mixins.json"
 
+# The Starlight-derived light engine. Its plugin refuses to apply the mixins at all when the
+# feature is off or another light-engine mod is installed -- these replace the engine rather than
+# tune it, so "applied but standing down" is not a state that exists. Note that C2ME is not
+# something it stands down for: C2ME targets this engine's SchedulingUtil by name and takes its
+# scheduling over, which is the integration working. See LightingMixinPlugin.
+[[mixins]]
+config = "duty_server_lighting.mixins.json"
+
 
 
 
@@ -84,6 +93,34 @@ type = "incompatible"
 reason = "Duty: Server already contains BiomeSpy."
 versionRange = "[0,)"
 ordering = "NONE"
+side = "BOTH"
+
+# The light engine is ScalableLux's, so running both means two copies of the same code competing
+# for the same targets. The mixin plugin already stands down when it sees these, but saying so
+# here turns a silent no-op into a message at load.
+[[dependencies.duty_server]]
+modId = "scalablelux"
+type = "incompatible"
+reason = "Duty: Server already contains ScalableLux's light engine."
+versionRange = "[0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.duty_server]]
+modId = "starlight"
+type = "incompatible"
+reason = "Duty: Server already contains a Starlight-derived light engine."
+versionRange = "[0,)"
+ordering = "NONE"
+side = "BOTH"
+
+# C2ME is deliberately NOT incompatible. Its threading-lighting module targets this engine's
+# SchedulingUtil by name and takes over scheduling; the two are designed to run together.
+[[dependencies.duty_server]]
+modId = "c2me"
+type = "optional"
+versionRange = "[0,)"
+ordering = "AFTER"
 side = "BOTH"
 
 # No entry for the biome-layering mods. TerraBlender's was here for compat mixins that were never
