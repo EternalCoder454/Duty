@@ -1,7 +1,7 @@
 package net.dutymod.client.quiet.config;
 
 import com.google.common.io.Files;
-import net.neoforged.fml.loading.FMLPaths;
+import net.dutymod.framework.platform.Platform;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,7 +13,7 @@ public class QuietMixinConfig {
     public static final ArrayList<String> DISABLED = new ArrayList<>();
 
     private static void load() {
-        File file = FMLPaths.CONFIGDIR.get().resolve("duty-stfu-disable.txt").toFile();
+        File file = Platform.get().configDir().resolve("duty-stfu-disable.txt").toFile();
         if (file.exists()) {
             try(BufferedReader reader = Files.newReader(file, StandardCharsets.UTF_8)) {
                 reader.lines().forEach(line -> {

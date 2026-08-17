@@ -5,7 +5,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.dutymod.fixerupper.entity.AttributeInstanceTemplates;
-import net.dutymod.fixerupper.neoforge.init.FixerUpperForge;
+import net.dutymod.fixerupper.FixerUpperState;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -29,7 +29,7 @@ public class AttributeSupplierBuilderMixin {
     private void deduplicateInstances(CallbackInfoReturnable<AttributeSupplier> cir) {
         // The interning has overhead, so we only apply it early during the launch, when mods are normally
         // registering the custom attribute suppliers.
-        if (FixerUpperForge.registryEventsFired) {
+        if (FixerUpperState.registryEventsFired) {
             return;
         }
         this.builder.replaceAll((a, i) -> AttributeInstanceTemplates.intern(i));

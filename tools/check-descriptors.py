@@ -51,6 +51,19 @@ EXTENDS_RE = re.compile(r"extends\s+([\w.$]+)")
 _members_cache: dict[str, set[str] | None] = {}
 
 
+
+def source_files(module_dir):
+    """Every Java file in a module, across all source sets.
+
+    Duty is split into `src/main/java`, which names no loader, and `src/<loader>/java`. Scanning
+    only main would silently skip the loader-specific half -- which is exactly what happened when
+    the split landed: this checker's count fell and nothing failed.
+    """
+    for src_set in sorted(p for p in (module_dir / "src").iterdir() if p.is_dir()):
+        java = src_set / "java"
+        if java.is_dir():
+            yield from java.rglob("*.java")
+
 def members_of(binary_name: str, jar: Path) -> set[str] | None:
     """Field and method names visible on a class, including inherited ones."""
     if binary_name in _members_cache:
@@ -92,7 +105,7 @@ def main() -> int:
     bad_methods: list[tuple[str, str, str]] = []
 
     for module in modules:
-        for src in sorted((ROOT / module / "src/main/java").rglob("*.java")):
+        for src in sorted(source_files(ROOT / module)):
             text = src.read_text(encoding="utf-8", errors="replace")
             refs: set[str] = set()
             for literal in ANNOTATION_STRING.findall(text):

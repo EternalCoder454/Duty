@@ -44,6 +44,19 @@ EXPECTED_ABSENT = {
 }
 
 
+
+def source_files(module_dir):
+    """Every Java file in a module, across all source sets.
+
+    Duty is split into `src/main/java`, which names no loader, and `src/<loader>/java`. Scanning
+    only main would silently skip the loader-specific half -- which is exactly what happened when
+    the split landed: this checker's count fell and nothing failed.
+    """
+    for src_set in sorted(p for p in (module_dir / "src").iterdir() if p.is_dir()):
+        java = src_set / "java"
+        if java.is_dir():
+            yield from java.rglob("*.java")
+
 def classes_in(jar: zipfile.ZipFile) -> set[str]:
     return {
         name[:-len(".class")].replace("/", ".")
@@ -91,7 +104,8 @@ def main() -> int:
                             f"{module}: service {service} lists {impl}, which is not in the jar")
 
         # 2. String literals in source that name a Duty class or package.
-        for src in (ROOT / module / "src/main/java").rglob("*.java"):
+        # Both source sets: loader-specific code moved out of src/main and must still be checked.
+        for src in source_files(ROOT / module):
             text = src.read_text(encoding="utf-8", errors="ignore")
             for literal in re.findall(r'"(net\.dutymod\.[A-Za-z0-9_.]+)"', text):
                 # A trailing dot, or a name whose last segment is lowercase, is a package root

@@ -5,6 +5,7 @@ import net.dutymod.client.bakedentities.compat.ModCompat;
 import net.dutymod.client.bakedentities.registry.Registry;
 import net.dutymod.client.batching.Batching;
 import net.dutymod.client.quiet.Quiet;
+import net.dutymod.client.quiet.QuietNeoForge;
 import net.dutymod.framework.DutyLog;
 import net.dutymod.framework.screen.DutyConfigScreens;
 import net.neoforged.fml.ModContainer;
@@ -44,7 +45,7 @@ public class DutyClient {
         // Block entity groups have to be registered before anything asks which ones are baked.
         Registry.init();
 
-        Quiet.register(modBus);
+        QuietNeoForge.register(modBus);
 
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> {
             EntityCulling.get().clientTick();

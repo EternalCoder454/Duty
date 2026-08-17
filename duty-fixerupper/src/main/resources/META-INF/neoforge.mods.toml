@@ -19,6 +19,12 @@ resource and registry loading lazy, and cuts the long tail of startup stalls.
 [[mixins]]
 config = "duty_fixerupper.mixins.json"
 
+# The loader source set's mixins get their own generated config. They target NeoForge's own classes
+# -- capabilities, registry events, its model pipeline -- and have no Fabric equivalent, so keeping
+# them separate is what lets a Fabric build ship the config above without this one.
+[[mixins]]
+config = "duty_fixerupper_neoforge.mixins.json"
+
 [[dependencies.duty_fixerupper]]
 modId = "neoforge"
 type = "required"

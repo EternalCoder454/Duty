@@ -9,15 +9,12 @@ import net.minecraft.client.sounds.ChannelAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.client.event.RegisterDebugEntriesEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.Map;
 
 /**
- * Quiet's keybinds and music control, on NeoForge.
+ * Quiet's keybinds and music control.
  *
  * <p>Upstream this was a Fabric {@code ModInitializer} that registered keybinds through
  * {@code KeyMappingHelper} and hooked {@code ClientTickEvents}. NeoForge registers keybinds from
@@ -32,11 +29,11 @@ public final class Quiet {
             "key.quiet.narrator_hotkey", InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_UNKNOWN, KeyMapping.Category.MISC);
 
-    private static final KeyMapping SKIP_MUSIC_KEY = new KeyMapping(
+    public static final KeyMapping SKIP_MUSIC_KEY = new KeyMapping(
             "key.quiet.skip_music", InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_UNKNOWN, KeyMapping.Category.MISC);
 
-    private static final KeyMapping TOGGLE_MUSIC_KEY = new KeyMapping(
+    public static final KeyMapping TOGGLE_MUSIC_KEY = new KeyMapping(
             "key.quiet.toggle_music", InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_UNKNOWN, KeyMapping.Category.MISC);
 
@@ -57,16 +54,6 @@ public final class Quiet {
 
     private Quiet() {}
 
-    public static void register(IEventBus modBus) {
-        modBus.addListener(RegisterKeyMappingsEvent.class, event -> {
-            event.register(NARRATOR_KEY);
-            event.register(SKIP_MUSIC_KEY);
-            event.register(TOGGLE_MUSIC_KEY);
-        });
-        modBus.addListener(RegisterDebugEntriesEvent.class, event ->
-                event.register(Identifier.fromNamespaceAndPath("duty_client", "fps_history"),
-                        new DebugEntryFpsHistory()));
-    }
 
     /** Called once per client tick from {@code DutyClient}. */
     public static void clientTick(Minecraft client) {

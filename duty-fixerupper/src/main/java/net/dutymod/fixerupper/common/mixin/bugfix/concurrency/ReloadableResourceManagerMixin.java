@@ -8,7 +8,7 @@ import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import net.dutymod.fixerupper.FixerUpper;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
-import net.dutymod.fixerupper.neoforge.init.FixerUpperForge;
+import net.dutymod.fixerupper.FixerUpperState;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -30,7 +30,7 @@ public abstract class ReloadableResourceManagerMixin {
      */
     @WrapMethod(method = "registerReloadListener")
     private void checkCallingThread(PreparableReloadListener listener, Operation<Void> original) {
-        if (FixerUpperForge.registryEventsFired && this.type == PackType.CLIENT_RESOURCES
+        if (FixerUpperState.registryEventsFired && this.type == PackType.CLIENT_RESOURCES
                 && (Object)this == Minecraft.getInstance().getResourceManager()
                 && !Minecraft.getInstance().isSameThread()) {
             FixerUpper.LOGGER.error("A mod is calling registerReloadListener at the wrong time. This will cause random concurrency crashes when Duty is not installed. Please report this to them. If you are a modder, refer to https://github.com/embeddedt/FixerUpper/wiki/registerReloadListener-called-on-wrong-thread for more information.", new Exception("registerReloadListener called on wrong thread"));

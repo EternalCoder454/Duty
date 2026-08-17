@@ -54,6 +54,7 @@ dependencies {
     // annotationProcessor path, where they would shadow ModDevGradle's copy; gson,
     // auto-common, guava and duty-annotations arrive as ordinary transitive deps.
     annotationProcessor(project(path = ":fixerupper-mixin-ap", configuration = "shadow"))
+    "neoforgeAnnotationProcessor"(project(path = ":fixerupper-mixin-ap", configuration = "shadow"))
 
     // ModernFix also shipped per-mod compat shims for spark, CTM, TerraBlender, CoFH Core
     // and SuperMartijn642's Core Lib. Each guards a single file against one third-party mod,
@@ -64,9 +65,18 @@ dependencies {
 }
 
 // The processor writes the generated mixin configs here; they have to end up in the jar.
+//
+// Both source sets are processed. When the loader split moved twenty mixins into src/neoforge, the
+// processor -- which only ran over main -- stopped listing them, and the generated config went from
+// 114 entries to 100. The classes still shipped, so nothing failed to build; the mixins simply
+// would not have applied. That is the exact shape of bug the checkers exist for, and
+// check-mixin-configs caught it by counting.
 sourceSets {
     main {
         resources.srcDir(layout.buildDirectory.dir("generated/sources/annotationProcessor/java/main/resources"))
+    }
+    named("neoforge") {
+        resources.srcDir(layout.buildDirectory.dir("generated/sources/annotationProcessor/java/neoforge/resources"))
     }
 }
 
@@ -77,13 +87,23 @@ tasks.named("compileJava") {
     dependsOn(":fixerupper-mixin-ap:shadowJar")
 }
 
+tasks.named("compileNeoforgeJava") {
+    dependsOn(":fixerupper-mixin-ap:shadowJar")
+}
+
 tasks.withType<JavaCompile>().configureEach {
     if (!name.lowercase().contains("test")) {
         // The processor names its output "<rootProject.name>-<project.name>.mixins.json",
         // and omits the suffix when project.name is absent. Passing only the first, set to
         // the mod id, yields "duty_fixerupper.mixins.json" -- which is what neoforge.mods.toml
         // refers to -- instead of "duty-duty-fixerupper.mixins.json".
-        options.compilerArgs.add("-ArootProject.name=duty_fixerupper")
+        //
+        // The loader source set gets its own config rather than being merged into main's. Two
+        // configs is what lets a Fabric build ship main's without NeoForge's, which is the point
+        // of the split; the toml registers both.
+        val configName =
+            if (name == "compileNeoforgeJava") "duty_fixerupper_neoforge" else "duty_fixerupper"
+        options.compilerArgs.add("-ArootProject.name=$configName")
     }
 }
 
@@ -91,6 +111,10 @@ tasks.withType<JavaCompile>().configureEach {
 // reads resources has to wait for the processor to have written them.
 tasks.named<ProcessResources>("processResources") {
     dependsOn(tasks.named("compileJava"))
+}
+
+tasks.named<ProcessResources>("processNeoforgeResources") {
+    dependsOn(tasks.named("compileNeoforgeJava"))
 }
 
 tasks.named("sourcesJar") {

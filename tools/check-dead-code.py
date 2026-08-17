@@ -17,11 +17,12 @@ import sys
 import zipfile
 
 for module in sys.argv[1:] or ["duty-memory", "duty-client", "duty-fixerupper", "duty-server", "duty-essentials"]:
-    src = pathlib.Path(module, "src/main/java")
-    if not src.exists():
+    src_roots = [d / "java" for d in sorted(pathlib.Path(module, "src").iterdir())
+                 if (d / "java").is_dir()]
+    if not src_roots:
         continue
 
-    paths = list(src.rglob("*.java"))
+    paths = [f for root in src_roots for f in root.rglob("*.java")]
     texts = {p: p.read_text(encoding="utf-8", errors="ignore") for p in paths}
 
     registered = set()

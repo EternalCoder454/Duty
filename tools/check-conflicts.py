@@ -36,11 +36,24 @@ INTERESTING = ("lithium", "sodium", "c2me", "scalablelux", "ferritecore", "moder
                "noisium", "immediatelyfast", "entityculling", "moreculling")
 
 
+
+def source_files(module_dir):
+    """Every Java file in a module, across all source sets.
+
+    Duty is split into `src/main/java`, which names no loader, and `src/<loader>/java`. Scanning
+    only main would silently skip the loader-specific half -- which is exactly what happened when
+    the split landed: this checker's count fell and nothing failed.
+    """
+    for src_set in sorted(p for p in (module_dir / "src").iterdir() if p.is_dir()):
+        java = src_set / "java"
+        if java.is_dir():
+            yield from java.rglob("*.java")
+
 def duty_targets() -> dict[str, set[str]]:
     """Internal names of Minecraft classes each Duty module mixes into."""
     found: dict[str, set[str]] = {}
     for module in ("duty-memory", "duty-client", "duty-fixerupper", "duty-server", "duty-essentials"):
-        for src in (ROOT / module / "src/main/java").rglob("*.java"):
+        for src in source_files(ROOT / module):
             text = src.read_text(encoding="utf-8", errors="replace")
             m = MIXIN_TARGET.search(text)
             if not m:

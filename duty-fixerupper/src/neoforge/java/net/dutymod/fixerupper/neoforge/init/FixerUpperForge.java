@@ -33,6 +33,8 @@ import java.util.List;
 public class FixerUpperForge {
     private static FixerUpper commonMod;
     public static boolean launchDone = false;
+    /** @deprecated read {@link net.dutymod.fixerupper.FixerUpperState#registryEventsFired}. */
+    @Deprecated
     public static boolean registryEventsFired = false;
 
     public FixerUpperForge(ModContainer modContainer, IEventBus modBus) {
