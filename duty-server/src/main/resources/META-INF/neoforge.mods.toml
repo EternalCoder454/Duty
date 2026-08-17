@@ -56,6 +56,11 @@ config = "duty_server_structure.mixins.json"
 [[mixins]]
 config = "duty_server_jigsaw.mixins.json"
 
+# How much world a joining player waits for. No plugin: the radius is read from the config inside
+# the mixin, so setting it back to 3 restores vanilla without unapplying anything.
+[[mixins]]
+config = "duty_server_spawn.mixins.json"
+
 
 
 

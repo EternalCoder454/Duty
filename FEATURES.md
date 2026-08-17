@@ -1301,3 +1301,41 @@ by default in a performance mod. The registered comment says all of that.
 
 Upstream's platform service and config library did not come across -- the service existed to answer
 "is this Fabric", which a branch that targets one loader does not need to ask.
+
+## Ksyxis — the idea taken, the mod not
+
+Reviewed on 2026-08-16 (`VidTu/Ksyxis`, single `main` branch). Ksyxis is known for removing the 441
+permanently-loaded spawn chunks, and does it across every Minecraft version from 1.7 up in one jar.
+
+### Most of what it does, 26.1.2 already did
+
+Checked against the jar rather than assumed:
+
+* `MinecraftServer.prepareLevels` no longer registers a spawn ticket at all. It tracks loading
+  through `ChunkLoadCounter` and nothing else.
+* The constant **441 is not in `MinecraftServer`**. The only `11` left is `Mth.square(11)` in
+  `setInitialSpawn`, which is a search radius for a valid spawn *position*, not chunk loading.
+
+So the headline is moot here for the same reason Fastload was: vanilla absorbed it. Ksyxis still
+carries the machinery because it supports versions where it is not moot.
+
+### What is left is real, and Duty now does it
+
+One spawn load survives, in `PrepareSpawnTask$Preparing`: when a player joins, the server registers
+a `PLAYER_SPAWN` ticket with **radius 3 -- 49 chunks -- and does not let them in until all of them
+have loaded**. On a heavy pack that is most of the time spent joining a world, and it buys nothing:
+the chunks a player can see arrive through the normal view-distance path either way.
+
+`server.join_chunk_radius`, default 1. Vanilla is 3; 0 loads only the chunk underfoot, which is
+faster still but can show open air for a moment on a slow disk.
+
+### Why the mod itself was not merged
+
+Ksyxis is built to run everywhere at once: `@Pseudo`, `remap = false`, `require = 0, expect = 0`,
+and every target listed three times over -- Mojang names, Yarn names, Fabric intermediary names --
+across about ten files of scaffolding around a small amount of logic. Duty targets one version per
+branch and can name `PrepareSpawnTask$Preparing` directly, so the port is one mixin with one
+`@ModifyConstant` and none of the machinery.
+
+Uncontested: no installed mod mixes into `PrepareSpawnTask`, and the target method contains exactly
+one `3`, so the constant cannot bind to the wrong thing.
