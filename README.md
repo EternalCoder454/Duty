@@ -22,7 +22,7 @@ Duty is five separate jars. Install the ones you want — none of them requires 
 > handing it to a friend is not permitted. The other four jars are unaffected. See
 > [NOTICE.md](NOTICE.md).
 
-## Installing
+## 📦 Installing
 
 Drop the jars you want into `mods/`. That is all — there are no library dependencies to
 install alongside them.
@@ -32,7 +32,7 @@ EntityCulling and so on), so the game will tell you rather than let you run both
 
 **Java 25** is required, which is what NeoForge 26.1 runs on anyway.
 
-## Configuring
+## ⚙️ Configuring
 
 Two ways, and they are the same settings:
 
@@ -51,7 +51,7 @@ The settings screen marks every entry accordingly rather than pretending otherwi
 Removing a Duty jar does not lose its settings: options belonging to a module you do not
 have installed are kept in the file rather than deleted.
 
-## If something goes wrong
+## 🩹 If something goes wrong
 
 Duty logs under `Duty` in `logs/latest.log`, and each module logs under its own name
 (`Duty/Server`, `Duty/Client`). For more detail, set `framework.verbose_logging=true` in
@@ -60,7 +60,7 @@ Duty logs under `Duty` in `logs/latest.log`, and each module logs under its own 
 Every optimization sits behind its own toggle, so if something misbehaves you can turn off
 one feature rather than the whole jar. The option comments say what each one does.
 
-## Recommended JVM flags
+## 🚀 Recommended JVM flags
 
 Duty does not need these, but they pair well with it on Java 25:
 
@@ -73,12 +73,12 @@ Duty does not need these, but they pair well with it on Java 25:
 `UseCompactObjectHeaders` is production-ready in Java 25 and does work with ZGC; it makes
 every object smaller, which compounds with what Duty: Memory already does.
 
-## Licensing
+## 📜 Licensing
 
 Duty is assembled from LGPL-3.0, MIT and Apache-2.0 code, plus one component that is not
 redistributable. Read [NOTICE.md](NOTICE.md) before sharing anything.
 
-## For developers
+## 💻 For developers
 
 Building it, how the modules are put together, the other Minecraft versions, and the
 verification tooling are all in **[DEV.md](DEV.md)**.

@@ -2,7 +2,7 @@
 
 Player-facing documentation is in [README.md](README.md). This is everything else.
 
-## Branches
+## 🌿 Branches
 
 One target per branch. Every branch is a full checkout that builds one thing, so a build is
 never a matrix of conditions and a checkout is never half-configured for a version you are
@@ -22,7 +22,7 @@ the branch, and the build derives everything from those — so a version branch 
 Shared work lands on `main` first and is cherry-picked outward. See [PORTING.md](PORTING.md)
 for what each target still needs and which features cannot exist on which version.
 
-## Building
+## 🛠️ Building
 
 ```bash
 export TMP=C:/gtmp TEMP=C:/gtmp   # required, see below
@@ -37,7 +37,7 @@ pins `-Djava.net.preferIPv4Stack=true` for the same class of problem.
 `./gradlew.bat build` builds every module. Note that a **Kotlin build-script error does not
 print `error:`** — it says `Unresolved reference`. Check the exit code, not a grep.
 
-## Modules
+## 🧩 Modules
 
 | Module | Combines | Licence |
 |---|---|---|
@@ -54,7 +54,7 @@ many modules are installed. `duty-all` deliberately does **not** nest `duty-esse
 that jar means "install Duty and the game gets faster", and adding gameplay commands to it
 would change what an existing install does on update.
 
-## Source sets: the loader axis
+## 🗂️ Source sets: the loader axis
 
 Every module is split in two:
 
@@ -78,7 +78,7 @@ Watch for the two leaks an import scan does not find:
   entry point and read by neutral mixins. No import, invisible to a scan, and a missing class
   on another loader.
 
-## Verification
+## ✅ Verification
 
 A green build proves the code compiles. It says nothing about whether a mixin applies.
 
@@ -115,7 +115,7 @@ real hazard, not a theoretical one.
 
 CI runs the same suite per branch; see `.github/workflows/build.yml`.
 
-## Measuring
+## 📊 Measuring
 
 The checkers above answer "is it wired up". `DutyMetrics` in the framework answers "is it
 worth keeping".
@@ -238,20 +238,20 @@ Where a module already keeps a last-value field for its own display, it keeps it
 culling line needs the last pass exactly, and has to work whether or not measurement is on.
 The metrics call sits alongside and adds the shape over time.
 
-## Two rules the design enforces
+## 📏 Two rules the design enforces
 
 - **Must work alongside Sodium, C2ME and other mods.** Every optimization sits behind a
   config toggle, mixins are gated on those toggles, and each module declares itself
   `incompatible` with the upstream mod it replaces.
 - **Stability first, performance second.**
 
-## The Jasione mass-ASM warning
+## ⚠️ The Jasione mass-ASM warning
 
 `duty-memory` rewrites `Enum.values()` call sites across the game. It is the single most
 invasive thing Duty does. If a crash appears with no obvious cause, turn
 `memory.enum_values` off first and re-test before investigating anything else.
 
-## Modernica was removed
+## 🗑️ Modernica was removed
 
 FixerUpper is plain ModernFix. Modernica's 97 extra files were ported and taken back out
 after six consecutive runtime crashes traced to them and none to ModernFix's own code:
@@ -264,7 +264,7 @@ an `@Invoker` declaring `void` for a method returning `boolean`.
 Structural rather than bad luck: Modernica is Fabric-only and written against a different
 Minecraft, so its mixins compile against 26.1.2 while targeting an API that has moved.
 
-## Dependencies dropped
+## 🧱 Dependencies dropped
 
 Targeting one version at a time is what makes this possible:
 
@@ -278,7 +278,7 @@ Targeting one version at a time is what makes this possible:
 | `net.lenni0451:reflect` | Jasione's classloader lookup | `StackWalker` |
 | knot, uilib, yamlconfig | Necessities' platform, UI and config | `DutyPlatform`, `DutyConfig` — uilib was declared and never imported |
 
-## Where the reasoning lives
+## 🧠 Where the reasoning lives
 
 [FEATURES.md](FEATURES.md) records every mod assessed, what was taken, what was rejected and
 why — including the ones rejected on evidence after the work was done. It is the file to read
