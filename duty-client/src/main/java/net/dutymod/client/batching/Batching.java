@@ -25,7 +25,7 @@ import net.minecraft.server.packs.resources.ReloadableResourceManager;
 import net.dutymod.client.batching.feature.core.BatchingConfig;
 import net.dutymod.client.batching.feature.core.BatchingRuntimeConfig;
 import net.dutymod.client.batching.feature.sign_text_buffering.SignTextCache;
-import net.dutymod.client.batching.service.PlatformService;
+import net.dutymod.framework.platform.Platform;
 import net.dutymod.client.batching.util.IrisCompat;
 import org.lwjgl.system.MathUtil;
 import org.slf4j.Logger;
@@ -51,7 +51,7 @@ public class Batching {
         }
         Batching.loadConfig();
         Batching.createRuntimeConfig();
-        VERSION = PlatformService.INSTANCE.getModVersion("duty_client").orElse("unknown");
+        VERSION = Platform.get().modVersion("duty_client").orElse("unknown");
 
         //System.load("C:\\Program Files\\RenderDoc\\renderdoc.dll");
     }
@@ -77,7 +77,7 @@ public class Batching {
         }
 
         if (!Batching.config.debug_only_and_not_recommended_disable_mod_conflict_handling) {
-            PlatformService.INSTANCE.getModVersion("iris").ifPresent(version -> {
+            Platform.get().modVersion("iris").ifPresent(version -> {
                 Batching.LOGGER.info("Found Iris " + version + ". Enabling compatibility.");
                 IrisCompat.init();
             });
@@ -87,7 +87,7 @@ public class Batching {
     public static void lateInit() {
         if (Batching.config.experimental_sign_text_buffering) {
             Batching.signTextCache = new SignTextCache();
-            if (PlatformService.INSTANCE.getModVersion("neoforge").isEmpty()) { // NeoForge uses an event. Handled in BatchingNeoForge
+            if (Platform.get().modVersion("neoforge").isEmpty()) { // NeoForge uses an event. Handled in BatchingNeoForge
                 ((ReloadableResourceManager) Minecraft.getInstance().getResourceManager()).registerReloadListener(Batching.signTextCache);
             }
         }
@@ -100,7 +100,7 @@ public class Batching {
     }
 
     public static void loadConfig() {
-        final File configFile = PlatformService.INSTANCE.getConfigDirectory().resolve("duty-immediatelyfast.json").toFile();
+        final File configFile = Platform.get().configDir().resolve("duty-immediatelyfast.json").toFile();
         if (configFile.exists()) {
             try {
                 Batching.config = new Gson().fromJson(new FileReader(configFile), BatchingConfig.class);

@@ -981,3 +981,80 @@ Gamemode switches with the mode already chosen. Deliberately not aliases: an ali
 All six take an optional player argument like the commands they sit beside, all six have a config
 switch, and `/gmc` and friends share `/gamemode`'s permission node because they are the same act
 spelled shorter.
+
+## Duty Framework: renamed, and made the place shared code actually lives
+
+Duty: Core is now **Duty Framework** -- module `duty-framework`, package
+`net.dutymod.framework`, mod id `duty_framework`. Beyond the rename it gained the three things the
+five modules were each solving for themselves.
+
+### DutyMixinPlugin
+
+`IMixinConfigPlugin` has seven methods. Duty's eight config plugins between them used three; the
+other four were implemented empty eight times over. A base class in the framework took roughly 150
+lines out and left each plugin containing only its actual decision.
+
+It also made one plugin visibly pointless: `BiomeMixinPlugin`'s last remaining override returned
+the same value as the default, so it and its `plugin` entry in `duty_server.mixins.json` are gone.
+
+### One platform layer instead of four
+
+Four arrived with the merged mods: a static helper in duty-client's baked block entities, a
+`ServiceLoader` interface in its batching code, another in duty-server's biome search, and a
+`Class.forName` lookup in duty-fixerupper. Each was one mod's answer to "which mods are loaded,
+where is the config directory, what version is this".
+
+Three are now `net.dutymod.framework.platform.DutyPlatform` (18 call sites), and with them went two
+`META-INF/services` files -- including the class of file that
+[crashed startup](#) after the `ifast` rename. FixerUpper's stays: at eighteen methods covering ASM
+transformers, packet sending and command registration, it is a real module-specific layer rather
+than the same question asked again.
+
+**The two mod-presence checks are now named for when they apply.** The interface this replaced had
+`isModLoaded` and `hasLoadingMod` side by side, which said nothing about which was safe where.
+`isModLoadedAtStartup` reads the loading list and is the only one a mixin config plugin may call;
+`isModLoaded` reads the loaded list and throws if called too early. Every migrated call kept its
+original semantics rather than being normalised to the shorter name.
+
+### Logging worth reading
+
+`DutyLog` gained log-once and per-module loggers. Duty had three separate hand-rolled versions of
+"say this the first time and never again" -- a `volatile boolean` in the async saver, a
+`Set<Class<?>>` in the biome compat check, a per-thread flag in the structure watchdog. The first
+two are now `infoOnce(key, message)`. The third stays as it was, because it resets per search
+rather than logging once ever, which is a different thing wearing the same shape.
+
+`framework.verbose_logging` turns debug output on for every module. DutyLog cannot read that itself
+-- it runs during class transformation, before the config file is readable -- so `DutyConfig` hands
+it the value once the file has been read.
+
+## Multi-loader and multi-version: what is built and what is not
+
+The four targets Duty will ever have:
+
+| Loader | Minecraft | Java |
+| --- | --- | --- |
+| Forge | 1.20.1 | 17 |
+| NeoForge | 1.21.1 | 21 |
+| NeoForge | 26.1.2+ | 25 |
+| Fabric | 26.1.2+ | 25 |
+
+**Done.** `duty-framework` is split into `src/main`, which names no loader, and `src/neoforge`,
+which holds `NeoForgePlatform` and the settings-screen registration -- the only two classes in the
+framework that touch NeoForge. Adding Fabric is a `src/fabric` source set with two classes and a
+`META-INF/services` entry; nothing in `src/main` changes.
+
+That split is enforced, not documented. ModDevGradle puts Minecraft *and* NeoForge on the main
+compile classpath, so a `net.neoforged` import in `src/main` would compile happily here and only
+fail when someone built the Fabric target. `checkMainIsLoaderNeutral` fails the build instead, and
+was tested in both directions -- it rejects a planted import and passes when clean.
+
+**Not done, and it is the larger half.** The four feature modules are still NeoForge 26.1.2 only.
+Every mixin in them targets 26.1.2 signatures verified against that jar's bytecode, and the gap to
+1.20.1 is not a matter of source sets: `Identifier` was `ResourceLocation`, components did not
+exist before 1.20.5, `ValueInput`/`ValueOutput` and `PermissionSet` are 26.1, and the registry
+rework sits in between. Reaching all four targets needs per-version source sets -- Stonecutter or
+equivalent -- and a per-version verification pass, because the checkers here compare against one
+Minecraft jar and would need one per target.
+
+The framework is the part that has to be right first, and it now is.

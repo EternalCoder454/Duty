@@ -41,7 +41,6 @@ public final class AsyncWorldSave {
 
     private static final AtomicLong SUBMITTED = new AtomicLong();
     private static final AtomicLong COMPLETED = new AtomicLong();
-    private static volatile boolean announced;
 
     private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(runnable -> {
         Thread thread = new Thread(runnable, "Duty world save");
@@ -80,10 +79,8 @@ public final class AsyncWorldSave {
      */
     public static void submit(String what, Runnable write) {
         SUBMITTED.incrementAndGet();
-        if (!announced) {
-            announced = true;
-            DutyLog.info("Async world save is live; " + what + " is now written off the server thread.");
-        }
+        DutyLog.infoOnce("async_save.live",
+                "Async world save is live; " + what + " is now written off the server thread.");
         WORKER.execute(() -> {
             try {
                 write.run();

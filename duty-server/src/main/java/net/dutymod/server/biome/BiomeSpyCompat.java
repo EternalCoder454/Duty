@@ -3,9 +3,6 @@ package net.dutymod.server.biome;
 import net.dutymod.framework.DutyLog;
 import net.minecraft.world.level.biome.BiomeSource;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Reports, once per biome source type, that BiomeSpy has stood aside.
  *
@@ -23,16 +20,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * times, and a message per call would bury the log it is meant to help with.
  */
 public final class BiomeSpyCompat {
-    private static final Set<Class<?>> REPORTED = ConcurrentHashMap.newKeySet();
-
     private BiomeSpyCompat() {}
 
     public static void reportUnsupported(BiomeSource biomeSource) {
         Class<?> type = biomeSource.getClass();
-        if (!REPORTED.add(type)) {
-            return;
-        }
-        DutyLog.info("Accelerated structure search is standing aside for " + type.getName()
+        DutyLog.infoOnce("biomespy.unsupported." + type.getName(),"Accelerated structure search is standing aside for " + type.getName()
                 + ", which is not a plain MultiNoiseBiomeSource. A mod is layering biomes on top of"
                 + " the world's own, so the fast search cannot tell where a structure may generate"
                 + " and vanilla's search runs instead. /locate stays correct; it is only slower.");

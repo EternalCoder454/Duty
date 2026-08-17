@@ -7,7 +7,7 @@ import com.google.gson.reflect.TypeToken;
 import net.dutymod.client.bakedentities.OBE;
 import net.dutymod.client.bakedentities.compat.ModCompat;
 import net.dutymod.client.bakedentities.config.SettingsManager;
-import net.dutymod.client.bakedentities.platform.PlatformHelper;
+import net.dutymod.framework.platform.Platform;
 import net.dutymod.client.bakedentities.util.ResourceUtil;
 import net.minecraft.client.Minecraft;
 
@@ -29,7 +29,7 @@ public class SettingsManager {
      * off does live in duty.properties, which is what matters for "turn Duty off and retest".
      */
     private static final Path CONFIG_PATH =
-            PlatformHelper.getConfigDir().resolve("duty-blockentities.json");
+            Platform.get().configDir().resolve("duty-blockentities.json");
     private static Map<String, String> loadedSettings = loadSettings();
 
     private static Runnable emptyAction = () -> {};

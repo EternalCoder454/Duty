@@ -2,7 +2,7 @@ package net.dutymod.server.net;
 
 import net.dutymod.framework.DutyConfig;
 import net.dutymod.framework.DutyLog;
-import net.dutymod.server.biome.platform.Services;
+import net.dutymod.framework.platform.Platform;
 import net.dutymod.framework.DutyMixinPlugin;
 
 
@@ -30,7 +30,7 @@ public final class NetMixinPlugin extends DutyMixinPlugin {
     }
 
     private static boolean isModLoaded(String modId) {
-        return Services.PLATFORM.hasLoadingMod(modId);
+        return Platform.get().isModLoadedAtStartup(modId);
     }
 
     @Override

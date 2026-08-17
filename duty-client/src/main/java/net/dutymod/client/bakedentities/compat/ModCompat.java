@@ -7,22 +7,22 @@ import net.dutymod.client.bakedentities.compat.emf.EMFCompat;
 import net.dutymod.client.bakedentities.compat.iris.IrisCompat;
 import net.dutymod.client.bakedentities.compat.lootr.LootrCompat;
 import net.dutymod.client.bakedentities.config.SettingsManager;
-import net.dutymod.client.bakedentities.platform.PlatformHelper;
+import net.dutymod.framework.platform.Platform;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class ModCompat {
-    private final static boolean isIrisLoaded = PlatformHelper.isModLoaded("iris") || PlatformHelper.isModLoaded("oculus");
-    private final static boolean isSodiumLoaded = PlatformHelper.isModLoaded("sodium") || PlatformHelper.isModLoaded("embeddium");
-    private final static boolean isEMFLoaded = PlatformHelper.isModLoaded("entity_model_features");
-    private final static boolean isPunchyLoaded = PlatformHelper.isModLoaded("punchy");
+    private final static boolean isIrisLoaded = Platform.get().isModLoadedAtStartup("iris") || Platform.get().isModLoadedAtStartup("oculus");
+    private final static boolean isSodiumLoaded = Platform.get().isModLoadedAtStartup("sodium") || Platform.get().isModLoadedAtStartup("embeddium");
+    private final static boolean isEMFLoaded = Platform.get().isModLoadedAtStartup("entity_model_features");
+    private final static boolean isPunchyLoaded = Platform.get().isModLoadedAtStartup("punchy");
 
     private static final List<String> incompatibleMods = Arrays.asList("vulkanmod","optifine","embeddium","optifabric");
 
     public static void init(){
-        if(PlatformHelper.isModLoaded("lootr")) LootrCompat.init();
+        if(Platform.get().isModLoadedAtStartup("lootr")) LootrCompat.init();
     }
 
     public static boolean isIrisLoaded(){
@@ -58,14 +58,14 @@ public class ModCompat {
 
     public static boolean isIncompatibilityDetected(){
         for(String mod : incompatibleMods){
-            if(PlatformHelper.isModLoaded(mod)) return true;
+            if(Platform.get().isModLoadedAtStartup(mod)) return true;
         }
         return false;
     }
 
     public static String getIncompatibleMod(){
         for(String mod : incompatibleMods){
-            if(PlatformHelper.isModLoaded(mod)) return PlatformHelper.getModName(mod);
+            if(Platform.get().isModLoadedAtStartup(mod)) return Platform.get().modName(mod);
         }
         return null;
     }

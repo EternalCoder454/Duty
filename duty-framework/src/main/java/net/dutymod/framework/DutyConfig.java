@@ -33,6 +33,16 @@ public final class DutyConfig {
     private static boolean initialized;
     private static boolean dirty;
 
+    /**
+     * Turns on {@link DutyLog#debug} output for every module.
+     *
+     * <p>Registered here rather than by a module because it belongs to the framework and should
+     * exist whichever modules are installed. It is read once, at load, and handed to DutyLog --
+     * DutyLog cannot read it itself, because it runs during class transformation, before this file
+     * is readable.
+     */
+    public static final String VERBOSE_LOGGING = "framework.verbose_logging";
+
     private DutyConfig() {}
 
     /**
@@ -186,6 +196,11 @@ public final class DutyConfig {
         LOADED.setProperty(key, value);
         dirty = true;
         writeIfDirty();
+
+        // After the file is read, so a user's setting wins over the default, and before any module
+        // has had a chance to log anything worth suppressing.
+        DutyLog.setVerbose(Boolean.parseBoolean(
+                LOADED.getProperty(VERBOSE_LOGGING, "false").trim()));
     }
 
     private static Option requireOption(String key) {
@@ -212,6 +227,10 @@ public final class DutyConfig {
             return;
         }
         initialized = true;
+        register(VERBOSE_LOGGING, false,
+                "Write Duty's debug lines to the log. Off by default because the busy ones sit on\n"
+                        + "per-packet and per-frame paths. Turn it on when asked for a log that\n"
+                        + "shows what Duty decided, rather than only what it did.");
         Path path = configPath();
         if (Files.isRegularFile(path)) {
             try (InputStream in = Files.newInputStream(path)) {
