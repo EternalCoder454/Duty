@@ -34,7 +34,9 @@ public final class DutyConfigScreens {
      * in the mod list, all opening the same screen.
      */
     public static void register(ModContainer container) {
-        if (FMLEnvironment.getDist() != Dist.CLIENT) {
+        // FMLEnvironment exposes `dist` as a field on 1.21.1 and as getDist() on 26.1; this is
+        // the 1.21.1 form.
+        if (FMLEnvironment.dist != Dist.CLIENT) {
             return;
         }
         if (!ModList.get().isLoaded(CLOTH_CONFIG)) {

@@ -9,15 +9,16 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 /**
- * {@link DutyPlatform} for NeoForge.
+ * {@link DutyPlatform} for NeoForge on Minecraft 1.21.1.
  *
- * <p>Covers both NeoForge targets. The 1.21.1 and 26.1.2 FML APIs used here are the same calls, so
- * one implementation serves both; if they diverge, this file is what gets a second copy rather than
- * anything in {@code src/main}.
+ * <p>The API here differs from the 26.1 branch's copy of this file, which is why the file exists
+ * per branch rather than being shared. FML 4.x exposes the loader through static methods --
+ * {@code FMLLoader.getLoadingModList()}, {@code FMLLoader.isProduction()} -- where 26.1 routes
+ * everything through an {@code FMLLoader.getCurrent()} instance. Nothing outside this class had to
+ * change for that.
  *
- * <p>Nothing outside this source set may import {@code net.neoforged}. That is the whole point of
- * the split: {@code src/main} has to compile against a loader that is not present, so a stray
- * import there is a build failure on Fabric rather than something discovered at runtime.
+ * <p>Nothing outside this source set may import {@code net.neoforged};
+ * {@code checkMainIsLoaderNeutral} fails the build if anything does.
  */
 public final class NeoForgePlatform implements DutyPlatform {
     @Override
@@ -27,12 +28,12 @@ public final class NeoForgePlatform implements DutyPlatform {
 
     @Override
     public String minecraftVersion() {
-        return FMLLoader.getCurrent().getVersionInfo().mcVersion();
+        return FMLLoader.versionInfo().mcVersion();
     }
 
     @Override
     public boolean isModLoadedAtStartup(String modId) {
-        return FMLLoader.getCurrent().getLoadingModList().getModFileById(modId) != null;
+        return FMLLoader.getLoadingModList().getModFileById(modId) != null;
     }
 
     @Override
@@ -53,7 +54,7 @@ public final class NeoForgePlatform implements DutyPlatform {
 
     @Override
     public String modName(String modId) {
-        var file = FMLLoader.getCurrent().getLoadingModList().getModFileById(modId);
+        var file = FMLLoader.getLoadingModList().getModFileById(modId);
         if (file == null || file.getMods().isEmpty()) {
             return modId;
         }
@@ -62,6 +63,6 @@ public final class NeoForgePlatform implements DutyPlatform {
 
     @Override
     public boolean isDevelopment() {
-        return !FMLLoader.getCurrent().isProduction();
+        return !FMLLoader.isProduction();
     }
 }
