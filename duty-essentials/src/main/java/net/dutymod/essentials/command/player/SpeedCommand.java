@@ -34,8 +34,13 @@ import java.util.Collection;
  * player's saved data. Both survive a relog on their own.
  */
 public abstract class SpeedCommand implements Command {
-    /** The highest multiplier accepted. Ten times vanilla is already very fast. */
-    public static final int MAX_MULTIPLIER = 10;
+    /**
+     * The highest multiplier this command accepts.
+     *
+     * <p>Per command rather than shared, because the two have different ceilings in practice. See
+     * each implementation for why it stops where it does.
+     */
+    protected abstract int maxMultiplier();
 
     /** Applies the multiplier to one player. */
     protected abstract void apply(ServerPlayer player, int multiplier);

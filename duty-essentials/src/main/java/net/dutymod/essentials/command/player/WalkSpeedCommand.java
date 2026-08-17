@@ -37,6 +37,18 @@ public class WalkSpeedCommand extends SpeedCommand {
         return "walk";
     }
 
+    /**
+     * Left at 10 while {@code /flyspeed} allows 20.
+     *
+     * <p>Ground movement is checked harder than flight: the same squared-distance-of-100 budget
+     * applies, but walking also has to agree with collision, step height and block friction every
+     * tick, so overshooting it looks like stuttering rather than simply moving fast.
+     */
+    @Override
+    protected int maxMultiplier() {
+        return 10;
+    }
+
     @Override
     protected void apply(ServerPlayer player, int multiplier) {
         AttributeInstance attribute = player.getAttribute(Attributes.MOVEMENT_SPEED);
@@ -60,7 +72,7 @@ public class WalkSpeedCommand extends SpeedCommand {
     public void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         CommandManager.register(dispatcher, "walkspeed", literal -> literal
                 .requires(source -> DutyEssentials.API.hasPermission(source, "command.walkspeed"))
-                .then(Commands.argument("multiplier", IntegerArgumentType.integer(1, MAX_MULTIPLIER))
+                .then(Commands.argument("multiplier", IntegerArgumentType.integer(1, maxMultiplier()))
                         .executes(context -> setSpeed(
                                 context.getSource(),
                                 Collections.singleton(context.getSource().getPlayerOrException()),
