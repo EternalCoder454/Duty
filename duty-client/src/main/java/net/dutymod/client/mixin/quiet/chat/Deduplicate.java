@@ -28,7 +28,7 @@ public abstract class Deduplicate {
     private List<GuiMessage> allMessages;
 
     @Shadow
-    protected abstract void /*? >1.21{*/refreshTrimmedMessages/*?}else{*//*refreshTrimmedMessage*//*?}*/();
+    protected abstract void refreshTrimmedMessages();
 
     @ModifyVariable(
             method = {"addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V", "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V"},
@@ -76,7 +76,7 @@ public abstract class Deduplicate {
             }
             // remove previous message
             allMessages.remove(other);
-            /*? >1.21{*/refreshTrimmedMessages/*?}else{*//*refreshTrimmedMessage*//*?}*/();
+            refreshTrimmedMessages();
             break; // Trust the previous message
         }
         if (matches > 1) return message.copy().append(Component.literal(" (" + matches + ")").setStyle(OCCURRENCES));

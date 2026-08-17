@@ -19,7 +19,7 @@ import net.dutymod.client.quiet.config.Config;
 @Mixin(ChatComponent.class)
 public abstract class Filter {
     @Inject(method = {"addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V", "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V"}, at = @At("HEAD"), cancellable = true)
-    private void filter(Component message, MessageSignature messageSignature, /*? >1.21.11 >>'GuiMessageTag'*/GuiMessageSource source, GuiMessageTag tag, CallbackInfo ci) {
+    private void filter(Component message, MessageSignature messageSignature, GuiMessageSource source, GuiMessageTag tag, CallbackInfo ci) {
         if (!(message instanceof MutableComponent mutable && mutable.getContents() instanceof TranslatableContents translatable)) return;
 
         if (translatable.getKey().startsWith("chat.type.advancement")) {

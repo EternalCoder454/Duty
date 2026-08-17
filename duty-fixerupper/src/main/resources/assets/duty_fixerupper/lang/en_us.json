@@ -117,6 +117,7 @@
   "duty.option.mixin.perf.fast_forge_dummies": "Speeds up Forge registry freezing during launch by using a faster code path",
   "duty.option.mixin.perf.tag_id_caching": "Speeds up uses of tag entries by caching the location object instead of recreating it every time",
   "duty.option.mixin.perf.compress_unihex_font": "Stores the glyphs for the Unicode font more efficiently. Kudos to @AnAwesomGuy for the trick.",
+  "duty.option.mixin.perf.font_glyph_warmup": "Warms each font glyph on the one provider that will serve it, instead of on every provider in the stack. Cuts font loading on packs with several fonts.",
   "duty.option.mixin.bugfix.world_leaks": "Reduces the memory usage of old client-side worlds that aren't needed after switching dimensions. These are normally garbage collected in vanilla, but mods sometimes retain references to them.",
   "duty.option.mixin.perf.compact_mojang_registries": "(Fabric) Experimental option that reduces the memory usage of registries by roughly 50%. Not useful in most modpacks unless they contain millions of blocks and items.",
   "duty.option.mixin.perf.dynamic_block_codecs": "Avoids storing a codec for every block(state) and instead generates and caches it on the fly when needed. Generally not worth enabling unless you have a million blocks/items.",

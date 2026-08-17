@@ -31,7 +31,7 @@ import net.minecraft.server.level.ParticleStatus;
 @Mixin(WeatherEffectRenderer.class)
 public class DisableWeather {
     @Inject(method = "tickRainParticles", at = @At("HEAD"), cancellable = true)
-    private void addParticlesAndSound(ClientLevel clientLevel, Camera camera, int ticks, ParticleStatus particleStatus, /*? >= 1.21.11{*/ int j,/*?}*/ CallbackInfo ci){
+    private void addParticlesAndSound(ClientLevel clientLevel, Camera camera, int ticks, ParticleStatus particleStatus,  int j, CallbackInfo ci){
         if (!Config.get().renderWeather) ci.cancel();
     }
 
