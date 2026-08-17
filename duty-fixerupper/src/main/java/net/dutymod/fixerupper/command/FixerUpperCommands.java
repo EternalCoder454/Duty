@@ -5,6 +5,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.permissions.Permissions;
+import net.dutymod.framework.DutyConfig;
 import net.dutymod.framework.DutyMetrics;
 import net.dutymod.fixerupper.duck.IProfilingServerFunctionManager;
 
@@ -31,6 +32,15 @@ public class FixerUpperCommands {
                                 context.getSource().sendFailure(Component.literal("Duty mcfunction profiling is not enabled on this server."));
                                 return 0;
                             }
+                        }))
+                .then(literal("reload").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
+                        .executes(context -> {
+                            int changed = DutyConfig.reload();
+                            context.getSource().sendSuccess(() -> Component.literal(changed == 0
+                                    ? "Duty config re-read; nothing changed."
+                                    : "Duty config re-read; " + changed
+                                            + (changed == 1 ? " setting changed." : " settings changed.")), false);
+                            return 1;
                         }))
                 .then(literal("metrics").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
                         .executes(context -> sendReport(context.getSource()))

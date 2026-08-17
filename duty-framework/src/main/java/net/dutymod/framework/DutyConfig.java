@@ -278,6 +278,22 @@ public final class DutyConfig {
      *
      * @return the number of options whose value changed
      */
+    /**
+     * Things to re-read after {@link #reload()}.
+     *
+     * <p>Most options are read through on every access and need nothing here. This is for the ones
+     * a module caches in a field because reading them per call would cost more than the work being
+     * measured -- {@link DutyMetrics#ENABLED} is the first, and without a hook like this a reloaded
+     * file would update the map and leave the cached copy stale, which is worse than not reloading
+     * at all because the file and the behaviour disagree.
+     */
+    private static final List<Runnable> RELOAD_LISTENERS = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+    /** Registers work to run after every {@link #reload()}. Safe to call from a static block. */
+    public static void onReload(Runnable listener) {
+        RELOAD_LISTENERS.add(listener);
+    }
+
     public static synchronized int reload() {
         ensureLoaded();
 
@@ -311,6 +327,22 @@ public final class DutyConfig {
         // here keeps the file complete and the "unknown keys are preserved" guarantee intact.
         dirty = true;
         writeIfDirty();
+
+        // After the values are in place, so a listener that re-reads sees the new file rather than
+        // the old one. A listener that throws must not cost the others their refresh, or a reload
+        // would leave the modules in disagreement about what the file says.
+        for (Runnable listener : RELOAD_LISTENERS) {
+            try {
+                listener.run();
+            } catch (Throwable t) {
+                DutyLog.warn("A config reload listener failed: " + t);
+            }
+        }
+
+        // Verbose logging is cached in DutyLog the same way module options are, and is re-applied
+        // here for the same reason.
+        DutyLog.setVerbose(get(VERBOSE_LOGGING));
+
         return changed;
     }
 

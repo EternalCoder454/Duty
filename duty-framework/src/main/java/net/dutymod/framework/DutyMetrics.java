@@ -108,6 +108,17 @@ public final class DutyMetrics {
         if (enabled) {
             startReporterIfConfigured();
         }
+
+        // Without this, editing framework.metrics in the file and reloading would update the map
+        // and leave this cached copy stale -- the file would say one thing and the game do another,
+        // which is worse than not supporting reload at all.
+        DutyConfig.onReload(() -> {
+            enabled = DutyConfig.get(ENABLED);
+            if (enabled) {
+                startReporterIfConfigured();
+            }
+            DutyLog.info("Duty measurement is now " + (enabled ? "on" : "off") + " (config reload).");
+        });
     }
 
     /** {@return whether measurement is on} */

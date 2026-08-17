@@ -158,6 +158,14 @@ Reading it:
 | `/duty metrics reset` / `log` | clear, or dump to the log |
 | `framework.metrics` | on at startup |
 | `framework.metrics_report_seconds` | periodic report to the log; 0 is off |
+| `/duty reload` | re-read `duty.properties` without a restart |
+
+Both routes are live: the command sets the flag directly, and editing the file then
+reloading works because `DutyConfig.onReload` lets a module refresh a value it caches.
+`DutyMetrics` caches `framework.metrics` precisely because reading it per call would cost
+more than the work being timed — and without the hook, a reloaded file would update the map
+and leave that copy stale, so the file and the behaviour would disagree. Any module that
+caches an option should register the same way.
 
 Timers report calls, total, mean and worst, sorted by **total** rather than mean — a cheap
 thing done constantly is usually the problem, and sorting by mean hides it behind whatever
