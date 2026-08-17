@@ -130,13 +130,13 @@ That determines each module's licence:
 
 | Module | Built from | Licence |
 |---|---|---|
-| `duty-core` | original code | MIT |
+| `duty-framework` | original code | MIT |
 | `duty-memory` | Jasione (LGPL-3.0) + FerriteCore (MIT) + Fast-Tag (LGPL-3.0) | **LGPL-3.0** |
 | `duty-client` | Particle Core (MIT) + OptimisedBlockEntities (LGPL-3.0) + OcclusionCulling (MIT) + Stfu (MIT) + EntityCulling (Protective) | **Not distributable** |
 | `duty-fixerupper` | ModernFix (LGPL-3.0) + Resource-Trimmer (LGPL-3.0) | **LGPL-3.0** |
 | `duty-server` | BiomeSpy (LGPL-3.0) + KryptonReno (LGPL-3.0), bundling velocity-native | **LGPL-3.0** |
 
-`duty-core` is deliberately MIT even though it is original work: had it been
+`duty-framework` is deliberately MIT even though it is original work: had it been
 LGPL-3.0, it would have dragged `duty-client` to LGPL-3.0 along with it for no
 benefit to anyone.
 
@@ -150,7 +150,7 @@ Under LGPL-3.0, for `duty-memory` and `duty-fixerupper`:
 - Do not add restrictions on top — no "personal use only", no anti-redistribution
   clause on the modules as a whole.
 
-Under MIT, for `duty-core` and the MIT-licensed parts of `duty-client`: keep the
+Under MIT, for `duty-framework` and the MIT-licensed parts of `duty-client`: keep the
 copyright notice and the permission notice. That is all it asks.
 
 For `duty-client` as a whole: build it, run it, keep it. Do not hand it to anyone.

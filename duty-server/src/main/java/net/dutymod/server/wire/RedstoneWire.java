@@ -1,6 +1,6 @@
 package net.dutymod.server.wire;
 
-import net.dutymod.core.DutyConfig;
+import net.dutymod.framework.DutyConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

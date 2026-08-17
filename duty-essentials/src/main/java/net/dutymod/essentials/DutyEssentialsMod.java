@@ -1,7 +1,7 @@
 package net.dutymod.essentials;
 
-import net.dutymod.core.DutyLog;
-import net.dutymod.core.screen.DutyConfigScreens;
+import net.dutymod.framework.DutyLog;
+import net.dutymod.framework.screen.DutyConfigScreens;
 import net.dutymod.essentials.config.CommandConfig;
 import net.dutymod.essentials.config.EssentialsOptions;
 import net.dutymod.essentials.event.EssentialsEvents;

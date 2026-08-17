@@ -1,6 +1,6 @@
 package net.dutymod.memory.blockstate;
 
-import net.dutymod.core.DutyConfig;
+import net.dutymod.framework.DutyConfig;
 import net.dutymod.memory.MemoryOptions;
 import net.dutymod.memory.mixin.blockstate.StateHolderAccessor;
 import net.minecraft.world.level.block.state.StateHolder;

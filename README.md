@@ -9,7 +9,7 @@ versions. One target version, no multi-version tooling, no legacy branches.
 ## Modules
 
 Duty ships as three independent jars over a shared core. Installing one does not
-require the others; `duty-core` is nested inside each jar and loads once.
+require the others; `duty-framework` is nested inside each jar and loads once.
 
 | Jar | Combines | Licence |
 |---|---|---|
@@ -47,7 +47,7 @@ accidentally run both.
 | `duty-memory-0.1.0.jar` | 44 KB | Jasione's `Enum.values()` transformer + FerriteCore's shared block-state table |
 | `duty-client-0.1.0.jar` | 220 KB | EntityCulling's occlusion culling + Particle Core's 17 mixins + OptimisedBlockEntities' chunk-mesh baking |
 | `duty-fixerupper-0.1.0.jar` | 592 KB | ModernFix, 120 mixins registered |
-| `duty-core-0.1.0.jar` | 7 KB | shared config and logging, nested into the others via JarJar |
+| `duty-framework-0.1.0.jar` | 7 KB | shared config and logging, nested into the others via JarJar |
 
 ### Modernica was removed
 

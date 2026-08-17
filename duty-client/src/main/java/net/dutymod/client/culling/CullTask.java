@@ -2,7 +2,7 @@ package net.dutymod.client.culling;
 
 import net.dutymod.client.occlusion.OcclusionCullingInstance;
 import net.dutymod.client.occlusion.util.Vec3d;
-import net.dutymod.core.DutyLog;
+import net.dutymod.framework.DutyLog;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;

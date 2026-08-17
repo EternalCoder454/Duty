@@ -1,7 +1,7 @@
 package net.dutymod.server.save;
 
-import net.dutymod.core.DutyConfig;
-import net.dutymod.core.DutyLog;
+import net.dutymod.framework.DutyConfig;
+import net.dutymod.framework.DutyLog;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

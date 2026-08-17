@@ -1,8 +1,8 @@
 package net.dutymod.client.particle;
 
 import net.dutymod.client.ClientOptions;
-import net.dutymod.core.DutyConfig;
-import net.dutymod.core.DutyLog;
+import net.dutymod.framework.DutyConfig;
+import net.dutymod.framework.DutyLog;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.core.particles.ParticleType;

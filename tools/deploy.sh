@@ -25,7 +25,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STAGE="$ROOT/install-mods"
 PACK="${DUTY_PACK:-/c/Users/Zachary Smith/AppData/Roaming/PrismLauncher/instances/Eternally Planetary(1)/minecraft}"
 
-# Only these ship. duty-core is nested inside each via JarJar and must not be installed
+# Only these ship. duty-framework is nested inside each via JarJar and must not be installed
 # separately; duty-annotations and fixerupper-mixin-ap are build-time only.
 # Deliberately the four modules, not duty-all. Duty ships two install shapes: these four
 # jars, or the single duty-all jar that nests them. They carry the same mod ids, so having

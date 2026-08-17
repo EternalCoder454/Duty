@@ -29,8 +29,8 @@ dependencies {
     // JarJar only, deliberately: nothing here compiles against the modules, and adding them
     // to the compile classpath would let source drift into this jar unnoticed.
     //
-    // Each module already nests duty-core. Four copies arrive with identical coordinates and
-    // JarJar resolves them to one, which is why duty-core is not listed again here -- adding
+    // Each module already nests duty-framework. Four copies arrive with identical coordinates and
+    // JarJar resolves them to one, which is why duty-framework is not listed again here -- adding
     // it would be a fifth identical candidate, not a fix for anything.
     jarJar(project(":duty-memory"))
     jarJar(project(":duty-client"))

@@ -1,14 +1,10 @@
 package net.dutymod.server.net;
 
-import net.dutymod.core.DutyConfig;
-import net.dutymod.core.DutyLog;
+import net.dutymod.framework.DutyConfig;
+import net.dutymod.framework.DutyLog;
 import net.dutymod.server.biome.platform.Services;
-import org.objectweb.asm.tree.ClassNode;
-import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import net.dutymod.framework.DutyMixinPlugin;
 
-import java.util.List;
-import java.util.Set;
 
 /**
  * Decides which of the network pipeline mixins apply.
@@ -23,7 +19,7 @@ import java.util.Set;
  * per-packet paths, and because a mixin that applied and then returned early is indistinguishable
  * in a log from one that never applied.
  */
-public final class NetMixinPlugin implements IMixinConfigPlugin {
+public final class NetMixinPlugin extends DutyMixinPlugin {
     private static final String PACKAGE = "net.dutymod.server.mixin.net.";
 
     @Override
@@ -31,11 +27,6 @@ public final class NetMixinPlugin implements IMixinConfigPlugin {
         // Force the option registrations to run now, so config.duty.properties is complete
         // before anything reads it. Mixin plugins load before the mod itself is constructed.
         NetOptions.init();
-    }
-
-    @Override
-    public String getRefMapperConfig() {
-        return null;
     }
 
     private static boolean isModLoaded(String modId) {
@@ -89,22 +80,4 @@ public final class NetMixinPlugin implements IMixinConfigPlugin {
         return DutyConfig.get(key);
     }
 
-    @Override
-    public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
-    }
-
-    @Override
-    public List<String> getMixins() {
-        return null;
-    }
-
-    @Override
-    public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName,
-                         IMixinInfo mixinInfo) {
-    }
-
-    @Override
-    public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName,
-                          IMixinInfo mixinInfo) {
-    }
 }

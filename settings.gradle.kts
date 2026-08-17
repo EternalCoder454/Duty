@@ -13,7 +13,7 @@ plugins {
 rootProject.name = "duty"
 
 // Shared plumbing: config, annotations, the mixin plugin base. Not shipped alone.
-include("duty-core")
+include("duty-framework")
 
 // Mixin annotations, shared by duty-fixerupper and the processor that reads them.
 include("duty-annotations")

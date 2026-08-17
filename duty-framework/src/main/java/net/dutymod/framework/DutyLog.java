@@ -1,4 +1,4 @@
-package net.dutymod.core;
+package net.dutymod.framework;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

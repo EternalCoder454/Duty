@@ -1,6 +1,6 @@
-package net.dutymod.core.screen;
+package net.dutymod.framework.screen;
 
-import net.dutymod.core.DutyLog;
+import net.dutymod.framework.DutyLog;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;

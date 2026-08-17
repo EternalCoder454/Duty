@@ -1,4 +1,4 @@
-package net.dutymod.core;
+package net.dutymod.framework;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -1,6 +1,6 @@
 package net.dutymod.server.net;
 
-import net.dutymod.core.DutyConfig;
+import net.dutymod.framework.DutyConfig;
 
 /**
  * Every toggle Duty's network pipeline owns.

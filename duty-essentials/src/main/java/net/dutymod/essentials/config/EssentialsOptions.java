@@ -1,6 +1,6 @@
 package net.dutymod.essentials.config;
 
-import net.dutymod.core.DutyConfig;
+import net.dutymod.framework.DutyConfig;
 
 /**
  * Every option Duty: Essentials owns.

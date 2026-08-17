@@ -538,7 +538,7 @@ change rather than a free one: switching language shows raw keys. The translatio
 `-Pduty.languages=all` brings them back. Note the property is read at configuration time, so it
 needs a `clean` to take effect.
 
-**Looked at and left alone.** `duty-core` is extracted four times into the JarInJar cache, once per
+**Looked at and left alone.** `duty-framework` is extracted four times into the JarInJar cache, once per
 module, costing about 136 KB. That is the price of every module standing alone, which is a
 deliberate design decision recorded in HANDOFF, so it stays. The 38 MB `.cache/jij` is
 overwhelmingly other mods; Duty's share was 652 KB before this pass.

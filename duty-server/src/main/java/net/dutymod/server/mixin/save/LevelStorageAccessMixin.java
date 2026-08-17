@@ -51,7 +51,7 @@ public class LevelStorageAccessMixin {
             NbtIo.writeCompressed(levelData, temp);
             Util.safeReplaceFile(this.levelDirectory.dataFile(), temp, this.levelDirectory.oldDataFile());
         } catch (Exception e) {
-            net.dutymod.core.DutyLog.warn("Could not write level.dat: " + e);
+            net.dutymod.framework.DutyLog.warn("Could not write level.dat: " + e);
         }
     }
 }

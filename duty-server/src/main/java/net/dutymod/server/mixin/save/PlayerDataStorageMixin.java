@@ -56,7 +56,7 @@ public class PlayerDataStorageMixin {
         try {
             NbtIo.writeCompressed(data, path);
         } catch (Exception e) {
-            net.dutymod.core.DutyLog.warn("Could not save player data for "
+            net.dutymod.framework.DutyLog.warn("Could not save player data for "
                     + player.getName().getString() + ": " + e);
         }
     }

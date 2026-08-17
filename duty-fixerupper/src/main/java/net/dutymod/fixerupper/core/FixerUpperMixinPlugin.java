@@ -13,14 +13,14 @@ import net.dutymod.fixerupper.world.ThreadDumper;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
-import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
+import net.dutymod.framework.DutyMixinPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.mixin.transformer.meta.MixinMerged;
 
 import java.io.File;
 import java.util.*;
 
-public class FixerUpperMixinPlugin implements IMixinConfigPlugin {
+public class FixerUpperMixinPlugin extends DutyMixinPlugin {
     private static final String MIXIN_PACKAGE_ROOT = "net.dutymod.fixerupper.mixin.";
 
     public final Logger logger = LogManager.getLogger("Duty");
@@ -116,15 +116,6 @@ public class FixerUpperMixinPlugin implements IMixinConfigPlugin {
 
 
     @Override
-    public void onLoad(String mixinPackage) {
-    }
-
-    @Override
-    public String getRefMapperConfig() {
-        return null;
-    }
-
-    @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         mixinClassName = FixerUpperEarlyConfig.sanitize(mixinClassName);
         if (!mixinClassName.startsWith(MIXIN_PACKAGE_ROOT)) {
@@ -170,21 +161,6 @@ public class FixerUpperMixinPlugin implements IMixinConfigPlugin {
 
     public static FeatureLevel activeFeatureLevel() {
         return instance.getOptionValue(BuiltInOptions.STABILITY_LEVEL, FeatureLevel.class);
-    }
-
-    @Override
-    public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
-
-    }
-
-    @Override
-    public List<String> getMixins() {
-        return null;
-    }
-
-    @Override
-    public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-
     }
 
     @Override

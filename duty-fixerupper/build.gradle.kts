@@ -42,8 +42,8 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":duty-core"))
-    jarJar(project(":duty-core"))
+    implementation(project(":duty-framework"))
+    jarJar(project(":duty-framework"))
 
     // The annotations the mixins carry, plus the processor that turns them into mixin
     // configs during compilation. See fixerupper-mixin-ap and duty-annotations.

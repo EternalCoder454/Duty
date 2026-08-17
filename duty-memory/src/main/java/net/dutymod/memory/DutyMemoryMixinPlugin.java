@@ -1,14 +1,11 @@
 package net.dutymod.memory;
 
-import net.dutymod.core.DutyConfig;
-import net.dutymod.core.DutyLog;
-import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import net.dutymod.framework.DutyConfig;
+import net.dutymod.framework.DutyLog;
+import net.dutymod.framework.DutyMixinPlugin;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Gates Duty: Memory's mixins on the config.
@@ -18,7 +15,7 @@ import java.util.Set;
  * see if Duty is the problem" would not actually rule Duty out -- which defeats the point of having
  * the switch.
  */
-public class DutyMemoryMixinPlugin implements IMixinConfigPlugin {
+public class DutyMemoryMixinPlugin extends DutyMixinPlugin {
 
     /**
      * Mixin class name fragment to the config key that controls it.
@@ -64,24 +61,4 @@ public class DutyMemoryMixinPlugin implements IMixinConfigPlugin {
         return true;
     }
 
-    @Override
-    public String getRefMapperConfig() {
-        return null;
-    }
-
-    @Override
-    public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {}
-
-    @Override
-    public List<String> getMixins() {
-        return null;
-    }
-
-    @Override
-    public void preApply(String targetClassName, org.objectweb.asm.tree.ClassNode targetClass,
-                         String mixinClassName, IMixinInfo mixinInfo) {}
-
-    @Override
-    public void postApply(String targetClassName, org.objectweb.asm.tree.ClassNode targetClass,
-                          String mixinClassName, IMixinInfo mixinInfo) {}
 }

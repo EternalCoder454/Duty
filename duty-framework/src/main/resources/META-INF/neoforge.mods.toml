@@ -1,32 +1,32 @@
 modLoader = "javafml"
 loaderVersion = "[1,)"
-# MIT rather than LGPL on purpose: Duty Core is original code, and keeping it
+# MIT rather than LGPL on purpose: Duty Framework is original code, and keeping it
 # permissive is what lets Duty: Client stay MIT. See NOTICE.
 license = "MIT"
 
-# Duty Core carries no game logic of its own. It exists so the three Duty
+# Duty Framework carries no game logic of its own. It exists so the three Duty
 # modules can share one config file and one mixin-gating implementation instead
 # of shipping three near-identical copies that fight over the same file.
 # It is nested inside each module jar via JarJar, so exactly one copy loads no
 # matter how many Duty modules are installed.
 [[mods]]
-modId = "duty_core"
+modId = "duty_framework"
 version = "${mod_version}"
-displayName = "Duty Core"
+displayName = "Duty Framework"
 logoFile = "icon.png"
 authors = "Duty"
 description = '''
 Shared configuration and mixin gating for the Duty module family. Installed automatically.
 '''
 
-[[dependencies.duty_core]]
+[[dependencies.duty_framework]]
 modId = "neoforge"
 type = "required"
 versionRange = "[26.1,)"
 ordering = "NONE"
 side = "BOTH"
 
-[[dependencies.duty_core]]
+[[dependencies.duty_framework]]
 modId = "minecraft"
 type = "required"
 versionRange = "[26.1.2,26.2)"
@@ -35,7 +35,7 @@ side = "BOTH"
 
 # Cloth Config is optional: it only provides the in-game settings screen. Without it
 # Duty behaves identically and is configured through config/duty.properties.
-[[dependencies.duty_core]]
+[[dependencies.duty_framework]]
 modId = "cloth_config"
 type = "optional"
 versionRange = "[0,)"

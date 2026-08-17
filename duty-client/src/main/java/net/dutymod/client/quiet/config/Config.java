@@ -1,7 +1,7 @@
 package net.dutymod.client.quiet.config;
 
 import net.dutymod.client.ClientOptions;
-import net.dutymod.core.DutyConfig;
+import net.dutymod.framework.DutyConfig;
 
 /**
  * Quiet's settings, rewritten on top of Duty's config.
@@ -95,7 +95,7 @@ public final class Config {
                 return value;
             }
         }
-        net.dutymod.core.DutyLog.warn("Config key '" + key + "' has unknown value '" + raw
+        net.dutymod.framework.DutyLog.warn("Config key '" + key + "' has unknown value '" + raw
                 + "'; using " + fallback.name());
         return fallback;
     }

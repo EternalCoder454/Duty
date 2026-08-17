@@ -1,7 +1,7 @@
 package net.dutymod.memory.enums;
 
-import net.dutymod.core.DutyConfig;
-import net.dutymod.core.DutyLog;
+import net.dutymod.framework.DutyConfig;
+import net.dutymod.framework.DutyLog;
 import net.dutymod.memory.MemoryOptions;
 import net.neoforged.neoforgespi.transformation.ClassProcessor;
 import net.neoforged.neoforgespi.transformation.ClassProcessorIds;

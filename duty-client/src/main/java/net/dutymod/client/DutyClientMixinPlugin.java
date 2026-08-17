@@ -1,14 +1,11 @@
 package net.dutymod.client;
 
 import net.dutymod.client.batching.injection.BatchingMixinPlugin;
-import net.dutymod.core.DutyConfig;
-import net.dutymod.core.DutyLog;
-import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import net.dutymod.framework.DutyConfig;
+import net.dutymod.framework.DutyLog;
+import net.dutymod.framework.DutyMixinPlugin;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Gates Duty: Client's mixins on the config.
@@ -21,7 +18,7 @@ import java.util.Set;
  * Duty should leave the render path completely untouched, so that turning it off is a real test of
  * whether Duty is responsible for a problem.
  */
-public class DutyClientMixinPlugin implements IMixinConfigPlugin {
+public class DutyClientMixinPlugin extends DutyMixinPlugin {
 
     /**
      * Batching's own config plugin, delegated to for its mixins.
@@ -137,24 +134,4 @@ public class DutyClientMixinPlugin implements IMixinConfigPlugin {
         return null;
     }
 
-    @Override
-    public String getRefMapperConfig() {
-        return null;
-    }
-
-    @Override
-    public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {}
-
-    @Override
-    public List<String> getMixins() {
-        return null;
-    }
-
-    @Override
-    public void preApply(String targetClassName, org.objectweb.asm.tree.ClassNode targetClass,
-                         String mixinClassName, IMixinInfo mixinInfo) {}
-
-    @Override
-    public void postApply(String targetClassName, org.objectweb.asm.tree.ClassNode targetClass,
-                          String mixinClassName, IMixinInfo mixinInfo) {}
 }

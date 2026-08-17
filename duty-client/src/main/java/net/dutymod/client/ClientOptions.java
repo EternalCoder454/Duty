@@ -1,6 +1,6 @@
 package net.dutymod.client;
 
-import net.dutymod.core.DutyConfig;
+import net.dutymod.framework.DutyConfig;
 
 /**
  * Every toggle Duty: Client owns.

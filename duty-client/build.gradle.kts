@@ -32,8 +32,8 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":duty-core"))
-    jarJar(project(":duty-core"))
+    implementation(project(":duty-framework"))
+    jarJar(project(":duty-framework"))
 
     // ImmediatelyFast uses Reflect for its Iris compatibility probe and to reach
     // MapTextureManager$MapInstance. Bundled, the way upstream bundles it.

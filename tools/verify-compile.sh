@@ -112,7 +112,7 @@ for module in "${MODULES[@]}"; do
   [ -d "$ROOT/$module/src/main/java" ] || { echo "==> $module: no sources, skipping"; continue; }
   echo "==> compiling $module"
   rm -rf "$WORK/src" "$WORK/out" && mkdir -p "$WORK/src" "$WORK/out"
-  cp -r "$ROOT/duty-core/src/main/java/." "$WORK/src/"
+  cp -r "$ROOT/duty-framework/src/main/java/." "$WORK/src/"
   cp -r "$ROOT/$module/src/main/java/." "$WORK/src/"
   "$JAVAC" -d "$WORK/out" -nowarn -proc:none \
         -cp "$CP" -sourcepath "$(to_win "$WORK/stub")" \

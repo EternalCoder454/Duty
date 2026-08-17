@@ -3,7 +3,7 @@ package net.dutymod.memory.mixin.blockstate;
 import net.dutymod.memory.blockstate.FastMap;
 import net.dutymod.memory.blockstate.FastMapStateHolder;
 import net.dutymod.memory.MemoryOptions;
-import net.dutymod.core.DutyConfig;
+import net.dutymod.framework.DutyConfig;
 import net.minecraft.world.level.block.state.StateHolder;
 import net.minecraft.world.level.block.state.properties.Property;
 import org.objectweb.asm.Opcodes;

@@ -1,6 +1,6 @@
 package net.dutymod.server.biome;
 
-import net.dutymod.core.DutyLog;
+import net.dutymod.framework.DutyLog;
 import net.minecraft.world.level.biome.BiomeSource;
 
 import java.util.Set;

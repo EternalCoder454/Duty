@@ -1,6 +1,6 @@
 package net.dutymod.fixerupper.fastrecipes;
 
-import net.dutymod.core.DutyConfig;
+import net.dutymod.framework.DutyConfig;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.Ingredient;

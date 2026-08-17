@@ -10,7 +10,7 @@ val modVersion: String = property("mod_version") as String
 // The mod jars. Everything else in this build (currently the mixin-config annotation
 // processor) is a plain Java library and must not have ModDevGradle applied to it --
 // it does not compile against Minecraft and would only pay the setup cost.
-val modProjects = setOf("duty-core", "duty-memory", "duty-client", "duty-fixerupper", "duty-server", "duty-essentials", "duty-all")
+val modProjects = setOf("duty-framework", "duty-memory", "duty-client", "duty-fixerupper", "duty-server", "duty-essentials", "duty-all")
 
 subprojects {
     apply(plugin = "java")

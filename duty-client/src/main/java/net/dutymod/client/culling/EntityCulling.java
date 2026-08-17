@@ -2,8 +2,8 @@ package net.dutymod.client.culling;
 
 import net.dutymod.client.ClientOptions;
 import net.dutymod.client.occlusion.OcclusionCullingInstance;
-import net.dutymod.core.DutyConfig;
-import net.dutymod.core.DutyLog;
+import net.dutymod.framework.DutyConfig;
+import net.dutymod.framework.DutyLog;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;

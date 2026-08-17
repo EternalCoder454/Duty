@@ -1,8 +1,8 @@
 package net.dutymod.memory;
 
-import net.dutymod.core.DutyConfig;
-import net.dutymod.core.DutyLog;
-import net.dutymod.core.screen.DutyConfigScreens;
+import net.dutymod.framework.DutyConfig;
+import net.dutymod.framework.DutyLog;
+import net.dutymod.framework.screen.DutyConfigScreens;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 

@@ -1,6 +1,6 @@
 package net.dutymod.essentials;
 
-import net.dutymod.core.DutyLog;
+import net.dutymod.framework.DutyLog;
 import net.dutymod.essentials.config.EssentialsOptions;
 import net.dutymod.essentials.utils.ChatFormatter;
 import net.minecraft.commands.CommandSourceStack;

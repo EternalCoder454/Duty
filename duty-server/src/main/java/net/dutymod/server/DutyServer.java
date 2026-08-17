@@ -1,7 +1,7 @@
 package net.dutymod.server;
 
-import net.dutymod.core.DutyLog;
-import net.dutymod.core.screen.DutyConfigScreens;
+import net.dutymod.framework.DutyLog;
+import net.dutymod.framework.screen.DutyConfigScreens;
 import net.dutymod.server.net.NetOptions;
 import net.dutymod.server.save.AsyncWorldSave;
 import net.dutymod.server.structure.StructureSearchBudget;

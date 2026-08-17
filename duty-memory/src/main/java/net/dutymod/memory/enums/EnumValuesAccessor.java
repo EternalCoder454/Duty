@@ -1,6 +1,6 @@
 package net.dutymod.memory.enums;
 
-import net.dutymod.core.DutyLog;
+import net.dutymod.framework.DutyLog;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Method;

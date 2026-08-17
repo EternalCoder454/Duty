@@ -19,6 +19,6 @@ neoForge {
 }
 
 dependencies {
-    implementation(project(":duty-core"))
-    jarJar(project(":duty-core"))
+    implementation(project(":duty-framework"))
+    jarJar(project(":duty-framework"))
 }

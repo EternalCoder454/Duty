@@ -1,6 +1,6 @@
 package net.dutymod.memory;
 
-import net.dutymod.core.DutyConfig;
+import net.dutymod.framework.DutyConfig;
 
 /**
  * Every toggle Duty: Memory owns, registered in one place.

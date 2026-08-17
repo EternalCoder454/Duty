@@ -8,7 +8,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import net.dutymod.core.DutyConfig;
+import net.dutymod.framework.DutyConfig;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import net.dutymod.fixerupper.annotation.FeatureLevel;
 import net.dutymod.fixerupper.annotation.IgnoreOutsideDev;

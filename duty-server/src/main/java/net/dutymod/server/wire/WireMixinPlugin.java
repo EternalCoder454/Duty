@@ -1,12 +1,8 @@
 package net.dutymod.server.wire;
 
-import net.dutymod.core.DutyLog;
-import org.objectweb.asm.tree.ClassNode;
-import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
-import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import net.dutymod.framework.DutyLog;
+import net.dutymod.framework.DutyMixinPlugin;
 
-import java.util.List;
-import java.util.Set;
 
 /**
  * Applies the Alternate Current mixins only when Duty is configured to own redstone dust.
@@ -22,7 +18,7 @@ import java.util.Set;
  * {@code RedStoneWireBlockMixin} routes updates into it and {@code ExperimentalRedstoneUtilsMixin}
  * supplies orientation. Applying any subset would leave the handler half-installed.
  */
-public final class WireMixinPlugin implements IMixinConfigPlugin {
+public final class WireMixinPlugin extends DutyMixinPlugin {
     private boolean enabled;
 
     @Override
@@ -37,31 +33,8 @@ public final class WireMixinPlugin implements IMixinConfigPlugin {
     }
 
     @Override
-    public String getRefMapperConfig() {
-        return null;
-    }
-
-    @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         return this.enabled;
     }
 
-    @Override
-    public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
-    }
-
-    @Override
-    public List<String> getMixins() {
-        return null;
-    }
-
-    @Override
-    public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName,
-                         IMixinInfo mixinInfo) {
-    }
-
-    @Override
-    public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName,
-                          IMixinInfo mixinInfo) {
-    }
 }
