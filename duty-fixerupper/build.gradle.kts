@@ -6,6 +6,12 @@
 
 base.archivesName = "duty-fixerupper"
 
+// Task names Gradle derives from the loader source set, e.g. compileNeoforgeJava.
+val loaderName: String = rootProject.property("duty.loader") as String
+val loaderTitle: String = loaderName.replaceFirstChar { it.uppercase() }
+val loaderCompileTask = "compile${loaderTitle}Java"
+val loaderResourcesTask = "process${loaderTitle}Resources"
+
 // Annotation classes are copied into the jar rather than left as an external dependency:
 // the retained ones have to resolve at class load or mixin application fails.
 val embed: Configuration by configurations.creating {
@@ -54,7 +60,7 @@ dependencies {
     // annotationProcessor path, where they would shadow ModDevGradle's copy; gson,
     // auto-common, guava and duty-annotations arrive as ordinary transitive deps.
     annotationProcessor(project(path = ":fixerupper-mixin-ap", configuration = "shadow"))
-    "neoforgeAnnotationProcessor"(project(path = ":fixerupper-mixin-ap", configuration = "shadow"))
+    "${loaderName}AnnotationProcessor"(project(path = ":fixerupper-mixin-ap", configuration = "shadow"))
 
     // ModernFix also shipped per-mod compat shims for spark, CTM, TerraBlender, CoFH Core
     // and SuperMartijn642's Core Lib. Each guards a single file against one third-party mod,
@@ -75,8 +81,8 @@ sourceSets {
     main {
         resources.srcDir(layout.buildDirectory.dir("generated/sources/annotationProcessor/java/main/resources"))
     }
-    named("neoforge") {
-        resources.srcDir(layout.buildDirectory.dir("generated/sources/annotationProcessor/java/neoforge/resources"))
+    named(loaderName) {
+        resources.srcDir(layout.buildDirectory.dir("generated/sources/annotationProcessor/java/$loaderName/resources"))
     }
 }
 
@@ -87,7 +93,7 @@ tasks.named("compileJava") {
     dependsOn(":fixerupper-mixin-ap:shadowJar")
 }
 
-tasks.named("compileNeoforgeJava") {
+tasks.named(loaderCompileTask) {
     dependsOn(":fixerupper-mixin-ap:shadowJar")
 }
 
@@ -102,7 +108,7 @@ tasks.withType<JavaCompile>().configureEach {
         // configs is what lets a Fabric build ship main's without NeoForge's, which is the point
         // of the split; the toml registers both.
         val configName =
-            if (name == "compileNeoforgeJava") "duty_fixerupper_neoforge" else "duty_fixerupper"
+            if (name == loaderCompileTask) "duty_fixerupper_$loaderName" else "duty_fixerupper"
         options.compilerArgs.add("-ArootProject.name=$configName")
     }
 }
@@ -113,8 +119,8 @@ tasks.named<ProcessResources>("processResources") {
     dependsOn(tasks.named("compileJava"))
 }
 
-tasks.named<ProcessResources>("processNeoforgeResources") {
-    dependsOn(tasks.named("compileNeoforgeJava"))
+tasks.named<ProcessResources>(loaderResourcesTask) {
+    dependsOn(tasks.named(loaderCompileTask))
 }
 
 tasks.named("sourcesJar") {

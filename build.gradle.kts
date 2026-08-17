@@ -12,6 +12,10 @@ val modVersion: String = property("mod_version") as String
 // it does not compile against Minecraft and would only pay the setup cost.
 val modProjects = setOf("duty-framework", "duty-memory", "duty-client", "duty-fixerupper", "duty-server", "duty-essentials", "duty-all")
 
+// The loader this branch builds for, and the name of the source set holding its code.
+// Set in gradle.properties; see the target table there.
+val loaderName: String = property("duty.loader") as String
+
 subprojects {
     apply(plugin = "java")
 
@@ -87,7 +91,7 @@ configure(subprojects.filter { it.name in modProjects }) {
         // in this shared block it has to be looked up on the extension container.
         val sets = extensions.getByType(SourceSetContainer::class.java)
         val mainSet = sets.getByName("main")
-        val loaderSet = sets.maybeCreate("neoforge").apply {
+        val loaderSet = sets.maybeCreate(loaderName).apply {
             // ModDevGradle only puts Minecraft and NeoForge on `main`; inheriting its classpath is
             // what lets this set see them, and its output is what lets it extend main's classes.
             compileClasspath += mainSet.compileClasspath + mainSet.output

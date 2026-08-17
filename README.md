@@ -2,9 +2,45 @@
 
 Duty does what it needs to do, perform its duty.
 
-A performance mod for Minecraft **26.1.2** on **NeoForge**, built by combining several
-existing performance mods and dropping everything that exists only to support older
-versions. One target version, no multi-version tooling, no legacy branches.
+A performance mod built by combining several existing performance mods and dropping
+everything that exists only to support older versions.
+
+## Branches
+
+One target per branch. Every branch is a full checkout that builds one thing, so a build
+is never a matrix of conditions and a checkout is never half-configured for a version you
+are not on.
+
+| Branch | Loader | Minecraft | Java | State |
+|---|---|---|---|---|
+| **`main`** | NeoForge | 26.1.2+ | 25 | Builds and runs. The development line. |
+| `neoforge-1.21.1` | NeoForge | 1.21.1 | 21 | Branched from main; not yet ported. |
+| `fabric-26.1.2` | Fabric | 26.1.2+ | 25 | Branched from main; not yet ported. |
+| `forge-1.20.1` | Forge | 1.20.1 | 17 | Branched from main; not yet ported. |
+
+The three port branches start as copies of `main` with their build retargeted. **They do
+not compile yet**, and that is their intended state rather than a fault -- see
+[PORTING.md](PORTING.md) for what each still needs and why some features cannot exist on
+some targets at all.
+
+### How code moves between branches
+
+`main` is where shared work lands first. A fix that is not version-specific is cherry-picked
+outward:
+
+```bash
+git checkout fabric-26.1.2
+git cherry-pick <commit-from-main>
+```
+
+The loader split is what keeps that cheap. Every module is `src/main`, which names no
+loader, plus `src/<loader>`, which is the only place allowed to import one -- and 36 of
+Duty's 574 source files are in the second category. A cherry-pick that touches only
+`src/main` applies to every branch unchanged; the build fails on any branch where it does
+not, because `checkMainIsLoaderNeutral` refuses a loader import in the neutral set.
+
+Each branch names its own loader in `gradle.properties` (`duty.loader`), so the build
+finds `src/fabric` on the Fabric branch without any build-script difference.
 
 ## Modules
 
