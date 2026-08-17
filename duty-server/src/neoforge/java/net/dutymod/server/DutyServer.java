@@ -41,7 +41,11 @@ public final class DutyServer {
         // still be in flight when the process goes away, which is the save most worth keeping.
         // AsyncWorldSave also registers a JVM shutdown hook, but that only covers the paths that
         // reach it; this is the one that fires on a normal world exit.
-        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> AsyncWorldSave.flush());
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> {
+            AsyncWorldSave.flush();
+            // After the flush, so the report includes the time that flush just cost.
+            net.dutymod.framework.DutyReport.onWorldClose();
+        });
 
         DutyConfigScreens.register(container);
         DutyLog.info("Duty: Server reporting for duty.");

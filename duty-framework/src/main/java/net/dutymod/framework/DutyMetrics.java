@@ -66,6 +66,9 @@ public final class DutyMetrics {
     /** Seconds between automatic reports to the log. 0 disables the periodic report. */
     public static final String REPORT_SECONDS = "framework.metrics_report_seconds";
 
+    /** How often the report is written to disk, so a crash cannot take the session with it. */
+    public static final String AUTOSAVE_SECONDS = "framework.metrics_autosave_seconds";
+
     /**
      * Read once into a plain field rather than through {@link DutyConfig} per call.
      *
@@ -114,6 +117,11 @@ public final class DutyMetrics {
         DutyConfig.register(REPORT_SECONDS, 0,
                 "Seconds between automatic performance reports in the log. 0 reports only when\n"
                         + "something asks. Ignored while " + ENABLED + " is false.");
+        DutyConfig.register(AUTOSAVE_SECONDS, 60,
+                "Seconds between automatic writes of logs/duty-report.txt while measuring. This\n"
+                        + "is what survives a crash: without it, a session that ends badly takes\n"
+                        + "every measurement with it and the crash report says nothing about what\n"
+                        + "was slow beforehand. 0 disables. Ignored while " + ENABLED + " is false.");
 
         enabled = DutyConfig.get(ENABLED);
         if (enabled) {
@@ -161,6 +169,18 @@ public final class DutyMetrics {
             windowStartedNanos = System.nanoTime();
         }
         enabled = value;
+
+        // Persisted, not just held in memory. Turning measurement on is the first half of a task
+        // whose second half happens minutes later, and the session in between is exactly the one
+        // that might crash. Leaving the flag in memory meant a crash lost both the measurements
+        // and the fact that measuring had been asked for, so the next launch quietly collected
+        // nothing.
+        try {
+            DutyConfig.set(ENABLED, Boolean.toString(value));
+        } catch (Throwable t) {
+            DutyLog.warn("Could not persist " + ENABLED + ": " + t);
+        }
+
         if (value) {
             startReporterIfConfigured();
         }
@@ -289,21 +309,43 @@ public final class DutyMetrics {
         if (reporter != null) {
             return;
         }
-        int seconds = DutyConfig.getInt(REPORT_SECONDS, 0, 3600);
-        if (seconds <= 0) {
+        int logSeconds = DutyConfig.getInt(REPORT_SECONDS, 0, 3600);
+        int autosaveSeconds = DutyConfig.getInt(AUTOSAVE_SECONDS, 0, 3600);
+        if (logSeconds <= 0 && autosaveSeconds <= 0) {
             return;
         }
 
+        // One thread for both jobs, waking on the shorter of the two intervals and firing whichever
+        // is actually due. Two timers would mean two threads to do a few file writes a minute.
+        int tick = Math.min(logSeconds > 0 ? logSeconds : Integer.MAX_VALUE,
+                autosaveSeconds > 0 ? autosaveSeconds : Integer.MAX_VALUE);
+
         Thread thread = new Thread(() -> {
+            long sinceLog = 0L;
+            long sinceAutosave = 0L;
             while (true) {
                 try {
-                    Thread.sleep(seconds * 1000L);
+                    Thread.sleep(tick * 1000L);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     return;
                 }
-                if (enabled) {
+                sinceLog += tick;
+                sinceAutosave += tick;
+                if (!enabled) {
+                    continue;
+                }
+                if (logSeconds > 0 && sinceLog >= logSeconds) {
+                    sinceLog = 0L;
                     reportToLog();
+                }
+                if (autosaveSeconds > 0 && sinceAutosave >= autosaveSeconds) {
+                    sinceAutosave = 0L;
+                    try {
+                        DutyReport.writeToFile("autosave");
+                    } catch (Throwable t) {
+                        DutyLog.warn("Metrics autosave failed: " + t);
+                    }
                 }
             }
         }, "Duty metrics reporter");

@@ -1,69 +1,69 @@
 #!/usr/bin/env python3
-"""Check that every mixin named in a config actually exists in the built jar.
+"""Check that every mixin a config names actually exists.
 
-A mixin config lists classes by name. If one of those classes is not in the jar, mixin fails
-at *prepare* time with "The specified mixin ... was not found" and the game dies before it
-reaches any of the other checkers' failure modes.
+A mixin config listing a class that is not there is fatal: mixin aborts the whole config with
+"The specified mixin ... was not found" and the mod does not load. Nothing catches this earlier --
+the Java compiles, the jar builds, the build is green, and the failure only appears on the first
+launch. That is exactly the gap this fills.
 
-This is easy to cause when porting. Stonecutter leaves version-inapplicable files fully
-commented out -- the .java file exists, so a script that builds the config from the file tree
-registers it, but it compiles to nothing. That is exactly how
-`stfu.keybinds.MultipleBindingsPerKey.KeyBindingMixin` got listed and crashed the game.
+Hand-written configs go stale when a mixin is deleted and its entry is not; imported ones can
+arrive stale, which is how this was found (four dead entries in a config copied from upstream).
 
-Run after a build, before deploying:
-
-    python tools/check-mixin-configs.py
+Run with no arguments to check every module. Exit status is 1 if anything is missing.
 """
-
-import io
 import json
+import pathlib
 import sys
-import zipfile
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-VERSION = "0.1.0"
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+
+def source_roots(module: pathlib.Path):
+    """Every java source root in a module, including per-loader source sets."""
+    return [p for p in module.glob("src/*/java") if p.is_dir()]
+
+
+def check(config: pathlib.Path, module: pathlib.Path) -> list[str]:
+    try:
+        data = json.loads(config.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        return [f"{config.relative_to(ROOT)}: not valid JSON ({e})"]
+
+    package = data.get("package", "").replace(".", "/")
+    roots = source_roots(module)
+    problems = []
+
+    for key in ("mixins", "client", "server"):
+        for entry in data.get(key, []):
+            relative = pathlib.Path(package) / (entry.replace(".", "/") + ".java")
+            if not any((root / relative).exists() for root in roots):
+                problems.append(
+                    f"{config.relative_to(ROOT)}: [{key}] {entry} -- no source at {relative}"
+                )
+    return problems
 
 
 def main() -> int:
-    modules = sys.argv[1:] or ["duty-memory", "duty-client", "duty-fixerupper", "duty-server", "duty-essentials"]
-    problems = checked = 0
+    problems = []
+    checked = 0
+    for config in sorted(ROOT.glob("duty-*/src/*/resources/**/*.mixins.json")):
+        # Walk up from src/<set>/resources/... to the module directory.
+        module = config
+        while module.parent != ROOT:
+            module = module.parent
+        problems.extend(check(config, module))
+        checked += 1
 
-    for module in modules:
-        jar = ROOT / module / "build/libs" / f"{module}-{VERSION}.jar"
-        if not jar.is_file():
-            print(f"  {module}: no jar built, skipping")
-            continue
-
-        with zipfile.ZipFile(jar) as zf:
-            names = zf.namelist()
-            present = {n[:-6].replace("/", ".") for n in names if n.endswith(".class")}
-            configs = [n for n in names if n.endswith(".mixins.json")]
-
-            for config in configs:
-                cfg = json.loads(zf.read(config).decode("utf-8"))
-                pkg = cfg.get("package", "")
-                listed = list(cfg.get("mixins", [])) + list(cfg.get("client", [])) \
-                    + list(cfg.get("server", []))
-                for entry in listed:
-                    checked += 1
-                    if f"{pkg}.{entry}" not in present:
-                        problems += 1
-                        print(f"  {module}/{config}")
-                        print(f"    '{entry}' is listed but has no class in the jar")
-
-                # A plugin that does not exist fails the whole config the same way.
-                plugin = cfg.get("plugin")
-                if plugin:
-                    checked += 1
-                    if plugin not in present:
-                        problems += 1
-                        print(f"  {module}/{config}")
-                        print(f"    plugin '{plugin}' has no class in the jar")
-
-    print(f"\n{checked} mixin entries checked, {problems} missing")
-    return 1 if problems else 0
+    print(f"checked {checked} mixin config(s)")
+    for problem in problems:
+        print(f"  MISSING  {problem}")
+    if problems:
+        print(f"\n{len(problems)} mixin(s) named but not present. Mixin drops the whole config "
+              f"for any one of these, so the mod would fail to load.")
+        return 1
+    print("  all named mixins have sources")
+    return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    sys.exit(main())

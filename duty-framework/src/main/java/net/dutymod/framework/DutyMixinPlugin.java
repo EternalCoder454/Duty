@@ -25,6 +25,11 @@ import java.util.Set;
 public abstract class DutyMixinPlugin implements IMixinConfigPlugin {
     @Override
     public void onLoad(String mixinPackage) {
+        // The earliest point every Duty module reliably reaches, and GC monitoring wants to be
+        // running before the first world load rather than from whenever a report is asked for.
+        // install() is idempotent, so every module calling it costs one compareAndSet.
+        DutyGc.install();
+        DutyReport.install();
     }
 
     @Override

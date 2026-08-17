@@ -4,9 +4,13 @@ import net.dutymod.framework.DutyConfig;
 import net.dutymod.framework.DutyLog;
 import net.dutymod.framework.DutyMetrics;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -54,6 +58,26 @@ public final class AsyncWorldSave {
     private static final DutyMetrics.Timer WRITE = DutyMetrics.timer("server.save.write");
     private static final DutyMetrics.Counter SAVES = DutyMetrics.counter("server.save.count");
 
+    /**
+     * How long leaving a world spends waiting for those writes.
+     *
+     * <p>Separate from {@link #WRITE} because it answers a user-visible question rather than a
+     * throughput one: this is time the server thread is stopped, on the path where the window can
+     * be seen to stop responding.
+     */
+    private static final DutyMetrics.Timer FLUSH = DutyMetrics.timer("server.save.flush");
+
+    /**
+     * Bound on the world-stop wait.
+     *
+     * <p>Short on purpose. Outstanding writes at this point are the level and player data just
+     * submitted, which is a handful of small files; if that has not finished in five seconds the
+     * disk is in trouble and holding the game hostage for another twenty-five will not help. The
+     * writes are not cancelled -- they keep running on the worker, and the shutdown hook waits for
+     * them properly before the JVM exits.
+     */
+    private static final int FLUSH_TIMEOUT_SECONDS = 5;
+
     private static final ExecutorService WORKER = Executors.newSingleThreadExecutor(runnable -> {
         Thread thread = new Thread(runnable, "Duty world save");
         // Not a daemon: a daemon dies with the JVM mid-write, which is exactly the save you most
@@ -69,7 +93,7 @@ public final class AsyncWorldSave {
                         + "server thread. Both paths write to a temp file and swap it in atomically,\n"
                         + "so an interrupted write leaves the previous save intact rather than a\n"
                         + "broken one, and Duty waits for outstanding writes when the server stops.");
-        Runtime.getRuntime().addShutdownHook(new Thread(AsyncWorldSave::flush, "Duty world save flush"));
+        Runtime.getRuntime().addShutdownHook(new Thread(AsyncWorldSave::shutdown, "Duty world save flush"));
     }
 
     private AsyncWorldSave() {}
@@ -94,33 +118,90 @@ public final class AsyncWorldSave {
         SAVES.increment();
         DutyLog.infoOnce("async_save.live",
                 "Async world save is live; " + what + " is now written off the server thread.");
-        WORKER.execute(() -> {
-            long started = WRITE.begin();
+        try {
+            WORKER.execute(() -> {
+                long started = WRITE.begin();
+                try {
+                    write.run();
+                } catch (Throwable t) {
+                    // Never let a save failure kill the worker; the next save must still get through.
+                    DutyLog.warn("Async save of " + what + " failed: " + t);
+                } finally {
+                    // Timed here rather than around submit(): submit returns the moment the
+                    // work is queued, so timing it would measure the handoff and report that
+                    // saving is free. What matters is how long the write actually takes, which
+                    // is what decides whether the queue can keep up with autosave.
+                    WRITE.end(started);
+                    COMPLETED.incrementAndGet();
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            // The worker only refuses work after shutdown(), i.e. the JVM is on its way out. Losing
+            // the save is the one outcome worth avoiding here, so write it on the calling thread
+            // instead. Blocking a thread that is already shutting down costs nothing.
+            DutyLog.warn("World save worker is shut down; writing " + what + " inline.");
             try {
                 write.run();
             } catch (Throwable t) {
-                // Never let a save failure kill the worker; the next save must still get through.
-                DutyLog.warn("Async save of " + what + " failed: " + t);
+                DutyLog.warn("Inline save of " + what + " failed: " + t);
             } finally {
-                // Timed here rather than around submit(): submit returns the moment the
-                // work is queued, so timing it would measure the handoff and report that
-                // saving is free. What matters is how long the write actually takes, which
-                // is what decides whether the queue can keep up with autosave.
-                WRITE.end(started);
                 COMPLETED.incrementAndGet();
             }
-        });
+        }
     }
 
-    /** Waits for outstanding writes. Called on server stop and again from the shutdown hook. */
+    /**
+     * Waits for outstanding writes, then leaves the worker running.
+     *
+     * <p>Called when a server stops. In singleplayer that is every time you leave a world, which is
+     * the whole reason this does not shut the executor down: the worker is a {@code static final}
+     * created once per JVM, so a {@code shutdown()} here is permanent. Leaving one world would kill
+     * async saving for every world joined afterwards in the same session, and -- because
+     * {@link #submit} hands work straight to the executor -- turn each later save into a
+     * {@link RejectedExecutionException} on the server thread. Shutting down is
+     * {@link #shutdown()}'s job, and only the JVM hook calls it.
+     *
+     * <p>Waiting is still correct: the world must not unload with its own writes outstanding. But
+     * the wait is now for exactly the queued work and nothing else. Submitting a no-op barrier and
+     * waiting on that is what makes it exact -- the worker is single-threaded and FIFO, so the
+     * barrier cannot run until every write queued before it has finished.
+     *
+     * <p>Timed, because this blocks the server thread and blocking the server thread is the thing
+     * this class exists to stop doing. If leaving a world ever hitches, {@code server.save.flush}
+     * says whether this was it.
+     */
     public static void flush() {
         long pending = SUBMITTED.get() - COMPLETED.get();
-        if (pending <= 0 && WORKER.isShutdown()) {
+        if (pending <= 0 || WORKER.isShutdown()) {
             return;
         }
-        if (pending > 0) {
-            DutyLog.info("Waiting for " + pending + " world save write(s) to finish.");
+        DutyLog.info("Waiting for " + pending + " world save write(s) to finish.");
+
+        long started = FLUSH.begin();
+        try {
+            Future<?> barrier = WORKER.submit(() -> {});
+            barrier.get(FLUSH_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            DutyLog.warn("World save writes did not finish within " + FLUSH_TIMEOUT_SECONDS + "s; "
+                    + (SUBMITTED.get() - COMPLETED.get()) + " still outstanding. They keep running;"
+                    + " the shutdown hook waits for them again before the JVM exits.");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException | RejectedExecutionException e) {
+            DutyLog.warn("World save flush failed: " + e);
+        } finally {
+            FLUSH.end(started);
         }
+    }
+
+    /**
+     * Waits for outstanding writes and stops the worker for good. JVM shutdown only.
+     *
+     * <p>The longer timeout is deliberate: this is the last chance for a save to reach the disk,
+     * and the alternative to waiting is losing it.
+     */
+    private static void shutdown() {
+        flush();
         WORKER.shutdown();
         try {
             if (!WORKER.awaitTermination(30, TimeUnit.SECONDS)) {

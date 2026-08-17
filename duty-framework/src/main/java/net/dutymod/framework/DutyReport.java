@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -60,6 +61,39 @@ public final class DutyReport {
 
     private static final List<Contributor> CONTRIBUTORS = new CopyOnWriteArrayList<>();
 
+    public static final String ON_WORLD_CLOSE = "framework.report_on_world_close";
+
+    private static final java.util.concurrent.atomic.AtomicBoolean HOOK_INSTALLED =
+            new java.util.concurrent.atomic.AtomicBoolean();
+
+    /**
+     * Registers the options this class owns and arranges for a final report on the way out.
+     *
+     * <p>The shutdown hook is the crash net. A Minecraft crash is an exception that unwinds and
+     * exits normally, so hooks still run -- which is the difference between a session ending in a
+     * crash report with no measurements and one that leaves the numbers describing the moments
+     * before it went wrong. It cannot help with a JVM abort or a kill, and nothing can.
+     */
+    static void install() {
+        if (!HOOK_INSTALLED.compareAndSet(false, true)) {
+            return;
+        }
+        DutyConfig.register(ON_WORLD_CLOSE, true,
+                "Write logs/duty-report.txt automatically whenever a world closes, and once more\n"
+                        + "when the game exits. Without this, a session that ends in a crash takes\n"
+                        + "its measurements with it.");
+        try {
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                if (DutyConfig.get(ON_WORLD_CLOSE)
+                        && (DutyMetrics.enabled() || DutyGc.count() > 0L)) {
+                    writeToFile("the game exited");
+                }
+            }, "Duty final report"));
+        } catch (Throwable t) {
+            DutyLog.warn("Could not install the final-report hook: " + t);
+        }
+    }
+
     private DutyReport() {}
 
     /** How much a finding matters. Ordering here is the ordering in the report. */
@@ -97,9 +131,14 @@ public final class DutyReport {
         List<Finding> out = new ArrayList<>();
 
         if (!DutyMetrics.enabled()) {
-            out.add(new Finding(Severity.INFO, "Measurement is off",
-                    "Nothing below was collected. Run /duty metrics on, play for a few minutes, "
-                            + "then ask again."));
+            // Said carefully, because the previous wording ("nothing below was collected") sat
+            // directly above findings that had plainly collected something. Counters, heap and GC
+            // do not depend on measurement being on; only the timings do.
+            out.add(new Finding(Severity.INFO, "Timings are off",
+                    "No timer is running, so nothing below reports how long anything took. "
+                            + "Counters, heap and garbage collection are still recorded and any "
+                            + "findings about them are real. For timings, run /duty metrics on, "
+                            + "play for a few minutes, then ask again."));
         }
 
         long windowNanos = DutyMetrics.windowNanos();
@@ -205,16 +244,87 @@ public final class DutyReport {
         }
         long used = runtime.totalMemory() - runtime.freeMemory();
         double share = (double) used / max;
-        if (share < 0.85d) {
+        long liveSet = DutyGc.liveSetBytes();
+
+        if (share >= 0.85d) {
+            // "Used" counts garbage the collector has not got to yet, so on its own a high figure
+            // is not evidence of anything -- a heap sitting at 90% with a small live set is a
+            // collector doing its job lazily, which is what it is supposed to do. The live set is
+            // what says whether the ceiling is actually too low, so the advice waits for it.
+            String verdict;
+            if (liveSet < 0L) {
+                verdict = "No major collection has happened yet, so how much of this is live is "
+                        + "not known. Ignore the percentage until one has.";
+            } else {
+                double liveShare = (double) liveSet / max;
+                verdict = String.format(Locale.ROOT,
+                        "Of that, %d MiB (%.0f%% of the maximum) was still reachable after the "
+                                + "last major collection -- that is the real requirement. ",
+                        liveSet >> 20, liveShare * 100.0d)
+                        + (liveShare >= 0.60d
+                                ? "That is high enough that the heap genuinely is too small; "
+                                        + "raising the maximum is the fix."
+                                : "The heap is big enough. The rest is garbage awaiting "
+                                        + "collection, so raising the maximum would only make "
+                                        + "collections rarer and larger, not fix a stall.");
+            }
+            out.add(new Finding(Severity.PROBLEM, "Heap is nearly full",
+                    String.format(Locale.ROOT,
+                            "%d MiB used of %d MiB (%.0f%%). Treat every spike below with "
+                                    + "suspicion: at this level a collection pause lands inside "
+                                    + "whatever was running and is measured as that thing being "
+                                    + "slow. %s",
+                            used >> 20, max >> 20, share * 100.0d, verdict)));
+        }
+
+        appendGcFinding(out, max, liveSet);
+    }
+
+    /**
+     * Reports what the collector actually did.
+     *
+     * <p>This is the finding that stops the rest of the report lying. A stop-the-world pause is
+     * attributed by every timer to whichever call it interrupted, so without a GC line a 45ms
+     * culling spike and a 45ms GC pause are the same observation wearing different labels.
+     */
+    private static void appendGcFinding(List<Finding> out, long max, long liveSet) {
+        long collections = DutyGc.count();
+        if (collections == 0L) {
             return;
         }
-        out.add(new Finding(Severity.PROBLEM, "Heap is nearly full",
-                String.format(Locale.ROOT,
-                        "%d MiB used of %d MiB (%.0f%%). Treat every spike below with suspicion: "
-                                + "at this level a collection pause lands inside whatever was "
-                                + "running and is measured as that thing being slow. Raise the "
-                                + "maximum before chasing any of them.",
-                        used >> 20, max >> 20, share * 100.0d)));
+        long worst = DutyGc.worstPauseMillis();
+        long longPauses = DutyGc.longPauses();
+        boolean concurrent = DutyGc.mostlyConcurrent();
+
+        String collectors = String.join(", ", DutyGc.collectors());
+        String base = String.format(Locale.ROOT,
+                "%d collection(s), %d major, %dms total, worst %dms (%s). Collector: %s.",
+                collections, DutyGc.majorCount(), DutyGc.totalPauseMillis(), worst,
+                DutyGc.worstCause().isEmpty() ? "cause unknown" : DutyGc.worstCause(),
+                collectors.isEmpty() ? "unknown" : collectors);
+
+        if (concurrent) {
+            // Reporting a concurrent cycle as a stall is the one mistake this section could make
+            // that would send somebody tuning the wrong thing.
+            out.add(new Finding(Severity.INFO, "Garbage collection (mostly concurrent)",
+                    base + " This collector does most of its work while the game runs, so these "
+                            + "durations are not freezes and should not be read as pauses."));
+            return;
+        }
+
+        if (worst >= 100L) {
+            String advice = liveSet >= 0L && (double) liveSet / max < 0.60d
+                    ? "The live set is comfortably inside the heap, so this is the collector's "
+                            + "pause behaviour rather than a shortage of memory. A mostly "
+                            + "concurrent collector removes pauses of this length without needing "
+                            + "a larger heap."
+                    : "Long enough to be seen as the window freezing.";
+            out.add(new Finding(Severity.PROBLEM, "Garbage collection is pausing the game",
+                    base + " " + longPauses + " pause(s) were 100ms or longer. " + advice));
+        } else {
+            out.add(new Finding(Severity.INFO, "Garbage collection looks healthy",
+                    base + " Nothing here is long enough to be visible as a freeze."));
+        }
     }
 
     /**
@@ -381,17 +491,61 @@ public final class DutyReport {
 
     /** Writes the report next to the log and {@return the path}, or null if it could not be written. */
     public static Path writeToFile() {
+        return writeToFile("asked for");
+    }
+
+    /**
+     * Writes the report, recording what prompted it.
+     *
+     * <p>One file, always the freshest: an autosave, a world closing, the JVM exiting and
+     * {@code /duty report} all land here. The alternative -- a file per trigger -- means working
+     * out which of four files is the interesting one at exactly the moment something has gone
+     * wrong. The trigger is written into the report instead, which answers the same question
+     * without the filing.
+     *
+     * <p>Written to a temporary file and moved into place, because the whole point of the autosave
+     * is to survive a crash and a crash during the write would otherwise leave a truncated report
+     * where the previous good one used to be.
+     */
+    public static synchronized Path writeToFile(String trigger) {
         Path path = Paths.get("logs").resolve("duty-report.txt").toAbsolutePath();
         try {
             Path parent = path.getParent();
             if (parent != null) {
                 Files.createDirectories(parent);
             }
-            Files.write(path, generate().getBytes(StandardCharsets.UTF_8));
+            String body = "Written because: " + trigger + "\n" + generate();
+            Path temp = path.resolveSibling("duty-report.txt.tmp");
+            Files.write(temp, body.getBytes(StandardCharsets.UTF_8));
+            try {
+                Files.move(temp, path, StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.ATOMIC_MOVE);
+            } catch (IOException atomicUnsupported) {
+                Files.move(temp, path, StandardCopyOption.REPLACE_EXISTING);
+            }
             return path;
         } catch (IOException e) {
             DutyLog.warn("Could not write " + path + ": " + e);
             return null;
+        }
+    }
+
+    /**
+     * Writes a report when a world closes, if configured to.
+     *
+     * <p>Default on: the interesting session is the one that just happened, and asking somebody to
+     * remember to run a command before leaving is asking them to lose the data.
+     */
+    public static void onWorldClose() {
+        if (!DutyConfig.get(ON_WORLD_CLOSE)) {
+            return;
+        }
+        if (!DutyMetrics.enabled() && DutyGc.count() == 0L) {
+            return;
+        }
+        Path written = writeToFile("a world closed");
+        if (written != null) {
+            DutyLog.info("Wrote " + written);
         }
     }
 
