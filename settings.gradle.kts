@@ -27,4 +27,6 @@ include("duty-client")
 include("duty-fixerupper")
 include("duty-server")
 include("duty-essentials")
+// Experimental. Async (GPL-3.0): entity ticking across threads. Off by default.
+include("duty-innovative")
 include("duty-all")

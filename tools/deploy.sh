@@ -62,7 +62,7 @@ fi
 # jars, or the single duty-all jar that nests them. They carry the same mod ids, so having
 # both present is a duplicate-mod error rather than a double dose of anything. The pack uses
 # the separate jars because that is what it already has installed.
-MODULES=(duty-memory duty-client duty-fixerupper duty-server duty-essentials)
+MODULES=(duty-memory duty-client duty-fixerupper duty-server duty-essentials duty-innovative)
 
 # Liteminer lives in its own repository next door and depends on duty-framework. It used to be
 # installed on every run, because it was forgotten once and that was the fix. The clean pack is

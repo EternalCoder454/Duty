@@ -1,0 +1,59 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "GPL-3.0"
+
+[[mods]]
+modId = "duty_innovative"
+version = "${mod_version}"
+displayName = "Duty: Innovative"
+logoFile = "icon.png"
+authors = "Duty"
+credits = "Derived from Async by AxalotL, Alchemy, Bliss, FurryMileon, Grider and jediminer543 (GPL-3.0)."
+description = '''
+Duty does what it needs to do, perform its duty.
+
+Innovative: the experimental module. Entity ticking spread across several threads instead
+of one, which is a change to when the game does things rather than only how fast. Off by
+default, and separate from the modules that only make existing work cheaper, because the
+failure mode here is an entity behaving oddly rather than a clean error.
+'''
+
+[[mixins]]
+config = "async.common.mixins.json"
+
+[[mixins]]
+config = "async.neoforge.mixins.json"
+
+[[dependencies.duty_innovative]]
+modId = "neoforge"
+type = "required"
+versionRange = "[26.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.duty_innovative]]
+modId = "minecraft"
+type = "required"
+versionRange = "[26.1.2,26.2)"
+ordering = "NONE"
+side = "BOTH"
+
+# Both rewrite the same entity tick path. Two mods doing that at once is not a conflict that
+# resolves into slow -- it resolves into entities being ticked twice or not at all.
+[[dependencies.duty_innovative]]
+modId = "moonrise"
+type = "incompatible"
+versionRange = ""
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.duty_innovative]]
+modId = "openpartiesandclaims"
+type = "incompatible"
+versionRange = ""
+ordering = "NONE"
+side = "BOTH"
+
+# Lithium's chunk_random allocation mixin assumes one thread owns the level's RandomSource.
+["lithium:options"]
+"mixin.alloc.chunk_random" = false
