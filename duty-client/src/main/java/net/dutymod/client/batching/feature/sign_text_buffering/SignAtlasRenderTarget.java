@@ -20,7 +20,7 @@ package net.dutymod.client.batching.feature.sign_text_buffering;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.dutymod.client.batching.Batching;
 import net.dutymod.client.batching.util.RenderTargetTexture;
 
@@ -29,13 +29,13 @@ public class SignAtlasRenderTarget extends TextureTarget implements AutoCloseabl
     public static final int ATLAS_SIZE = Batching.config.experimental_sign_atlas_size;
 
     private final int id;
-    private final Identifier textureId;
+    private final ResourceLocation textureId;
     private final Slot rootSlot;
 
     public SignAtlasRenderTarget(final int id) {
         super("Batching Sign Atlas", ATLAS_SIZE, ATLAS_SIZE, true);
         this.id = id;
-        this.textureId = Identifier.fromNamespaceAndPath("immediatelyfast", "sign_atlas/" + id);
+        this.textureId = ResourceLocation.fromNamespaceAndPath("immediatelyfast", "sign_atlas/" + id);
         Minecraft.getInstance().getTextureManager().register(this.textureId, new RenderTargetTexture(this));
         this.rootSlot = new Slot(null, 0, 0, ATLAS_SIZE, ATLAS_SIZE);
     }
@@ -54,7 +54,7 @@ public class SignAtlasRenderTarget extends TextureTarget implements AutoCloseabl
         return this.id;
     }
 
-    public Identifier getTextureId() {
+    public ResourceLocation getTextureId() {
         return this.textureId;
     }
 

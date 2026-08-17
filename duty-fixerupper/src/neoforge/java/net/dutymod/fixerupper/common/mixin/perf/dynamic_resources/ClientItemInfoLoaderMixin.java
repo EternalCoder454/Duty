@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.multiplayer.ClientRegistryLayer;
 import net.minecraft.client.resources.model.ClientItemInfoLoader;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import net.dutymod.fixerupper.dynresources.DynamicModelSystem;
@@ -22,7 +22,7 @@ import java.util.function.Function;
 @ClientOnlyMixin
 public abstract class ClientItemInfoLoaderMixin {
     @Shadow
-    private static ClientItemInfoLoader.PendingLoad lambda$scheduleLoad$3(Identifier resourceId, Resource resource, RegistryAccess.Frozen registries) {
+    private static ClientItemInfoLoader.PendingLoad lambda$scheduleLoad$3(ResourceLocation resourceId, Resource resource, RegistryAccess.Frozen registries) {
         throw new AssertionError();
     }
 
@@ -31,8 +31,8 @@ public abstract class ClientItemInfoLoaderMixin {
      * @reason Load client item infos dynamically instead of all at once
      */
     @ModifyArg(method = "scheduleLoad", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;thenCompose(Ljava/util/function/Function;)Ljava/util/concurrent/CompletableFuture;"))
-    private static Function<Map<Identifier, Resource>, ? extends CompletionStage<ClientItemInfoLoader.LoadedClientInfos>> skipAOTClientItemLoad(
-            Function<Map<Identifier, Resource>, ? extends CompletionStage<ClientItemInfoLoader.LoadedClientInfos>> original,
+    private static Function<Map<ResourceLocation, Resource>, ? extends CompletionStage<ClientItemInfoLoader.LoadedClientInfos>> skipAOTClientItemLoad(
+            Function<Map<ResourceLocation, Resource>, ? extends CompletionStage<ClientItemInfoLoader.LoadedClientInfos>> original,
             @Local(ordinal = 0) RegistryAccess.Frozen staticRegistries) {
         return resourceMap -> CompletableFuture.completedFuture(DynamicModelSystem.createDynamicClientInfos(resourceMap, (resourceId, resource) -> {
             ClientItemInfoLoader.PendingLoad load = lambda$scheduleLoad$3(resourceId, resource, staticRegistries);

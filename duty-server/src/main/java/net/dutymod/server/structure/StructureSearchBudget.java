@@ -106,7 +106,7 @@ public final class StructureSearchBudget {
         for (Holder<Structure> holder : targets) {
             var key = holder.unwrapKey();
             if (key.isPresent()) {
-                return key.get().identifier().toString();
+                return key.get().location().toString();
             }
         }
         return "an unnamed structure";

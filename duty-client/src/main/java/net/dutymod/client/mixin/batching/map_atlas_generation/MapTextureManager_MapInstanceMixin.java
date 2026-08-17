@@ -25,7 +25,7 @@ import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.resources.MapTextureManager;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.dutymod.client.batching.Batching;
@@ -62,7 +62,7 @@ public abstract class MapTextureManager_MapInstanceMixin {
     @Shadow
     @Final
     @Mutable
-    Identifier location;
+    ResourceLocation location;
 
     @Unique
     private static final DynamicTexture DUMMY_TEXTURE = Objects.allocate(DynamicTexture.class);
@@ -95,8 +95,8 @@ public abstract class MapTextureManager_MapInstanceMixin {
         return DUMMY_TEXTURE;
     }
 
-    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/texture/TextureManager;register(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/renderer/texture/AbstractTexture;)V"))
-    private void getAtlasTextureIdentifier(TextureManager instance, Identifier path, AbstractTexture texture) {
+    @Redirect(method = "<init>", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/texture/TextureManager;register(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/client/renderer/texture/AbstractTexture;)V"))
+    private void getAtlasTextureIdentifier(TextureManager instance, ResourceLocation path, AbstractTexture texture) {
         if (this.duty$atlasTexture != null) {
             this.texture = null; // Don't leave the texture field pointing to the uninitialized dummy texture
             this.location = this.duty$atlasTexture.getTextureId();

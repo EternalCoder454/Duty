@@ -7,16 +7,16 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.blockentity.SkullBlockRenderer;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.AbstractSkullBlock;
 import net.minecraft.world.level.block.SkullBlock;
 import net.minecraft.world.level.block.WallSkullBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class SkullBlockUtil {
-    public static Identifier getSkullBlockMaterial(BlockState state) {
+    public static ResourceLocation getSkullBlockMaterial(BlockState state) {
         SkullBlock.Type type = ((AbstractSkullBlock)state.getBlock()).getType();
-        Identifier id = SkullBlockRenderer.SKIN_BY_TYPE.get(type);
+        ResourceLocation id = SkullBlockRenderer.SKIN_BY_TYPE.get(type);
         return ResourceUtil.entityTextureFormatter(id);
     }
 

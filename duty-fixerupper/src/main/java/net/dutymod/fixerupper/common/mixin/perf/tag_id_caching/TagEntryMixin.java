@@ -1,6 +1,6 @@
 package net.dutymod.fixerupper.common.mixin.perf.tag_id_caching;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.util.ExtraCodecs;
 import org.spongepowered.asm.mixin.Final;
@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.Shadow;
 @Mixin(TagEntry.class)
 public class TagEntryMixin {
     @Shadow @Final private boolean tag;
-    @Shadow @Final private Identifier id;
+    @Shadow @Final private ResourceLocation id;
     private ExtraCodecs.TagOrElementLocation cachedLoc;
 
     /**

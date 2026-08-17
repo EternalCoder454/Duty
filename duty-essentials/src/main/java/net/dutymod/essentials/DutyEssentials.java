@@ -6,7 +6,7 @@ import net.dutymod.essentials.utils.ChatFormatter;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.permissions.Permission;
 import net.minecraft.server.permissions.PermissionLevel;
 import net.minecraft.server.permissions.Permissions;
@@ -37,8 +37,8 @@ public final class DutyEssentials {
             return Component.translatable(MOD_ID + "." + key, args);
         }
 
-        public Identifier getId(String path) {
-            return Identifier.fromNamespaceAndPath(MOD_ID, path);
+        public ResourceLocation getId(String path) {
+            return ResourceLocation.fromNamespaceAndPath(MOD_ID, path);
         }
 
         public void info(String message) {

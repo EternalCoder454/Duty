@@ -20,7 +20,7 @@ package net.dutymod.client.mixin.batching.resource_pack_conflict_handling;
 import com.mojang.blaze3d.shaders.ShaderType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderManager;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -46,13 +46,13 @@ public abstract class ShaderManagerMixin {
         PackResources resourcePackWhichBreaksFontAtlasResizing = null;
         try {
             final Set<PackResources> breakingResourcePacks = new HashSet<>();
-            for (Identifier shaderIdentifier : CoreShaderBlacklist.getBlacklist()) {
-                final Identifier vertexShaderIdentifier = ShaderType.VERTEX.idConverter().idToFile(shaderIdentifier);
+            for (ResourceLocation shaderIdentifier : CoreShaderBlacklist.getBlacklist()) {
+                final ResourceLocation vertexShaderIdentifier = ShaderType.VERTEX.idConverter().idToFile(shaderIdentifier);
                 final PackResources vertexShaderResourcePack = resourceManager.getResource(vertexShaderIdentifier).map(Resource::source).orElse(null);
                 if (vertexShaderResourcePack != null && !vertexShaderResourcePack.equals(Minecraft.getInstance().getVanillaPackResources())) {
                     breakingResourcePacks.add(vertexShaderResourcePack);
                 }
-                final Identifier fragmentShaderIdentifier = ShaderType.FRAGMENT.idConverter().idToFile(shaderIdentifier);
+                final ResourceLocation fragmentShaderIdentifier = ShaderType.FRAGMENT.idConverter().idToFile(shaderIdentifier);
                 final PackResources fragmentShaderResourcePack = resourceManager.getResource(fragmentShaderIdentifier).map(Resource::source).orElse(null);
                 if (fragmentShaderResourcePack != null && !fragmentShaderResourcePack.equals(Minecraft.getInstance().getVanillaPackResources())) {
                     breakingResourcePacks.add(fragmentShaderResourcePack);

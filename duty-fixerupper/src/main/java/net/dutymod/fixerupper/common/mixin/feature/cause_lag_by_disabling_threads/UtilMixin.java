@@ -1,7 +1,7 @@
 package net.dutymod.fixerupper.common.mixin.feature.cause_lag_by_disabling_threads;
 
 import net.minecraft.TracingExecutor;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 import net.dutymod.fixerupper.util.SingleThreadedWorkerService;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

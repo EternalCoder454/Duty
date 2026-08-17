@@ -1,7 +1,7 @@
 package net.dutymod.fixerupper.common.mixin.core;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 import net.minecraft.server.MinecraftServer;
 import net.dutymod.fixerupper.duck.ITimeTrackingServer;
 import net.dutymod.fixerupper.neoforge.load.MinecraftServerReloadTracker;

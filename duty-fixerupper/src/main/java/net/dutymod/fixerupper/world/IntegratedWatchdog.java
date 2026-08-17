@@ -2,7 +2,7 @@ package net.dutymod.fixerupper.world;
 
 import com.mojang.logging.LogUtils;
 import net.minecraft.DefaultUncaughtExceptionHandlerWithName;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 import net.minecraft.server.MinecraftServer;
 import net.dutymod.fixerupper.duck.ITimeTrackingServer;
 import org.slf4j.Logger;

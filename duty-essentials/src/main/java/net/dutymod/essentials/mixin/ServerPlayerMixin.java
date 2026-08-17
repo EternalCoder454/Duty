@@ -21,7 +21,7 @@ import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoRemovePacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -162,7 +162,7 @@ public abstract class ServerPlayerMixin extends Player implements DutyServerPlay
     }
 
     @Override
-    public ServerLevel duty$getLevel(Identifier dimension) {
+    public ServerLevel duty$getLevel(ResourceLocation dimension) {
         return this.level().getServer().getLevel(ResourceKey.create(Registries.DIMENSION, dimension));
     }
 

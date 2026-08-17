@@ -38,7 +38,7 @@ public class BlockCallbacksMixin {
 
     @Inject(method = "onBake", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;getStateDefinition()Lnet/minecraft/world/level/block/state/StateDefinition;", ordinal = 0))
     private void showBakeProgressPerBlock(CallbackInfo ci, @Local(ordinal = 0) Block block, @Share("meter") LocalRef<ProgressMeter> meter) {
-        var id = block.builtInRegistryHolder().getKey().identifier();
+        var id = block.builtInRegistryHolder().getKey().location();
         meter.get().label("Build blockstate caches - " + id.toString());
         meter.get().increment();
     }

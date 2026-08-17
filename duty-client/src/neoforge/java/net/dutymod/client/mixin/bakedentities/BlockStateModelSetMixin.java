@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.At;
 
 import net.minecraft.client.renderer.block.BlockStateModelSet;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -26,7 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public class BlockStateModelSetMixin {
 
     @Unique private final OBEBlockRenderer obeBlockRenderer = new OBEBlockRenderer();
-    @Unique private final Identifier missingTexture = Identifier.tryParse("minecraft:missingno");
+    @Unique private final ResourceLocation missingTexture = ResourceLocation.tryParse("minecraft:missingno");
 
     @Shadow
     public Map<BlockState, BlockStateModel> modelByState;

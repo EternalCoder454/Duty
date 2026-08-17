@@ -5,7 +5,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.client.renderer.item.ClientItem;
 import net.minecraft.client.resources.model.ModelBakery;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import net.dutymod.fixerupper.dynresources.DynamicModelSystem;
 import org.objectweb.asm.Opcodes;
@@ -37,8 +37,8 @@ public class ModelBakeryMixin {
     @Redirect(method = "bakeModels",
             slice = @Slice(from = @At(value = "FIELD", target = "Lnet/minecraft/client/resources/model/ModelBakery;clientInfos:Ljava/util/Map;", opcode = Opcodes.GETFIELD, ordinal = 2)),
             at = @At(value = "INVOKE", target = "Ljava/util/Map;forEach(Ljava/util/function/BiConsumer;)V", ordinal = 0))
-    private void dynamicItemProperties(Map<Identifier, ClientItem> clientItems, BiConsumer<? super Identifier, ? super ClientItem> action,
-                               @Local(name = "itemStackModelProperties") LocalRef<Map<Identifier, ClientItem.Properties>> modelProperties) {
+    private void dynamicItemProperties(Map<ResourceLocation, ClientItem> clientItems, BiConsumer<? super ResourceLocation, ? super ClientItem> action,
+                               @Local(name = "itemStackModelProperties") LocalRef<Map<ResourceLocation, ClientItem.Properties>> modelProperties) {
         modelProperties.set(Maps.asMap(clientItems.keySet(), id -> {
             var item = clientItems.get(id);
             var props = ClientItem.Properties.DEFAULT;

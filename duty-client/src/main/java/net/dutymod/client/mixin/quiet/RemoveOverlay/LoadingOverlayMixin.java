@@ -6,7 +6,7 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.dutymod.client.quiet.config.Config;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.LoadingOverlay;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -83,10 +83,10 @@ public abstract class LoadingOverlayMixin {
             method = "extractRenderState",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIIIIII)V"
+                    target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/ResourceLocation;IIFFIIIIIII)V"
             )
     )
-    private void duty$skipLogo(GuiGraphicsExtractor extractor, RenderPipeline pipeline, Identifier texture,
+    private void duty$skipLogo(GuiGraphicsExtractor extractor, RenderPipeline pipeline, ResourceLocation texture,
                                int x, int y, float u, float v, int width, int height,
                                int srcWidth, int srcHeight, int textureWidth, int textureHeight,
                                int colour, Operation<Void> original) {

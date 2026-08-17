@@ -1,6 +1,6 @@
 package net.dutymod.client.quiet;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RegisterDebugEntriesEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
@@ -23,7 +23,7 @@ public final class QuietNeoForge {
             event.register(Quiet.TOGGLE_MUSIC_KEY);
         });
         modBus.addListener(RegisterDebugEntriesEvent.class, event ->
-                event.register(Identifier.fromNamespaceAndPath("duty_client", "fps_history"),
+                event.register(ResourceLocation.fromNamespaceAndPath("duty_client", "fps_history"),
                         new DebugEntryFpsHistory()));
     }
 }

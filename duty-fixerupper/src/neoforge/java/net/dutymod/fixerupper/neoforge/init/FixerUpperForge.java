@@ -3,7 +3,7 @@ package net.dutymod.fixerupper.neoforge.init;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
@@ -54,7 +54,7 @@ public class FixerUpperForge {
             event.register(Registries.ITEM, helper -> {
                 Item.Properties props = new Item.Properties();
                 for(int i = 0; i < 1000000; i++) {
-                    helper.register(Identifier.fromNamespaceAndPath("duty_fixerupper", "item_" + i), new Item(props));
+                    helper.register(ResourceLocation.fromNamespaceAndPath("duty_fixerupper", "item_" + i), new Item(props));
                 }
             });
         }

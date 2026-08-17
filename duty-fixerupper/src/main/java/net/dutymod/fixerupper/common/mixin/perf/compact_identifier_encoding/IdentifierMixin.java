@@ -3,7 +3,7 @@ package net.dutymod.fixerupper.common.mixin.perf.compact_identifier_encoding;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Drops the redundant "minecraft:" namespace when an {@link net.minecraft.resources.Identifier}
+ * Drops the redundant "minecraft:" namespace when an {@link net.minecraft.resources.ResourceLocation}
  * goes over the wire. Vanilla sends it in full every time, and the great majority of identifiers
  * in a packet stream are vanilla ones.
  *
@@ -23,16 +23,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  *
  * <p>Off by default for that reason. Turn it on only where you control both ends.
  */
-@Mixin(Identifier.class)
+@Mixin(ResourceLocation.class)
 public class IdentifierMixin {
 
     @Shadow
     @Mutable
     @Final
-    public static StreamCodec<ByteBuf, Identifier> STREAM_CODEC;
+    public static StreamCodec<ByteBuf, ResourceLocation> STREAM_CODEC;
 
     @Inject(method = "<clinit>", at = @At("RETURN"))
     private static void inject(CallbackInfo ci) {
-        STREAM_CODEC = ByteBufCodecs.STRING_UTF8.map(Identifier::parse, rl -> (rl.getNamespace().equals(Identifier.DEFAULT_NAMESPACE)) ? rl.getPath() : rl.toString());
+        STREAM_CODEC = ByteBufCodecs.STRING_UTF8.map(ResourceLocation::parse, rl -> (rl.getNamespace().equals(ResourceLocation.DEFAULT_NAMESPACE)) ? rl.getPath() : rl.toString());
     }
 }

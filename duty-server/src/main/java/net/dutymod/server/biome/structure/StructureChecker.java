@@ -11,7 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelReader;
@@ -29,7 +29,7 @@ import java.util.Map;
 
 public class StructureChecker {
     static TagKey<Structure> UNINITED_SAFE_STRUCTURES = TagKey.create(Registries.STRUCTURE,
-            Identifier.fromNamespaceAndPath(Constants.MOD_ID, "uninit_safe"));
+            ResourceLocation.fromNamespaceAndPath(Constants.MOD_ID, "uninit_safe"));
 
     private static boolean tryAddReference(StructureManager pStructureManager, StructureStart pStructureStart) {
         if (pStructureStart.canBeReferenced()) {

@@ -13,7 +13,7 @@ import net.dutymod.essentials.model.Position;
 import net.dutymod.essentials.model.TPARequest;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.storage.LevelData;
 
@@ -28,7 +28,7 @@ public interface DutyServerPlayer {
 
 
     DutyServerLevel duty$getLevel();
-    ServerLevel duty$getLevel(Identifier dimension);
+    ServerLevel duty$getLevel(ResourceLocation dimension);
     DutyServerLevel duty$getOverworld();
 
     EssentialsLevelData duty$getLevelData();

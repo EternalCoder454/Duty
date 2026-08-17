@@ -3,7 +3,7 @@ package net.dutymod.fixerupper.resources;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.IoSupplier;
@@ -376,7 +376,7 @@ public class ZipPackIndex {
         for (int i = 0; i < offsets.size(); i++) {
             String basename = readBasename(offsets.getInt(i));
             String rlPathFull = rlSubPath + basename;
-            Identifier rl = Identifier.tryBuild(namespace, rlPathFull);
+            ResourceLocation rl = ResourceLocation.tryBuild(namespace, rlPathFull);
             if (rl != null) {
                 ZipEntry entry = zipFile.getEntry(entryPrefix + rlPathFull);
                 if (entry != null) {

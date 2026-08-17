@@ -63,7 +63,7 @@ public class DutyClient {
                 event -> {
                     if (Batching.config != null && Batching.config.experimental_sign_text_buffering) {
                         event.addListener(
-                                net.minecraft.resources.Identifier.fromNamespaceAndPath(MOD_ID, "sign_text_cache"),
+                                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MOD_ID, "sign_text_cache"),
                                 (net.minecraft.server.packs.resources.ResourceManagerReloadListener)
                                         manager -> Batching.signTextCache.onResourceManagerReload(manager));
                     }
@@ -71,7 +71,7 @@ public class DutyClient {
                     // true. This event covers all three ways that happens: a resource pack change,
                     // a language change, and toggling forced unicode.
                     event.addListener(
-                            net.minecraft.resources.Identifier.fromNamespaceAndPath(MOD_ID, "text_width_cache"),
+                            net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MOD_ID, "text_width_cache"),
                             (net.minecraft.server.packs.resources.ResourceManagerReloadListener)
                                     manager -> net.dutymod.client.text.TextWidths.cache().clear());
                 });

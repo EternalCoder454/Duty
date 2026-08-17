@@ -5,7 +5,7 @@ import net.dutymod.essentials.level.storage.EssentialsLevelData;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.Level;
@@ -29,7 +29,7 @@ public abstract class ServerLevelMixin extends Level implements DutyServerLevel 
     }
 
     @Override
-    public Identifier duty$getDimension() {
-        return dimension().identifier();
+    public ResourceLocation duty$getDimension() {
+        return dimension().location();
     }
 }

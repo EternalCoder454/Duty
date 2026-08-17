@@ -7,7 +7,7 @@ import net.dutymod.essentials.command.CommandManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -29,8 +29,8 @@ public class WalkSpeedCommand extends SpeedCommand {
      * any modifier already registered under it, so running the command ten times leaves one
      * modifier rather than ten stacked ones.
      */
-    private static final Identifier MODIFIER_ID =
-            Identifier.fromNamespaceAndPath(DutyEssentials.MOD_ID, "walk_speed");
+    private static final ResourceLocation MODIFIER_ID =
+            ResourceLocation.fromNamespaceAndPath(DutyEssentials.MOD_ID, "walk_speed");
 
     @Override
     protected String kind() {

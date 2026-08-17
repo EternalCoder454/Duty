@@ -2,7 +2,7 @@ package net.dutymod.fixerupper.fastrecipes;
 
 import net.dutymod.framework.DutyConfig;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -75,7 +75,7 @@ public final class FastRecipes {
                 continue;
             }
             try {
-                RecipeType<?> type = BuiltInRegistries.RECIPE_TYPE.getValue(Identifier.parse(trimmed));
+                RecipeType<?> type = BuiltInRegistries.RECIPE_TYPE.getValue(ResourceLocation.parse(trimmed));
                 if (type == null) {
                     LOGGER.warn("Unknown recipe type '{}' in {}; skipping it.", trimmed, INDEXED_TYPES);
                 } else {

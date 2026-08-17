@@ -2,7 +2,7 @@ package net.dutymod.fixerupper.common.mixin.perf.dynamic_resources;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.resources.model.BlockStateModelLoader;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,7 +24,7 @@ import java.util.function.Function;
 @ClientOnlyMixin
 public abstract class BlockStateModelLoaderMixin {
     @Shadow
-    protected static BlockStateModelLoader.LoadedModels lambda$loadBlockStates$2(Map.Entry<Identifier, List<Resource>> entry, Function<Identifier, StateDefinition<Block, BlockState>> locationToBlockStateMapper) {
+    protected static BlockStateModelLoader.LoadedModels lambda$loadBlockStates$2(Map.Entry<ResourceLocation, List<Resource>> entry, Function<ResourceLocation, StateDefinition<Block, BlockState>> locationToBlockStateMapper) {
         throw new AssertionError();
     }
 
@@ -33,7 +33,7 @@ public abstract class BlockStateModelLoaderMixin {
      * @reason Load blockstate model definitions dynamically instead of all at once
      */
     @ModifyArg(method = "loadBlockStates", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;thenCompose(Ljava/util/function/Function;)Ljava/util/concurrent/CompletableFuture;"))
-    private static Function<Map<Identifier, List<Resource>>, ? extends CompletionStage<BlockStateModelLoader.LoadedModels>> skipAOTBlockStateLoad(Function<Map<Identifier, List<Resource>>, ? extends CompletionStage<Map<Identifier, BlockStateModelLoader.LoadedModels>>> original, @Local(ordinal = 0) Function<Identifier, StateDefinition<Block, BlockState>> mapper) {
+    private static Function<Map<ResourceLocation, List<Resource>>, ? extends CompletionStage<BlockStateModelLoader.LoadedModels>> skipAOTBlockStateLoad(Function<Map<ResourceLocation, List<Resource>>, ? extends CompletionStage<Map<ResourceLocation, BlockStateModelLoader.LoadedModels>>> original, @Local(ordinal = 0) Function<ResourceLocation, StateDefinition<Block, BlockState>> mapper) {
         return resourceMap -> CompletableFuture.completedFuture(DynamicModelSystem.createDynamicBlockStateLoadedModels(resourceMap, (id, resources) -> {
             return lambda$loadBlockStates$2(Map.entry(id, resources), mapper);
         }));

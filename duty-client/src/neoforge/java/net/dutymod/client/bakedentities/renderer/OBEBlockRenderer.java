@@ -24,7 +24,7 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.blockentity.BedRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -66,7 +66,7 @@ public class OBEBlockRenderer {
 
                 TransformationGetter.applyTransformation(state, poseStack, group);
 
-                Identifier material = customModelProvider.getMaterialProvider().apply(state, be);
+                ResourceLocation material = customModelProvider.getMaterialProvider().apply(state, be);
                 if(material == null) return null;
 
                 BlockStateModel model = ResourceUtil.getModel(layerLocation, material, state, cacheKey, poseStack, getAmbientOcclusion(group), originalModel.particleMaterial());
@@ -132,7 +132,7 @@ public class OBEBlockRenderer {
 
         TransformationGetter.applyTransformation(state, poseStack, "bed");
 
-        Identifier material = MaterialGetter.getMaterial(state, "bed");
+        ResourceLocation material = MaterialGetter.getMaterial(state, "bed");
         if(material == null) return null;
 
         BlockStateModel model = ResourceUtil.getModel(layerLocation, material, state, poseStack, SettingsManager.BED_AMBIENT_OCCLUSION.getValue(), originalModel.particleMaterial());
@@ -192,7 +192,7 @@ public class OBEBlockRenderer {
 
         TransformationGetter.applyTransformation(state, poseStack, "shulker_box");
 
-        Identifier material = MaterialGetter.getMaterial(state, "shulker_box");
+        ResourceLocation material = MaterialGetter.getMaterial(state, "shulker_box");
         if(material == null) return null;
 
         BlockStateModel model = ResourceUtil.getModel(layerLocation, material, state, poseStack, getAmbientOcclusion("shulker_box"), originalModel.particleMaterial());

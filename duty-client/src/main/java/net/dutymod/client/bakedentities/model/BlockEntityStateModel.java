@@ -28,7 +28,7 @@ import net.minecraft.client.resources.model.geometry.BakedQuad.MaterialInfo;
 import net.minecraft.client.resources.model.geometry.QuadCollection;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -37,11 +37,11 @@ public class BlockEntityStateModel implements BlockStateModel{
     private final Map<String, BlockStateModel> partsMap = new HashMap<>();
     private final Material.Baked particleMaterial;
 
-    public BlockEntityStateModel(ModelLayerLocation modelLayerLocation, Identifier texture, boolean useAo, BlockState state, Material.Baked particleMaterial){
+    public BlockEntityStateModel(ModelLayerLocation modelLayerLocation, ResourceLocation texture, boolean useAo, BlockState state, Material.Baked particleMaterial){
         this(modelLayerLocation, texture, new PoseStack(), useAo, state, particleMaterial);
     }
 
-    public BlockEntityStateModel(ModelLayerLocation modelLayerLocation, Identifier texture, PoseStack poseStack, boolean useAo, BlockState state, Material.Baked particleMaterial){
+    public BlockEntityStateModel(ModelLayerLocation modelLayerLocation, ResourceLocation texture, PoseStack poseStack, boolean useAo, BlockState state, Material.Baked particleMaterial){
         TextureAtlasSprite sprite = ResourceUtil.getSprite(texture);
         this.particleMaterial = particleMaterial;
         generateModel(modelLayerLocation, sprite, poseStack, useAo, state);

@@ -8,14 +8,14 @@ import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.blockentity.CopperGolemStatueBlockRenderer;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.animal.golem.CopperGolemOxidationLevels;
 import net.minecraft.world.level.block.CopperGolemStatueBlock;
 import net.minecraft.world.level.block.WeatheringCopper.WeatherState;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class CopperGolemStatueUtil {
-    public static Identifier getCopperGolemStatueMaterial(BlockState state) {
+    public static ResourceLocation getCopperGolemStatueMaterial(BlockState state) {
         WeatherState oxydationLevel;
         if (state.getBlock() instanceof CopperGolemStatueBlock copperGolemStatueBlock) {
             oxydationLevel = copperGolemStatueBlock.getWeatheringState();

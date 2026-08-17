@@ -1,7 +1,7 @@
 package net.dutymod.fixerupper.common.mixin.perf.dynamic_resources;
 
 import net.minecraft.client.resources.model.BlockStateDefinitions;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -15,7 +15,7 @@ import java.util.Map;
 @ClientOnlyMixin
 public interface BlockStateDefinitionsAccessor {
     @Accessor("STATIC_DEFINITIONS")
-    static Map<Identifier, StateDefinition<Block, BlockState>> getStaticDefinitions() {
+    static Map<ResourceLocation, StateDefinition<Block, BlockState>> getStaticDefinitions() {
         throw new AssertionError();
     }
 }

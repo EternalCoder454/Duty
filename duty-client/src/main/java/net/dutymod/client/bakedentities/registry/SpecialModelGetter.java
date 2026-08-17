@@ -12,7 +12,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.dutymod.client.bakedentities.OBE;
 import net.dutymod.client.bakedentities.util.blockentity.BellUtil;
 import net.minecraft.client.model.geom.ModelLayerLocation;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -58,13 +58,13 @@ public class SpecialModelGetter {
     public static class SpecialModelProvider{
 
         private final BiFunction<BlockState, BlockEntity, ModelLayerLocation> modelLayerLocationProvider;
-        private final BiFunction<BlockState, BlockEntity, Identifier> materialProvider;
+        private final BiFunction<BlockState, BlockEntity, ResourceLocation> materialProvider;
         private final TriConsumer<BlockState, BlockEntity, PoseStack> transformationProvider;
         private final Function<BlockEntity, Object> cacheKeyProvider;
         private boolean keepOriginalModel = false;
         private boolean showOriginalWhenHidden = false;
 
-        public SpecialModelProvider(BiFunction<BlockState, BlockEntity, ModelLayerLocation> modelLayerLocationProvider, BiFunction<BlockState, BlockEntity, Identifier> materialProvider, TriConsumer<BlockState, BlockEntity, PoseStack> transformationProvider, Function<BlockEntity, Object> cacheKeyProvider){
+        public SpecialModelProvider(BiFunction<BlockState, BlockEntity, ModelLayerLocation> modelLayerLocationProvider, BiFunction<BlockState, BlockEntity, ResourceLocation> materialProvider, TriConsumer<BlockState, BlockEntity, PoseStack> transformationProvider, Function<BlockEntity, Object> cacheKeyProvider){
             this.modelLayerLocationProvider = modelLayerLocationProvider;
             this.materialProvider = materialProvider;
             this.transformationProvider = transformationProvider;
@@ -85,7 +85,7 @@ public class SpecialModelGetter {
             return modelLayerLocationProvider;
         }
 
-        public BiFunction<BlockState, BlockEntity, Identifier> getMaterialProvider(){
+        public BiFunction<BlockState, BlockEntity, ResourceLocation> getMaterialProvider(){
             return materialProvider;
         }
 

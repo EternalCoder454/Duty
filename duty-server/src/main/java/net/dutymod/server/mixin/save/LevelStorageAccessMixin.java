@@ -1,7 +1,7 @@
 package net.dutymod.server.mixin.save;
 
 import net.dutymod.server.save.AsyncWorldSave;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.world.level.storage.LevelStorageSource;

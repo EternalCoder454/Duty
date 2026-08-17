@@ -6,7 +6,7 @@ import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
 import net.minecraft.client.gui.components.debug.DebugScreenEntry;
 import net.minecraft.client.gui.components.debug.DebugScreenEntryStatus;
 import net.minecraft.client.gui.components.debug.DebugScreenProfile;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.bus.api.EventPriority;
@@ -46,7 +46,7 @@ public class FixerUpperClientForge {
         }
     }
 
-    private static final Identifier MODERNFIX_VERSION = Identifier.fromNamespaceAndPath(FixerUpper.MODID, "version");
+    private static final ResourceLocation MODERNFIX_VERSION = ResourceLocation.fromNamespaceAndPath(FixerUpper.MODID, "version");
 
     private void onRenderOverlay(RegisterDebugEntriesEvent event) {
         event.register(MODERNFIX_VERSION, new DebugScreenEntry() {

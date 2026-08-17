@@ -5,16 +5,16 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.blockentity.BellRenderer;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class BellUtil {
-    public static Identifier getBellMaterial(BlockState state){
+    public static ResourceLocation getBellMaterial(BlockState state){
         return BellRenderer.BELL_TEXTURE.texture();
     }
 
-    public static Identifier getBellMaterial(BlockState state, BlockEntity be){
+    public static ResourceLocation getBellMaterial(BlockState state, BlockEntity be){
         return getBellMaterial(state);
     }
 

@@ -7,13 +7,13 @@ import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BedRenderer;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
 
 public class BedUtil {
-    public static Identifier getBedMaterial(BlockState state){
+    public static ResourceLocation getBedMaterial(BlockState state){
         if(state.getBlock() instanceof BedBlock block){
             return  Sheets.getBedSprite(block.getColor()).texture();
         }

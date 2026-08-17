@@ -21,7 +21,7 @@ import net.minecraft.client.resources.model.cuboid.ItemModelGenerator;
 import net.minecraft.client.resources.model.cuboid.MissingCuboidModel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.FileToIdConverter;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -51,16 +51,16 @@ public class DynamicModelSystem {
     public static final boolean DEBUG_DYNAMIC_MODEL_LOADING = Boolean.getBoolean("duty.debugDynamicModelLoading");
 
     private interface ResultLoader<RESOURCE, RESULT> {
-        RESULT load(Identifier file, @Nullable RESOURCE resource) throws Exception;
+        RESULT load(ResourceLocation file, @Nullable RESOURCE resource) throws Exception;
     }
 
-    private static <RESOURCE, RESULT> Map<Identifier, RESULT> createCachedResourceBackedMap(Map<Identifier, RESOURCE> resourceMap,
+    private static <RESOURCE, RESULT> Map<ResourceLocation, RESULT> createCachedResourceBackedMap(Map<ResourceLocation, RESOURCE> resourceMap,
                                                                                   FileToIdConverter converter,
                                                                                   String debugName,
                                                                                   ResultLoader<RESOURCE, RESULT> loader) {
-        LoadingCache<Identifier, Optional<RESULT>> resultCache = CacheBuilder.newBuilder().softValues().maximumSize(1000).build(new CacheLoader<>() {
+        LoadingCache<ResourceLocation, Optional<RESULT>> resultCache = CacheBuilder.newBuilder().softValues().maximumSize(1000).build(new CacheLoader<>() {
             @Override
-            public Optional<RESULT> load(Identifier id) throws Exception {
+            public Optional<RESULT> load(ResourceLocation id) throws Exception {
                 var file = converter.idToFile(id);
                 var resource = resourceMap.get(file);
                 if (resource == null) {
@@ -72,7 +72,7 @@ public class DynamicModelSystem {
                 return Optional.ofNullable(loader.load(file, resource));
             }
         });
-        Set<Identifier> idSet = resourceMap.keySet().stream().map(converter::fileToId).collect(Collectors.toUnmodifiableSet());
+        Set<ResourceLocation> idSet = resourceMap.keySet().stream().map(converter::fileToId).collect(Collectors.toUnmodifiableSet());
         return new DynamicRegistryMap<>(idSet, key -> {
             if (key == null) {
                 return null;
@@ -86,7 +86,7 @@ public class DynamicModelSystem {
         });
     }
     
-    public static Map<Identifier, UnbakedModel> createDynamicUnbakedModelMap(Map<Identifier, Resource> resourceMap) {
+    public static Map<ResourceLocation, UnbakedModel> createDynamicUnbakedModelMap(Map<ResourceLocation, Resource> resourceMap) {
         return createCachedResourceBackedMap(resourceMap, MODEL_LISTER, "unbaked model", (id, resource) -> {
             Objects.requireNonNull(resource, "unbaked model not present");
             try (Reader reader = resource.openAsReader()) {
@@ -96,7 +96,7 @@ public class DynamicModelSystem {
     }
 
     public interface SingleBlockStateEntryLoader {
-        BlockStateModelLoader.LoadedModels loadEntry(Identifier identifier, List<Resource> blockstateResources);
+        BlockStateModelLoader.LoadedModels loadEntry(ResourceLocation identifier, List<Resource> blockstateResources);
     }
 
     public static Set<BlockState> getAllBlockStates() {
@@ -121,7 +121,7 @@ public class DynamicModelSystem {
         };
     }
 
-    public static BlockStateModelLoader.LoadedModels createDynamicBlockStateLoadedModels(Map<Identifier, List<Resource>> resourceMap, SingleBlockStateEntryLoader entryLoader) {
+    public static BlockStateModelLoader.LoadedModels createDynamicBlockStateLoadedModels(Map<ResourceLocation, List<Resource>> resourceMap, SingleBlockStateEntryLoader entryLoader) {
         var blockStateDefinitions = createCachedResourceBackedMap(resourceMap, BLOCKSTATE_LISTER, "blockstate definition", entryLoader::loadEntry);
         var staticDefinitions = BlockStateDefinitionsAccessor.getStaticDefinitions();
         var staticIdentifiers = staticDefinitions.entrySet()
@@ -132,7 +132,7 @@ public class DynamicModelSystem {
         return new BlockStateModelLoader.LoadedModels(Maps.asMap(blockStateSet, state -> {
             var identifier = staticIdentifiers.get(state);
             if (identifier == null) {
-                identifier = state.getBlock().builtInRegistryHolder().getKey().identifier();
+                identifier = state.getBlock().builtInRegistryHolder().getKey().location();
             }
             var loadedModels = blockStateDefinitions.get(identifier);
             if (loadedModels != null) {
@@ -144,21 +144,21 @@ public class DynamicModelSystem {
     }
 
     public interface SingleClientItemEntryLoader {
-        @Nullable ClientItem loadEntry(Identifier resourceId, Resource resource);
+        @Nullable ClientItem loadEntry(ResourceLocation resourceId, Resource resource);
     }
 
-    public static ClientItemInfoLoader.LoadedClientInfos createDynamicClientInfos(Map<Identifier, Resource> resourceMap, SingleClientItemEntryLoader entryLoader) {
+    public static ClientItemInfoLoader.LoadedClientInfos createDynamicClientInfos(Map<ResourceLocation, Resource> resourceMap, SingleClientItemEntryLoader entryLoader) {
         var clientItems = createCachedResourceBackedMap(resourceMap, ITEM_LISTER, "client item info", entryLoader::loadEntry);
         return new ClientItemInfoLoader.LoadedClientInfos(clientItems);
     }
 
-    public record DynamicResolver(Map<Identifier, UnbakedModel> inputModels,
+    public record DynamicResolver(Map<ResourceLocation, UnbakedModel> inputModels,
                                           BlockStateModelLoader.LoadedModels loadedModels,
                                           ClientItemInfoLoader.LoadedClientInfos loadedClientInfos,
                                           StandaloneModelLoader.LoadedModels standaloneModels,
                                           UnbakedModel generatedItemModel) {
 
-        private ResolvedModel resolveModel(Identifier id) {
+        private ResolvedModel resolveModel(ResourceLocation id) {
             var discovery = new ModelDiscovery(inputModels, MissingCuboidModel.missingModel());
             discovery.addSpecialModel(ItemModelGenerator.GENERATED_ITEM_MODEL_ID, new ItemModelGenerator());
             if (!id.equals(ItemModelGenerator.GENERATED_ITEM_MODEL_ID)) {
@@ -174,10 +174,10 @@ public class DynamicModelSystem {
             return resolved.getOrDefault(id, discovery.missingModel());
         }
 
-        public Map<Identifier, ResolvedModel> resolvedModelsMap() {
-            LoadingCache<Identifier, ResolvedModel> resolvedModelCache = CacheBuilder.newBuilder().softValues().maximumSize(1000).build(new CacheLoader<>() {
+        public Map<ResourceLocation, ResolvedModel> resolvedModelsMap() {
+            LoadingCache<ResourceLocation, ResolvedModel> resolvedModelCache = CacheBuilder.newBuilder().softValues().maximumSize(1000).build(new CacheLoader<>() {
                 @Override
-                public ResolvedModel load(Identifier key) {
+                public ResolvedModel load(ResourceLocation key) {
                     return resolveModel(key);
                 }
             });

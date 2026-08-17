@@ -29,7 +29,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceSet;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.dutymod.client.batching.Batching;
 import net.dutymod.client.batching.util.IrisCompat;
 
@@ -205,11 +205,11 @@ public class BatchableBufferSource extends MultiBufferSource.BufferSource implem
         int order = 0;
         final RenderSetup.TextureBinding textureBinding = renderType.state.textures.get("Sampler0");
         if (textureBinding != null) {
-            final Identifier textureId = textureBinding.location();
+            final ResourceLocation textureId = textureBinding.location();
             if (renderType.name.startsWith("text") || renderType.name.startsWith("neoforge_text")) {
                 // Draws vanilla text over custom font text
                 // Fixes https://github.com/RaphiMC/Batching/issues/81, https://github.com/RaphiMC/Batching/issues/287, https://github.com/RaphiMC/Batching/issues/288
-                if (textureId.getNamespace().equals(Identifier.DEFAULT_NAMESPACE)) {
+                if (textureId.getNamespace().equals(ResourceLocation.DEFAULT_NAMESPACE)) {
                     order = 2;
                 } else {
                     order = 1;

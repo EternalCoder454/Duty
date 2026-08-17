@@ -7,13 +7,13 @@ import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.BannerRenderer;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.BannerBlock;
 import net.minecraft.world.level.block.WallBannerBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class BannerUtil {
-    public static Identifier getBannerMaterial(BlockState state){
+    public static ResourceLocation getBannerMaterial(BlockState state){
         return Sheets.BANNER_BASE.texture();
     }
 

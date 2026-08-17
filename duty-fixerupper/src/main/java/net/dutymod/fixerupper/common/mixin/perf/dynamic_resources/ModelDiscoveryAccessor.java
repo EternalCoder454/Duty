@@ -2,7 +2,7 @@ package net.dutymod.fixerupper.common.mixin.perf.dynamic_resources;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.minecraft.client.resources.model.ModelDiscovery;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.dutymod.fixerupper.annotation.ClientOnlyMixin;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
@@ -11,5 +11,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @ClientOnlyMixin
 public interface ModelDiscoveryAccessor {
     @Accessor("modelWrappers")
-    Object2ObjectMap<Identifier, ModelDiscovery.ModelWrapper> duty$getModelWrappers();
+    Object2ObjectMap<ResourceLocation, ModelDiscovery.ModelWrapper> duty$getModelWrappers();
 }

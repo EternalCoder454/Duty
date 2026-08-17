@@ -7,7 +7,7 @@ import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.blockentity.ChestRenderer;
 import net.minecraft.client.renderer.blockentity.state.ChestRenderState.ChestMaterialType;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.CopperChestBlock;
@@ -20,7 +20,7 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 public class ChestUtil {
     private static final boolean xmasTexture = ChestRenderer.xmasTextures();
 
-    public static Identifier getChestMaterial(BlockState state) {
+    public static ResourceLocation getChestMaterial(BlockState state) {
         ChestMaterialType materialType;
         Block block = state.getBlock();
         if (block instanceof CopperChestBlock copperChestBlock) {

@@ -4,14 +4,14 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.storage.LevelData;
 
 import java.util.Objects;
 
 public class Position {
 
-    public static final Position ZERO = new Position(0, 0, 0, 0, 0, Identifier.parse("overworld"));
+    public static final Position ZERO = new Position(0, 0, 0, 0, 0, ResourceLocation.parse("overworld"));
     public static final Codec<Position> CODEC = RecordCodecBuilder.create(
             instance -> instance.group(
                     Codec.DOUBLE.fieldOf("X").forGetter(position -> position.x),
@@ -19,7 +19,7 @@ public class Position {
                     Codec.DOUBLE.fieldOf("Z").forGetter(position -> position.z),
                     Codec.FLOAT.fieldOf("Yaw").forGetter(position -> position.yaw),
                     Codec.FLOAT.fieldOf("Pitch").forGetter(position -> position.pitch),
-                    Identifier.CODEC.fieldOf("Dimension").forGetter(position -> position.dimension)
+                    ResourceLocation.CODEC.fieldOf("Dimension").forGetter(position -> position.dimension)
             ).apply(instance, Position::new)
     );
 
@@ -28,9 +28,9 @@ public class Position {
     public double z;
     public float yaw;
     public float pitch;
-    public Identifier dimension;
+    public ResourceLocation dimension;
 
-    public Position(double x, double y, double z, float yaw, float pitch, Identifier dimension) {
+    public Position(double x, double y, double z, float yaw, float pitch, ResourceLocation dimension) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -45,7 +45,7 @@ public class Position {
         double z = dynamic.get("Z").asDouble(0);
         float yaw = dynamic.get("Yaw").asFloat(0);
         float pitch = dynamic.get("Pitch").asFloat(0);
-        Identifier dimension = Identifier.parse(dynamic.get("Dimension").asString("overworld"));
+        ResourceLocation dimension = ResourceLocation.parse(dynamic.get("Dimension").asString("overworld"));
         return new Position(x, y, z, yaw, pitch, dimension);
     }
 
@@ -55,7 +55,7 @@ public class Position {
         double z = tag.getDouble("Z").orElse(0D);
         float yaw = tag.getFloat("Yaw").orElse(0F);
         float pitch = tag.getFloat("Pitch").orElse(0F);
-        Identifier dimension = Identifier.parse(tag.getString("Dimension").orElse("overworld"));
+        ResourceLocation dimension = ResourceLocation.parse(tag.getString("Dimension").orElse("overworld"));
         return new Position(x, y, z, yaw, pitch, dimension);
     }
 
@@ -66,7 +66,7 @@ public class Position {
                 respawnData.globalPos().pos().getZ(),
                 respawnData.yaw(),
                 respawnData.pitch(),
-                respawnData.globalPos().dimension().identifier()
+                respawnData.globalPos().dimension().location()
         );
     }
 

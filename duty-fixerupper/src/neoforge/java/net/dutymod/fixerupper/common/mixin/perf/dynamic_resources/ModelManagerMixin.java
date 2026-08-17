@@ -10,7 +10,7 @@ import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.client.resources.model.ResolvedModel;
 import net.minecraft.client.resources.model.UnbakedModel;
 import net.minecraft.client.resources.model.cuboid.ItemModelGenerator;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.standalone.StandaloneModelLoader;
@@ -40,7 +40,7 @@ public class ModelManagerMixin {
      * a cache that loads them on demand
      */
     @ModifyArg(method = "loadBlockModels", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;thenCompose(Ljava/util/function/Function;)Ljava/util/concurrent/CompletableFuture;"))
-    private static Function<Map<Identifier, Resource>, ? extends CompletionStage<Map<Identifier, UnbakedModel>>> skipAOTUnbakedModelLoad(Function<Map<Identifier, Resource>, ? extends CompletionStage<Map<Identifier, UnbakedModel>>> original) {
+    private static Function<Map<ResourceLocation, Resource>, ? extends CompletionStage<Map<ResourceLocation, UnbakedModel>>> skipAOTUnbakedModelLoad(Function<Map<ResourceLocation, Resource>, ? extends CompletionStage<Map<ResourceLocation, UnbakedModel>>> original) {
         return resourceMap -> CompletableFuture.completedFuture(DynamicModelSystem.createDynamicUnbakedModelMap(resourceMap));
     }
 
@@ -63,9 +63,9 @@ public class ModelManagerMixin {
             method = "discoverModelDependencies(Ljava/util/Map;Lnet/minecraft/client/resources/model/BlockStateModelLoader$LoadedModels;Lnet/minecraft/client/resources/model/ClientItemInfoLoader$LoadedClientInfos;Lnet/neoforged/neoforge/client/model/standalone/StandaloneModelLoader$LoadedModels;)Lnet/minecraft/client/resources/model/ModelManager$ResolvedModels;",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/ModelDiscovery;resolve()Ljava/util/Map;")
     )
-    private static Map<Identifier, ResolvedModel> useDynamicResolverMap(
+    private static Map<ResourceLocation, ResolvedModel> useDynamicResolverMap(
             ModelDiscovery discovery,
-            Map<Identifier, UnbakedModel> allModels,
+            Map<ResourceLocation, UnbakedModel> allModels,
             BlockStateModelLoader.LoadedModels blockStateModels,
             ClientItemInfoLoader.LoadedClientInfos itemInfos,
             StandaloneModelLoader.LoadedModels standaloneModels
