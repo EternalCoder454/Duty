@@ -37,7 +37,17 @@ public final class NeoForgePlatform implements DutyPlatform {
 
     @Override
     public boolean isModLoaded(String modId) {
-        return ModList.get().isLoaded(modId);
+        ModList loaded = ModList.get();
+        if (loaded == null) {
+            // Not an NPE. Thrown from a mixin config plugin, an NPE gets swallowed into "Failed to
+            // select mixin config" and every mixin in that file stops applying without anything
+            // saying why. This at least names the mistake and the method that fixes it.
+            throw new IllegalStateException(
+                    "isModLoaded(\"" + modId + "\") was called before the mod list exists. Use "
+                            + "isModLoadedAtStartup from a mixin config plugin or any other code "
+                            + "that runs during class loading.");
+        }
+        return loaded.isLoaded(modId);
     }
 
     @Override
@@ -45,9 +55,29 @@ public final class NeoForgePlatform implements DutyPlatform {
         return FMLPaths.CONFIGDIR.get();
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Answers before mods are constructed as well as after, which is not decoration: a mixin
+     * config plugin asks this from {@code onLoad}, and {@link ModList#get()} returns {@code null}
+     * that early. Reading it through {@code ModList} alone threw an NPE out of
+     * {@code MixinConfig.onSelect}, and mixin's response to a plugin that throws is to drop the
+     * whole config -- so every mixin in {@code duty_client.mixins.json} silently stopped applying,
+     * with one warning buried among hundreds to say so.
+     *
+     * <p>The loading list is checked first because it is the one that exists at both times.
+     */
     @Override
     public Optional<String> modVersion(String modId) {
-        return ModList.get().getModContainerById(modId)
+        var file = FMLLoader.getCurrent().getLoadingModList().getModFileById(modId);
+        if (file != null && !file.getMods().isEmpty()) {
+            return Optional.of(file.getMods().get(0).getVersion().toString());
+        }
+        ModList loaded = ModList.get();
+        if (loaded == null) {
+            return Optional.empty();
+        }
+        return loaded.getModContainerById(modId)
                 .map(container -> container.getModInfo().getVersion().toString());
     }
 

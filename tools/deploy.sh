@@ -32,6 +32,10 @@ PACK="${DUTY_PACK:-/c/Users/Zachary Smith/AppData/Roaming/PrismLauncher/instance
 # both present is a duplicate-mod error rather than a double dose of anything. The pack uses
 # the separate jars because that is what it already has installed.
 MODULES=(duty-memory duty-client duty-fixerupper duty-server duty-essentials)
+
+# Liteminer lives in its own repository next door and depends on duty-framework, so it goes in with
+# the same run rather than being remembered separately -- it was forgotten once already.
+LITEMINER_JAR="$(ls "$(dirname "$0")/../../Liteminer/neoforge/versions/26.1.2/build/libs/"*.jar 2>/dev/null     | grep -viE 'sources|javadoc' | head -1)"
 VERSION="0.1.0"
 
 [ -d "$PACK/mods" ] || { echo "No mods folder at: $PACK/mods"; exit 1; }
@@ -48,7 +52,7 @@ done
 
 echo "==> removing stale duty jars from the pack"
 found=0
-for old in "$PACK/mods"/duty-*.jar; do
+for old in "$PACK/mods"/duty-*.jar "$PACK/mods"/liteminer-*.jar; do
   [ -e "$old" ] || continue
   echo "  - $(basename "$old")"
   rm -f "$old"
@@ -74,4 +78,10 @@ done
 echo
 echo "Installed. After launching, confirm mixins actually applied:"
 echo "  grep -c 'from duty_' \"$PACK/logs/debug.log\""
+if [ -n "$LITEMINER_JAR" ] && [ -f "$LITEMINER_JAR" ]; then
+    cp "$LITEMINER_JAR" "$PACK/mods/" && echo "  OK   $(basename "$LITEMINER_JAR")"
+else
+    echo "  --   Liteminer not built; skipping (build it in ../Liteminer to include it)"
+fi
+
 exit $status
