@@ -29,7 +29,7 @@ public class TrivialFastColumnIterator implements FastColumnIterator {
 
     long[][] data = new long[numSections][];
     for (int i = 0; i < numSections; i++)
-      data[i] = sections[i].states.data.storage().getData();
+      data[i] = sections[i].states.data.storage().getRaw();
 
     for (int i = 0; i < 256; i++) {
       int ly = this.size - 1;

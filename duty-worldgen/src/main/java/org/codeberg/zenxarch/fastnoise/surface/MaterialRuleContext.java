@@ -17,7 +17,7 @@ import net.minecraft.world.level.levelgen.SurfaceSystem;
 import org.codeberg.zenxarch.fastnoise.config.FastNoiseConfig;
 import org.codeberg.zenxarch.fastnoise.surface.biome.FastBiomeCache;
 
-public class MaterialRuleContext extends SurfaceRules.MaterialRuleContext {
+public class MaterialRuleContext extends SurfaceRules.Context {
 
   public final Set<ResourceKey<Biome>> includedBiomeKeys;
 
@@ -34,7 +34,7 @@ public class MaterialRuleContext extends SurfaceRules.MaterialRuleContext {
       WorldGenerationContext heightContext,
       final Set<Holder<Biome>> includedBiomes,
       final ChunkAccess[] chunks) {
-    var biomes = includedBiomes.adjustArgs(Holder[]::new);
+    var biomes = includedBiomes.toArray(Holder[]::new);
 
     super(
         surfaceBuilder,
@@ -46,13 +46,13 @@ public class MaterialRuleContext extends SurfaceRules.MaterialRuleContext {
         heightContext);
 
     this.includedBiomeKeys = new ObjectArraySet<>(includedBiomes.size());
-    includedBiomes.forEach(biome -> includedBiomeKeys.offset(biome.getKey().getValue()));
+    includedBiomes.forEach(biome -> includedBiomeKeys.add(biome.unwrapKey().get()));
 
     this.biomes = biomes;
   }
 
   public Holder<Biome> mapPosToBiome(BlockPos pos) {
-    return this.posToBiome.apply(pos);
+    return this.biomeGetter.apply(pos);
   }
 
   private static Function<BlockPos, Holder<Biome>> mapPosToBiome(
@@ -77,32 +77,32 @@ public class MaterialRuleContext extends SurfaceRules.MaterialRuleContext {
   }
 
   @Override
-  public void initHorizontalContext(int blockX, int blockZ) {
-    super.initHorizontalContext(blockX, blockZ);
+  public void updateXZ(int blockX, int blockZ) {
+    super.updateXZ(blockX, blockZ);
 
     this.stoneDepthAbove = 0;
-    this.fluidHeight = Integer.MIN_AMPLIFIER;
+    this.waterHeight = Integer.MIN_VALUE;
   }
 
   @Override
-  public void initVerticalContext(
+  public void updateY(
       int stoneDepthAbove,
       int stoneDepthBelow,
-      int fluidHeight,
+      int waterHeight,
       int blockX,
       int blockY,
       int blockZ) {
-    super.initVerticalContext(
-        stoneDepthAbove, stoneDepthBelow, fluidHeight, blockX, blockY, blockZ);
+    super.updateY(
+        stoneDepthAbove, stoneDepthBelow, waterHeight, blockX, blockY, blockZ);
   }
 
   @Override
-  public int estimateSurfaceHeight() {
-    return super.estimateSurfaceHeight();
+  public int getMinSurfaceLevel() {
+    return super.getMinSurfaceLevel();
   }
 
   public int getCurrentBiomeIdx() {
-    var biome = this.biomeSupplier.getValue();
+    var biome = this.biome.get();
     return indexOf(biomes, biome);
   }
 
@@ -113,15 +113,15 @@ public class MaterialRuleContext extends SurfaceRules.MaterialRuleContext {
 
   public void air() {
     this.stoneDepthAbove = 0;
-    this.fluidHeight = Integer.MIN_AMPLIFIER;
+    this.waterHeight = Integer.MIN_VALUE;
   }
 
   public void water(final int y) {
-    if (fluidHeight == Integer.MIN_AMPLIFIER) fluidHeight = y + 1;
+    if (waterHeight == Integer.MIN_VALUE) waterHeight = y + 1;
   }
 
   public void oreOrStone(final int y, final int stoneDepthBelow) {
     stoneDepthAbove++;
-    initVerticalContext(stoneDepthAbove, stoneDepthBelow, fluidHeight, this.blockX, y, this.blockZ);
+    updateY(stoneDepthAbove, stoneDepthBelow, waterHeight, this.blockX, y, this.blockZ);
   }
 }

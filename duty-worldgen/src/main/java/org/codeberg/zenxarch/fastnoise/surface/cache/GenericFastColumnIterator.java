@@ -62,7 +62,7 @@ public final class GenericFastColumnIterator implements FastColumnIterator {
 
     long[][] data = new long[numSections][];
     for (int i = 0; i < numSections; i++)
-      data[i] = sections[i].states.data.storage().getData();
+      data[i] = sections[i].states.data.storage().getRaw();
 
     for (int i = 0; i < 256; i++) {
       int ly = this.size - 1;
@@ -121,7 +121,7 @@ public final class GenericFastColumnIterator implements FastColumnIterator {
   private int liquid(Palette<BlockState> palette) {
     short result = 0x0;
     for (int i = 0; i < palette.getSize(); i++)
-      if (!palette.valueFor(i).getFluidState().hasOnlyAir()) result |= 0x1 << i;
+      if (!palette.valueFor(i).getFluidState().isEmpty()) result |= 0x1 << i;
     return result;
   }
 

@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface SurfaceBuilderAccessor {
 
   @Accessor("defaultState")
-  public BlockState zenxarch$getDefaultState();
+  public BlockState zenxarch$defaultBlockState();
 
   @Invoker("isDefaultBlock")
   public boolean zenxarch$isDefaultBlock(BlockState state);
@@ -33,7 +33,7 @@ public interface SurfaceBuilderAccessor {
       final int minY,
       final Biome biome,
       final BlockColumn column,
-      final BlockPos.Mutable mutablePos,
+      final BlockPos.MutableBlockPos mutablePos,
       final int x,
       final int z,
       final int surfaceY);

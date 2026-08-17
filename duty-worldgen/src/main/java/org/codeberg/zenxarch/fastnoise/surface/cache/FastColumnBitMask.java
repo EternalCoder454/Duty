@@ -65,8 +65,8 @@ public final class FastColumnBitMask {
       this.data = new long[(bits - 1 >> 6) + 1];
     }
 
-    public void set(int index) {
-      this.data[index >> 6] |= 0x1L << index;
+    public void set(int idFor) {
+      this.data[idFor >> 6] |= 0x1L << idFor;
     }
 
     public FastColumnBitMask build() {

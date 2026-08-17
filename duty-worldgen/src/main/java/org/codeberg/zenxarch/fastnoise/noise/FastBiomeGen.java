@@ -32,7 +32,7 @@ public final class FastBiomeGen {
         .zenxarch$createMultiNoiseSampler(config.router(), settings.value().spawnTarget());
   }
 
-  public static void populateBiomes(
+  public static void doCreateBiomes(
       ChunkAccess chunk,
       BiomeResolver supplier,
       NoiseChunk sampler,
@@ -40,12 +40,12 @@ public final class FastBiomeGen {
       Holder<NoiseGeneratorSettings> settings) {
 
     if (FastNoiseConfig.OPTIMIZE_FIXED_BIOMES && supplier instanceof FixedBiomeSource fixed) {
-      packSingleBiome(chunk.getSections(), fixed.biomes);
+      packSingleBiome(chunk.getSections(), fixed.biome);
       return;
     }
 
     if (FastNoiseConfig.OPTIMIZE_END_BIOMES && supplier instanceof TheEndBiomeSource theEnd) {
-      final var chunkPos = chunk.asVec3();
+      final var chunkPos = chunk.getPos();
       populateEndBiomes(
           theEnd,
           chunk,
@@ -62,19 +62,19 @@ public final class FastBiomeGen {
       return;
     }
 
-    populateBiomes(chunk, supplier, createSampler(sampler, config, settings));
+    doCreateBiomes(chunk, supplier, createSampler(sampler, config, settings));
   }
 
-  private static void populateBiomes(
+  private static void doCreateBiomes(
       ChunkAccess chunk, BiomeResolver supplier, Sampler sampler) {
 
     var sections = chunk.getSections();
 
-    final var chunkPos = chunk.asVec3();
+    final var chunkPos = chunk.getPos();
     final int cx = chunkPos.x();
     final int cz = chunkPos.z();
 
-    final int minY = chunk.getBottomY();
+    final int minY = chunk.getMinY();
     final int x = cx << 2;
     int y = minY >> 2;
     final int z = cz << 2;
@@ -85,7 +85,7 @@ public final class FastBiomeGen {
 
     for (int i = 0; i < sections.length; i++) {
       var section = sections[i];
-      FastBiomeGen.fillBiomesFromNoise(section, supplier, sampler, x, y, z, biomes, storage);
+      FastBiomeGen.doCreateBiomes(section, supplier, sampler, x, y, z, biomes, storage);
       y += 4;
     }
   }
@@ -97,7 +97,7 @@ public final class FastBiomeGen {
     }
   }
 
-  private static void populateBiomes(
+  private static void doCreateBiomes(
       LevelChunkSection section,
       BiomeResolver biomeSupplier,
       Climate.Sampler sampler,
@@ -132,7 +132,7 @@ public final class FastBiomeGen {
     }
   }
 
-  private static class EndBiomeNoisePos implements DensityFunction.NoisePos {
+  private static class EndBiomeNoisePos implements DensityFunction.FunctionContext {
     private final int x;
     private final int z;
     public int y;
@@ -161,7 +161,7 @@ public final class FastBiomeGen {
     }
 
     public double sampleAndStep() {
-      var result = sampler.data(this);
+      var result = sampler.compute(this);
       this.y += 4;
       return result;
     }
@@ -190,7 +190,7 @@ public final class FastBiomeGen {
     final int x = (cx << 4) + 8;
     final int z = (cz << 4) + 8;
 
-    var noisePos = new EndBiomeNoisePos(x, chunk.getBottomY(), z, sampler.erosion());
+    var noisePos = new EndBiomeNoisePos(x, chunk.getMinY(), z, sampler.erosion());
 
     for (int i = 0; i < sections.length; i++) {
       var a = getEndBiomeFromHeight(source, noisePos.sampleAndStep());
@@ -217,7 +217,7 @@ public final class FastBiomeGen {
 
     BiomeResolver modifiedSupplier =
         (x, y, z, samplerx) -> {
-          var sampled = sampler.data(x, y, z);
+          var sampled = sampler.sample(x, y, z);
 
           point[0] = sampled.temperature();
           point[1] = sampled.humidity();
@@ -228,12 +228,12 @@ public final class FastBiomeGen {
 
           var leaf =
               tree.root.search(
-                  point, resultNode.get(), TreeNode::getSquaredDistance);
+                  point, resultNode.get(), Node::distance);
           resultNode.setValue(leaf);
           return leaf.value;
         };
 
-    populateBiomes(chunk, modifiedSupplier, sampler);
+    doCreateBiomes(chunk, modifiedSupplier, sampler);
 
     tree.lastResult.set(resultNode.get());
   }

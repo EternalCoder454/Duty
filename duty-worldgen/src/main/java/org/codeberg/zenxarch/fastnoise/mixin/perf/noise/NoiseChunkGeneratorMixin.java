@@ -23,11 +23,11 @@ public abstract class NoiseChunkGeneratorMixin {
   @Shadow @Final private Holder<NoiseGeneratorSettings> settings;
 
   @Shadow
-  protected abstract NoiseChunk createChunkNoiseSampler(
+  protected abstract NoiseChunk createNoiseChunk(
       ChunkAccess chunk, StructureManager world, Blender blender, RandomState noiseConfig);
 
   @Shadow
-  protected abstract ChunkAccess populateNoise(
+  protected abstract ChunkAccess doFill(
       Blender blender,
       StructureManager structureAccessor,
       RandomState noiseConfig,
@@ -35,8 +35,8 @@ public abstract class NoiseChunkGeneratorMixin {
       int minimumCellY,
       int cellHeight);
 
-  @WrapMethod(method = "method_38332")
-  private ChunkAccess zenxarch$populateNoise(
+  @WrapMethod(method = "lambda$fillFromNoise$0")
+  private ChunkAccess zenxarch$doFill(
       ChunkAccess chunk,
       int cellHeight,
       NoiseSettings generationShapeConfig,
@@ -64,13 +64,13 @@ public abstract class NoiseChunkGeneratorMixin {
         || defaultBlock == FastNoiseGen.AIR
         || chunk.isUpgrading()
         || !FastNoiseGen.isEmpty(chunk))
-      return this.populateNoise(
+      return this.doFill(
           blender, structureAccessor, noiseConfig, chunk, minimumCellY, cellHeight);
 
     var sampler =
         chunk.getOrCreateNoiseChunk(
             chunkx ->
-                this.createChunkNoiseSampler(chunkx, structureAccessor, blender, noiseConfig));
+                this.createNoiseChunk(chunkx, structureAccessor, blender, noiseConfig));
 
     FastNoiseGen.doFill(sampler, defaultBlock, chunk, minimumCellY, cellHeight);
 

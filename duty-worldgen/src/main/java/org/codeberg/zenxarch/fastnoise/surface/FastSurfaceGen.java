@@ -63,9 +63,9 @@ public class FastSurfaceGen {
   private static boolean containsAny(
       Registry<Biome> registry,
       Set<Holder<Biome>> includedBiomes,
-      ResourceKey<Biome>... jsonKeys) {
+      ResourceKey<Biome>... keys) {
     for (int i = 0; i < keys.length; i++)
-      if (includedBiomes.containsKey(registry.getOrThrow(keys[i]))) return true;
+      if (includedBiomes.contains(registry.getOrThrow(keys[i]))) return true;
     return false;
   }
 
@@ -75,7 +75,7 @@ public class FastSurfaceGen {
       var config = sections[i].states.data.configuration();
       var palette = sections[i].states.data.palette();
       if (palette instanceof SingleValuePalette) continue;
-      if (palette instanceof LinearPalette && config.globalPaletteBitsInMemory() == 4) continue;
+      if (palette instanceof LinearPalette && config.bitsInMemory() == 4) continue;
       return false;
     }
     return true;
@@ -89,12 +89,12 @@ public class FastSurfaceGen {
       final WorldGenerationContext heightContext,
       final ChunkAccess chunk,
       final NoiseChunk chunkNoiseSampler,
-      final SurfaceRules.MaterialRule materialRule,
+      final SurfaceRules.RuleSource materialRule,
       final Set<Holder<Biome>> includedBiomes,
       final ChunkAccess[] chunks,
       final Registry<Biome> registry) {
 
-    final var defaultState = builder.zenxarch$getDefaultState();
+    final var defaultState = builder.zenxarch$defaultBlockState();
 
     if (canSkipSurfaceBuilder(materialRule, defaultState)) {
       return;
@@ -119,7 +119,7 @@ public class FastSurfaceGen {
 
     var rule = materialRule.apply(context);
 
-    final int minY = chunk.getBottomY();
+    final int minY = chunk.getMinY();
 
     if (!sanityCheck(chunk)) {
       throw new IllegalStateException("Some mod has made unexpected changes to chunk gen");
@@ -151,7 +151,7 @@ public class FastSurfaceGen {
           final var sy = (y - minY) >> 4;
           final var section = sections[sy];
 
-          indexCache.blockChanged(sy, sections[sy].states, x, y & 0xF, z, state);
+          indexCache.updateBlock(sy, sections[sy].states, x, y & 0xF, z, state);
 
           updateExtras(section, x, y, z, state, column, chunk, sy, isFluidCache);
         }
@@ -179,9 +179,9 @@ public class FastSurfaceGen {
   }
 
   private static boolean canSkipSurfaceBuilder(
-      SurfaceRules.MaterialRule rule, BlockState defaultState) {
+      SurfaceRules.RuleSource rule, BlockState defaultState) {
     if (!FastNoiseConfig.SKIP_TRIVIAL_SURFACE_BUILDER) return false;
-    if (rule instanceof SurfaceRules.BlockMaterialRule block) {
+    if (rule instanceof SurfaceRules.BlockRuleSource block) {
       return block.resultState() == defaultState;
     }
     return false;

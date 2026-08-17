@@ -1,46 +1,40 @@
-# duty-worldgen — Yarn to Mojang port, in progress
+# duty-worldgen — Yarn to Mojang port
 
-Not in the build. `settings.gradle.kts` and `build.gradle.kts` have it commented out, so
-`gradlew build` and `tools/deploy.sh` work normally; the pack currently ships the upstream
-jar from `external/fastnoise` instead, which is functionally the same mod.
+**Done.** In the build, compiling clean, and passing both mixin checkers.
 
-## Where it stands
+| check | result |
+|---|---|
+| `gradlew :duty-worldgen:build` | exit 0, 0 javac errors |
+| `check-mixin-configs.py` | all named mixins have sources |
+| `check-mixin-targets.py duty-worldgen` | every injection target exists |
+| built jar | 10 mixins listed, 0 missing |
+| mod id | `duty_worldgen`, matching the metadata |
 
-`gradlew :duty-worldgen:compileJava` reports **294 errors**, down from 700 on the first pass.
-Everything below the source level is finished:
+## How it was done
 
-- `META-INF/accesstransformer.cfg` — all 47 accessWidener entries converted and each one
-  verified against the real 26.1.2 jar with javap.
-- `accesstransformer.extra.cfg` — the two `Climate$RTree` override widenings NeoForge needs
-  and Fabric infers.
-- The Minecraft artifacts task passes, so the access transformer is correct.
-- Mixin config cleaned of one entry naming a class that does not exist upstream.
-- `MOD_ID` is `duty_worldgen`, matching the metadata.
+Source translated by `tools/yarn2mojang.py` from Loom's three-namespace tiny file, and the
+accessWidener converted by `tools/aw2at.py`. Neither is specific to this mod.
 
-## What is left
+Two things needed a human, and they live in files rather than in anyone's memory:
 
-All 294 are in the translated Java, in four groups:
+- `yarn-overrides.txt` — names the translator will not guess. Each was resolved once with
+  javap against the 26.1.2 jar. Four forms: bare, `Owner.member`, `file@name`, and
+  `literal:` for a receiver that is not a bare identifier.
+- `src/main/resources/META-INF/accesstransformer.extra.cfg` — the override widenings a
+  Fabric accessWidener infers and a NeoForge access transformer does not.
 
-1. **Ambiguous members** — `getDefaultState` (defaultBlockState vs defaultFluidState),
-   `getBottomY`, `name`, `hasOnlyAir`, `setHeight`. The translator declines these by design
-   rather than guessing. Owner-aware resolution is implemented but only fires when exactly one
-   candidate's declaring class is imported by the file; these need the receiver's type, which
-   means reading each call site.
-2. **Nested type names** — `Configuration.Static`, `BlockPos.Mutable`, `.Type`. Written bare
-   after an import of the outer class, so the import-scoped rule does not cover them.
-3. **Fields** — `log`, `possibleBiomes`.
-4. Whatever those are hiding.
-
-## Doing the next pass
+## Re-running it
 
     T="$HOME/.gradle/caches/fabric-loom/26.1.2/net.neoforged.neoforge_26.1.2.75/loom.mappings.26_1_2.layered+hash.561494802-v2/mappings.tiny"
     rm -rf duty-worldgen/src/main/java && mkdir -p duty-worldgen/src/main/java
     cp -r external/fastnoise/src/main/java/. duty-worldgen/src/main/java/
-    python tools/yarn2mojang.py "$T" duty-worldgen/src/main/java
-    # then re-apply the MOD_ID change and compile
+    python tools/yarn2mojang.py "$T" duty-worldgen/src/main/java            --overrides=duty-worldgen/yarn-overrides.txt
+    # then set MOD_ID to duty_worldgen in FastNoiseConstants.java
 
-Re-translating from `external/fastnoise` is always safe, because that tree is upstream's
-untouched Yarn source. Never translate an already-translated tree.
+Always translate from `external/fastnoise`, which is upstream's untouched Yarn source.
+Never translate an already-translated tree.
 
-Before re-enabling, run `python tools/check-mixin-targets.py duty-worldgen`. Compiling proves
-the Java; it does not prove a single mixin annotation, and those are strings.
+After any re-run, `python tools/check-mixin-targets.py duty-worldgen`. Compiling proves the
+Java and says nothing about a mixin annotation, which is a string. Four annotations still
+carried Yarn descriptors after the code compiled cleanly, and one carried a raw intermediary
+name; the checker is the only thing that caught them.

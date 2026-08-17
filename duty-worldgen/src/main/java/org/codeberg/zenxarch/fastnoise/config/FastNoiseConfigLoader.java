@@ -21,18 +21,18 @@ public final class FastNoiseConfigLoader {
   }
 
   private static void loadBoolean(BooleanConfigEntry entry) {
-    Optional<Boolean> value = CONFIG.getOptional(entry.name());
+    Optional<Boolean> value = CONFIG.getOptional(entry.key());
     if (value.isEmpty()) {
-      CONFIG.set(entry.name(), entry.defaultValue());
+      CONFIG.set(entry.key(), entry.defaultValue());
     }
-    CONFIG.setComment(entry.name(), entry.comment());
+    CONFIG.setComment(entry.key(), entry.comment());
   }
 
   private static void initVersion() {
-    CONFIG.set(FastNoiseConfigEntries.MIXIN_PERF_SURFACE.name(), true);
-    CONFIG.set(FastNoiseConfigEntries.OPTIMIZE_BIOME_ACCESS.name(), true);
-    CONFIG.set(FastNoiseConfigEntries.OPTIMIZE_END_BIOMES.name(), true);
-    CONFIG.set(FastNoiseConfigEntries.OPTIMIZE_FIXED_BIOMES.name(), true);
+    CONFIG.set(FastNoiseConfigEntries.MIXIN_PERF_SURFACE.key(), true);
+    CONFIG.set(FastNoiseConfigEntries.OPTIMIZE_BIOME_ACCESS.key(), true);
+    CONFIG.set(FastNoiseConfigEntries.OPTIMIZE_END_BIOMES.key(), true);
+    CONFIG.set(FastNoiseConfigEntries.OPTIMIZE_FIXED_BIOMES.key(), true);
 
     CONFIG.set(VERSION_KEY, 1L);
   }
@@ -49,7 +49,7 @@ public final class FastNoiseConfigLoader {
   private static void loadDefaults() {
     CONFIG.load();
     if (CONFIG.isEmpty()) CONFIG.set(VERSION_KEY, CONFIG_VERSION);
-    for (var entry : FastNoiseConfigEntries.ENTRIES_BY_ID) {
+    for (var entry : FastNoiseConfigEntries.ENTRIES) {
       loadBoolean(entry);
     }
     updateConfig();

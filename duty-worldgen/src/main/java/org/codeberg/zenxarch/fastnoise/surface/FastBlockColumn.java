@@ -24,19 +24,19 @@ public class FastBlockColumn implements BlockColumn {
   private final BitStorage[] heightmapData;
   private final LevelChunkSection[] sections;
 
-  private final BlockState VOID_AIR = Blocks.VOID_AIR.getDefaultState();
-  private final BlockState AIR = Blocks.AIR.getDefaultState();
+  private final BlockState VOID_AIR = Blocks.VOID_AIR.defaultBlockState();
+  private final BlockState AIR = Blocks.AIR.defaultBlockState();
 
-  private static final Heightmap.Type[] heightmaps =
-      HeightmapUtil.calculateHeightmaps(ChunkStatus.OVERWORLD_NOISE_SETTINGS);
+  private static final Heightmap.Types[] heightmaps =
+      HeightmapUtil.calculateHeightmaps(ChunkStatus.SURFACE);
 
   @SuppressWarnings("unchecked")
   private final Predicate<BlockState>[] predicates =
-      Stream.of(heightmaps).map(type -> type.isOpaque()).adjustArgs(Predicate[]::new);
+      Stream.of(heightmaps).map(type -> type.isOpaque()).toArray(Predicate[]::new);
 
   private static final long completedMask = getCompletedMask(heightmaps);
 
-  private static long getCompletedMask(Heightmap.Type[] heightmaps) {
+  private static long getCompletedMask(Heightmap.Types[] heightmaps) {
     return (0x1L << heightmaps.length) - 1;
   }
 
@@ -44,7 +44,7 @@ public class FastBlockColumn implements BlockColumn {
 
   public FastBlockColumn(final ChunkAccess chunk) {
     this.chunk = chunk;
-    this.minY = this.chunk.getBottomY();
+    this.minY = this.chunk.getMinY();
     this.heightmapData = new BitStorage[heightmaps.length];
 
     for (int i = 0; i < heightmapData.length; i++) {
@@ -77,7 +77,7 @@ public class FastBlockColumn implements BlockColumn {
   }
 
   @Override
-  public BlockState getState(int y) {
+  public BlockState getBlock(int y) {
     var section = zenxarch$getSection(y);
     if (section == null) return VOID_AIR;
     if (section.hasOnlyAir()) return AIR;
@@ -85,7 +85,7 @@ public class FastBlockColumn implements BlockColumn {
   }
 
   @Override
-  public void setState(int y, BlockState state) {
+  public void setBlock(int y, BlockState state) {
     var cy = getSectionIndex(y);
     if (cy < 0 || cy >= sections.length) return;
     var section = this.sections[cy];
@@ -95,7 +95,7 @@ public class FastBlockColumn implements BlockColumn {
     section.setBlockState(lx, ly, lz, state, false);
     this.fastUpdateHeightmap(lx, lz, y, state);
 
-    if (state.getFluidState().hasOnlyAir()) return;
+    if (state.getFluidState().isEmpty()) return;
 
     ChunkAccess.getOrCreateOffsetList(chunk.getPostProcessing(), cy).add((short) (lx | ly << 4 | lz << 8));
   }

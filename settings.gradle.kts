@@ -30,6 +30,6 @@ include("duty-essentials")
 // Experimental. Async (GPL-3.0): entity ticking across threads. Off by default.
 // duty-worldgen: Yarn -> Mojang port in progress, does not compile yet. Re-enable here and in
 // build.gradle.kts modProjects when it does. Source and tooling are committed; see DEV notes.
-// include("duty-worldgen")
+include("duty-worldgen")
 include("duty-innovative")
 include("duty-all")

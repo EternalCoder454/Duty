@@ -17,10 +17,10 @@ public class FastNoiseConfig {
   private static void collectOverrides(
       CommentedConfig config, ModInfo info, String key, boolean value) {
     if (!config.contains(key)) {
-      FastNoiseConstants.log.error(
+      FastNoiseConstants.LOGGER.error(
           "Mod {} tried to override unknown key {}", info.getModId(), key);
     } else {
-      FastNoiseConstants.log.info(
+      FastNoiseConstants.LOGGER.info(
           "Mod {} override key {} with value {}", info.getModId(), key, value);
       config.set(key, value);
     }
@@ -29,7 +29,7 @@ public class FastNoiseConfig {
   private static void collectOverrides(CommentedConfig config, ModInfo meta, List<?> array) {
     for (var value : array) {
       if (!(value instanceof String string)) {
-        FastNoiseConstants.log.error(
+        FastNoiseConstants.LOGGER.error(
             "Mod {} has array of not strings as overrides", meta.getModId());
         continue;
       }
@@ -38,10 +38,10 @@ public class FastNoiseConfig {
   }
 
   private static void collectOverrides(CommentedConfig config, ModInfo meta, Map<?, ?> object) {
-    for (var value : object.propertySet()) {
+    for (var value : object.keySet()) {
       if (!(value instanceof String key)) continue;
       if (!(object.get(value) instanceof Boolean bl)) {
-        FastNoiseConstants.log.error(
+        FastNoiseConstants.LOGGER.error(
             "Mod {} has object of not booleans as overrides", meta.getModId());
         continue;
       }
@@ -60,7 +60,7 @@ public class FastNoiseConfig {
         case List<?> list -> collectOverrides(config, container, list);
         case String string -> collectOverrides(config, container, string, false);
         default ->
-            FastNoiseConstants.log.error(
+            FastNoiseConstants.LOGGER.error(
                 "Mod {} has unsupported overrides of type {}",
                 container.getModId(),
                 value.getClass().getSimpleName());
@@ -70,10 +70,10 @@ public class FastNoiseConfig {
 
   private static void collectIncompats(CommentedConfig config) {
     var loader = FMLLoader.getCurrent();
-    for (var entry : FastNoiseConfigEntries.ENTRIES_BY_ID) {
+    for (var entry : FastNoiseConfigEntries.ENTRIES) {
       for (var modId : entry.incompats()) {
-        if (loader.getLoadingModList().getMods().in()
-            .contains(mod -> mod.getModId().equals(modId))) config.set(entry.name(), false);
+        if (loader.getLoadingModList().getMods().stream()
+            .anyMatch(mod -> mod.getModId().equals(modId))) config.set(entry.key(), false);
       }
     }
   }
@@ -85,13 +85,13 @@ public class FastNoiseConfig {
     collectOverrides(result);
     collectIncompats(result);
 
-    return result.instanceFrozen();
+    return result.unmodifiable();
   }
 
   public static final UnmodifiableCommentedConfig CONFIG_WITH_OVERRIDES = getConfigWithOverrides();
 
   static boolean get(BooleanConfigEntry entry) {
-    return CONFIG_WITH_OVERRIDES.get(entry.name());
+    return CONFIG_WITH_OVERRIDES.get(entry.key());
   }
 
   public static final boolean OPTIMIZE_END_BIOMES = get(FastNoiseConfigEntries.OPTIMIZE_END_BIOMES);
@@ -105,12 +105,12 @@ public class FastNoiseConfig {
 
   public static Object2BooleanMap<String> loadConfig() {
     var result = new Object2BooleanArrayMap<String>();
-    for (var entry : FastNoiseConfigEntries.ENTRIES_BY_ID) {
+    for (var entry : FastNoiseConfigEntries.ENTRIES) {
       if (!entry.isMixin()) continue;
       boolean r = get(entry);
-      result.put(entry.name(), r);
+      result.put(entry.key(), r);
     }
 
-    return Object2BooleanMaps.instanceFrozen(result);
+    return Object2BooleanMaps.unmodifiable(result);
   }
 }

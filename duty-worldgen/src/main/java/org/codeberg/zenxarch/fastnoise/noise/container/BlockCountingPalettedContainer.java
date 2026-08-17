@@ -12,11 +12,11 @@ public class BlockCountingPalettedContainer<T> extends PalettedContainer<T> {
   private LinearPalette<T> palette;
 
   public BlockCountingPalettedContainer(
-      Strategy<T> paletteProvider, long[] storage, T[] states, LinearPalette<T> palette) {
+      Strategy<T> strategy, long[] storage, T[] states, LinearPalette<T> palette) {
     this.states = states;
     super(
-        paletteProvider,
-        FastNoisePaletteHelper.FOUR_BITS_LINEAR,
+        strategy,
+        FastNoisePaletteHelper.ARRAY_4_TYPE,
         new SimpleBitStorage(4, 4096, storage),
         palette);
     this.palette = palette;
@@ -31,20 +31,20 @@ public class BlockCountingPalettedContainer<T> extends PalettedContainer<T> {
   }
 
   @Override
-  public void count(Counter<T> output) {
+  public void count(CountConsumer<T> output) {
     short airCount = 4096;
-    for (int i = 1; i < this.palette.entryCount; i++) {
+    for (int i = 1; i < this.palette.size; i++) {
       airCount -= blockCounts[i];
     }
 
     output.accept(states[0], airCount);
-    for (int i = 1; i < this.palette.entryCount; i++) {
+    for (int i = 1; i < this.palette.size; i++) {
       output.accept(states[i], blockCounts[i]);
     }
   }
 
   public PalettedContainer<T> revert() {
     return new PalettedContainer<T>(
-        this.paletteProvider, this.data.configuration(), this.data.storage(), this.palette);
+        this.strategy, this.data.configuration(), this.data.storage(), this.palette);
   }
 }

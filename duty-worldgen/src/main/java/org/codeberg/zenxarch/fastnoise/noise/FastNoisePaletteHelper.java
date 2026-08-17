@@ -22,13 +22,13 @@ public final class FastNoisePaletteHelper {
   private static final Palette.Factory ARRAY = LinearPalette::create;
   private static final Palette.Factory SINGULAR = SingleValuePalette::create;
 
-  private static final Configuration SINGULAR_TYPE = new Configuration.Static(SINGULAR, 0);
-  private static final Configuration ARRAY_1_TYPE = new Configuration.Static(ARRAY, 1);
-  private static final Configuration ARRAY_2_TYPE = new Configuration.Static(ARRAY, 2);
-  private static final Configuration ARRAY_3_TYPE = new Configuration.Static(ARRAY, 3);
-  public static final Configuration ARRAY_4_TYPE = new Configuration.Static(ARRAY, 4);
-  private static final Configuration ARRAY_5_TYPE = new Configuration.Static(ARRAY, 5);
-  private static final Configuration ARRAY_6_TYPE = new Configuration.Static(ARRAY, 6);
+  private static final Configuration SINGULAR_TYPE = new Configuration.Simple(SINGULAR, 0);
+  private static final Configuration ARRAY_1_TYPE = new Configuration.Simple(ARRAY, 1);
+  private static final Configuration ARRAY_2_TYPE = new Configuration.Simple(ARRAY, 2);
+  private static final Configuration ARRAY_3_TYPE = new Configuration.Simple(ARRAY, 3);
+  public static final Configuration ARRAY_4_TYPE = new Configuration.Simple(ARRAY, 4);
+  private static final Configuration ARRAY_5_TYPE = new Configuration.Simple(ARRAY, 5);
+  private static final Configuration ARRAY_6_TYPE = new Configuration.Simple(ARRAY, 6);
 
   private static final Configuration[] biomePaletteTypes =
       new Configuration[] {
@@ -82,11 +82,11 @@ public final class FastNoisePaletteHelper {
     } else {
       container.data =
           new Data<>(
-              SINGULAR_TYPE, new ZeroBitStorage(64), new SingleValuePalette<>(List.direct(element)));
+              SINGULAR_TYPE, new ZeroBitStorage(64), new SingleValuePalette<>(List.of(element)));
     }
   }
 
-  private static int index(Holder<Biome>[] palette, int size, Holder<Biome> value) {
+  private static int idFor(Holder<Biome>[] palette, int size, Holder<Biome> value) {
     for (int i = 0; i < size; i++) {
       if (palette[i] == value) return i;
     }
@@ -105,32 +105,32 @@ public final class FastNoisePaletteHelper {
       return;
     }
     var palette = (Holder<Biome>[]) new Holder[4];
-    var index = new int[4];
+    var idFor = new int[4];
     int size = 1;
     {
       palette[0] = a;
-      index[0] = 0;
+      idFor[0] = 0;
     }
     {
-      var next = index(palette, size, b);
-      index[1] = next;
+      var next = idFor(palette, size, b);
+      idFor[1] = next;
       palette[next] = b;
       if (next == size) size++;
     }
     {
-      var next = index(palette, size, c);
-      index[2] = next;
+      var next = idFor(palette, size, c);
+      idFor[2] = next;
       palette[next] = c;
       if (next == size) size++;
     }
     {
-      var next = index(palette, size, d);
-      index[3] = next;
+      var next = idFor(palette, size, d);
+      idFor[3] = next;
       palette[next] = d;
       if (next == size) size++;
     }
 
-    var storage = EndBiomeStorageCache.valueFor(index);
+    var storage = EndBiomeStorageCache.get(idFor);
     if (size == 2) {
       container.data =
           new Data<Holder<Biome>>(
@@ -143,7 +143,7 @@ public final class FastNoisePaletteHelper {
           new Data<Holder<Biome>>(
               ARRAY_2_TYPE,
               storage.copy(),
-              new LinearPalette<Holder<Biome>>(palette.replaceWith(), 2, size));
+              new LinearPalette<Holder<Biome>>(palette.clone(), 2, size));
     }
   }
 }

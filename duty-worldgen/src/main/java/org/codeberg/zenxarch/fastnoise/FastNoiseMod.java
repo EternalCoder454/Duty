@@ -18,10 +18,10 @@ public class FastNoiseMod {
     // However, some things (like resources) may still be uninitialized.
     // Proceed with mild caution.
 
-    FastNoiseConstants.log.info("Hello Fabric world!");
+    FastNoiseConstants.LOGGER.info("Hello Fabric world!");
   }
 
   public static Identifier id(String path) {
-    return Identifier.of(FastNoiseConstants.MOD_ID, path);
+    return Identifier.fromNamespaceAndPath(FastNoiseConstants.MOD_ID, path);
   }
 }

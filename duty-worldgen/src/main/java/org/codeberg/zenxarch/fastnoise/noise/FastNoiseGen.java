@@ -14,9 +14,9 @@ import net.minecraft.world.level.levelgen.NoiseChunk;
 import org.codeberg.zenxarch.fastnoise.heightmap.HeightmapUtil;
 
 public class FastNoiseGen {
-  public static final BlockState AIR = Blocks.AIR.getDefaultState();
+  public static final BlockState AIR = Blocks.AIR.defaultBlockState();
 
-  private static final Heightmap.Type[] heightmaps =
+  private static final Heightmap.Types[] heightmaps =
       HeightmapUtil.calculateHeightmaps(ChunkStatus.NOISE);
 
   public static boolean isEmpty(ChunkAccess chunk) {
@@ -28,7 +28,7 @@ public class FastNoiseGen {
     return true;
   }
 
-  public static void populateNoise(
+  public static void doFill(
       NoiseChunk chunkNoiseSampler,
       BlockState defaultBlockState,
       ChunkAccess chunk,
@@ -44,12 +44,12 @@ public class FastNoiseGen {
     int chunkStartZ = chunkPos.getMinBlockZ();
     Aquifer aquiferSampler = chunkNoiseSampler.aquifer();
     chunkNoiseSampler.initializeForFirstCellX();
-    BlockPos.Mutable mutable = new BlockPos.Mutable();
+    BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
     int horizontalCellBlockCount = chunkNoiseSampler.cellWidth();
     int verticalCellBlockCount = chunkNoiseSampler.cellHeight();
     int cellWidth = 16 / horizontalCellBlockCount;
 
-    var minY = chunk.getBottomY();
+    var minY = chunk.getMinY();
 
     for (int cellX = 0; cellX < cellWidth; cellX++) {
       chunkNoiseSampler.advanceCellX(cellX);
@@ -111,7 +111,7 @@ public class FastNoiseGen {
       NoiseChunk chunkNoiseSampler,
       Aquifer aquiferSampler,
       BlockState defaultBlockState,
-      BlockPos.Mutable mutable,
+      BlockPos.MutableBlockPos mutable,
       int blockY,
       int blockYInSection,
       int minY,
@@ -156,9 +156,9 @@ public class FastNoiseGen {
 
         fastSection.setBlockState(blockXInSection, blockYInSection, blockZInSection, state);
 
-        if (aquiferSampler.shouldScheduleFluidUpdate() && !state.getFluidState().hasOnlyAir()) {
+        if (aquiferSampler.shouldScheduleFluidUpdate() && !state.getFluidState().isEmpty()) {
           ChunkAccess.getOrCreateOffsetList(postProcessingLists, cy)
-              .offset((short) (blockXInSection | blockYInSection << 4 | blockZInSection << 8));
+              .add((short) (blockXInSection | blockYInSection << 4 | blockZInSection << 8));
         }
       }
     }

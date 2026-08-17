@@ -15,11 +15,11 @@ import org.spongepowered.asm.mixin.Mixin;
 public abstract class BiomeMaterialRuleMixin {
   @WrapMethod(
       method =
-          "apply(Lnet/minecraft/world/gen/surfacebuilder/MaterialRules$MaterialRuleContext;)Lnet/minecraft/world/gen/surfacebuilder/MaterialRules$BooleanSupplier;")
+          "apply(Lnet/minecraft/world/level/levelgen/SurfaceRules$Context;)Lnet/minecraft/world/level/levelgen/SurfaceRules$Condition;")
   public Condition zenxarch$apply(
-      final SurfaceRules.MaterialRuleContext ruleContext, Operation<Condition> op) {
+      final SurfaceRules.Context ruleContext, Operation<Condition> op) {
     if (ruleContext instanceof MaterialRuleContext ctx) {
-      return BiomePredicate.createLookup(((BiomeConditionSource) (Object) this).possibleBiomes, ctx);
+      return BiomePredicate.getSupplier(((BiomeConditionSource) (Object) this).biomes, ctx);
     }
     return op.call(ruleContext);
   }

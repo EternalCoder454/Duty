@@ -21,7 +21,7 @@ public final class FastBiomeCache {
     // get height params from center chunk to avoid retrogen stuff
     var heightView = chunks[4].getHeightAccessorForGeneration();
 
-    this.minYInBiomes = heightView.getBottomY() >> 2;
+    this.minYInBiomes = heightView.getMinY() >> 2;
 
     this.cache = new FastChunkBiomeCache[chunks[4].getSections().length];
 

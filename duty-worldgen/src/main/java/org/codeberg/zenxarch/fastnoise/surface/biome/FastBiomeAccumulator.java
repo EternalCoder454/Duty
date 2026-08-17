@@ -32,7 +32,7 @@ public final class FastBiomeAccumulator {
     accumulate(region.getChunk(sx + 1, sz + 1), items);
 
     if (items.size() == 1) {
-      for (var item : items) return ReferenceSets.of(item);
+      for (var item : items) return ReferenceSets.singleton(item);
     }
 
     if (items.size() > 4) {
@@ -47,7 +47,7 @@ public final class FastBiomeAccumulator {
     for (int i = 0; i < sections.length; i++) {
       var palette =
           ((PalettedContainer<Holder<Biome>>) sections[i].biomes).data.palette();
-      for (int j = 0; j < palette.getSize(); j++) biomeOut.add(palette.get(j));
+      for (int j = 0; j < palette.getSize(); j++) biomeOut.add(palette.valueFor(j));
     }
   }
 }

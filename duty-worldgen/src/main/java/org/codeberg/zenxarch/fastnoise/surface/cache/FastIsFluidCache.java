@@ -10,10 +10,10 @@ public class FastIsFluidCache {
 
   private static final BlockState[] STATES =
       new BlockState[] {
-        Blocks.GRASS_BLOCK.getDefaultState(),
-        Blocks.DIRT.getDefaultState(),
-        Blocks.SAND.getDefaultState(),
-        Blocks.DEEPSLATE.getDefaultState()
+        Blocks.GRASS_BLOCK.defaultBlockState(),
+        Blocks.DIRT.defaultBlockState(),
+        Blocks.SAND.defaultBlockState(),
+        Blocks.DEEPSLATE.defaultBlockState()
       };
 
   private static final boolean[] IS_FLUID =
@@ -25,8 +25,8 @@ public class FastIsFluidCache {
       };
 
   public FastIsFluidCache() {
-    this.states = STATES.replaceWith();
-    this.isFluid = IS_FLUID.replaceWith();
+    this.states = STATES.clone();
+    this.isFluid = IS_FLUID.clone();
     nextIdx = 0;
   }
 

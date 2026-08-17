@@ -20,12 +20,12 @@ public final class BiomePredicate implements Condition {
   public static Condition getSupplier(
       List<ResourceKey<Biome>> predicates, MaterialRuleContext context) {
     long mask = 0L;
-    for (int i = 0; i < context.possibleBiomes.length; i++) {
-      if (predicates.contains(context.possibleBiomes[i].getKey().orElseThrow())) mask = setBit(mask, i);
+    for (int i = 0; i < context.biomes.length; i++) {
+      if (predicates.contains(context.biomes[i].unwrapKey().orElseThrow())) mask = setBit(mask, i);
     }
 
     if (mask == 0L) return ALWAYS_FALSE;
-    if (mask == ((0x1L << context.possibleBiomes.length) - 1)) return ALWAYS_TRUE;
+    if (mask == ((0x1L << context.biomes.length) - 1)) return ALWAYS_TRUE;
 
     return new BiomePredicate(mask, context);
   }
@@ -35,7 +35,7 @@ public final class BiomePredicate implements Condition {
   }
 
   @Override
-  public boolean get() {
+  public boolean test() {
     var idx = context.getCurrentBiomeIdx();
     return (mask & (0x1L << idx)) != 0;
   }

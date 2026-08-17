@@ -49,6 +49,9 @@ def load(tiny_path: pathlib.Path):
     # yarn member name -> {(mojang name, mojang owner)}. What lets an ambiguous name be resolved
     # by asking which candidate is declared on a class this file actually uses.
     owned: dict[str, set[tuple[str, str]]] = collections.defaultdict(set)
+    # intermediary -> mojang, for the method_NNNNN names that survive in mixin
+    # annotations because Loom would have remapped them at build time.
+    intermediary: dict[str, str] = {}
 
     with tiny_path.open(encoding="utf-8", errors="replace") as handle:
         header = handle.readline().rstrip("\n").split("\t")
@@ -58,6 +61,7 @@ def load(tiny_path: pathlib.Path):
         try:
             mojang_col = namespaces.index("official")
             yarn_col = namespaces.index("named")
+            inter_col = namespaces.index("intermediary")
         except ValueError:
             raise SystemExit(f"need 'official' and 'named' namespaces, found {namespaces}")
 
@@ -70,6 +74,8 @@ def load(tiny_path: pathlib.Path):
                 mojang, yarn = parts[1 + mojang_col], parts[1 + yarn_col]
                 if yarn and mojang:
                     classes[yarn] = mojang
+                if len(parts) > 1 + inter_col and parts[1 + inter_col]:
+                    intermediary[parts[1 + inter_col]] = mojang
                 mojang_owner = mojang or None
             elif len(parts) > 3 and parts[0] == "" and parts[1] in ("m", "f"):
                 # "", kind, descriptor, then one name per namespace
@@ -77,13 +83,21 @@ def load(tiny_path: pathlib.Path):
                 if len(names) <= max(mojang_col, yarn_col):
                     continue
                 mojang, yarn = names[mojang_col], names[yarn_col]
-                if not yarn or not mojang or yarn == mojang:
+                if not yarn or not mojang:
                     continue
-                (methods if parts[1] == "m" else fields)[yarn].add(mojang)
+                if yarn != mojang:
+                    (methods if parts[1] == "m" else fields)[yarn].add(mojang)
+                # Identity mappings are kept here on purpose, even though they are useless as
+                # renames. They are what lets "leave it alone" compete: BitStorage.get is called
+                # get in both namespaces, so without this entry the only visible candidate for
+                # `get` was Heightmap.getFirstAvailable and storage.get(i) was rewritten to
+                # storage.getFirstAvailable(i). Same for List.of becoming List.direct.
                 if mojang_owner:
                     owned[yarn].add((mojang, mojang_owner))
+                if len(names) > inter_col and names[inter_col]:
+                    intermediary[names[inter_col]] = mojang
 
-    return classes, methods, fields, owned
+    return classes, methods, fields, owned, intermediary
 
 
 def unambiguous(table: dict[str, set[str]]) -> dict[str, str]:
@@ -150,6 +164,49 @@ def mask(text: str):
     return MASKABLE.sub(stash, text), saved
 
 
+SLASHED_TYPE = re.compile(r"L([a-z][A-Za-z0-9_/$]*);")
+INTERMEDIARY = re.compile(r"\b((?:method|field|class)_\d+)\b")
+
+
+def translate_annotation_strings(saved: list[str], classes, intermediary, members, overrides=None):
+    """Translate mixin descriptors inside the string literals that were masked.
+
+    Masking literals is what stops "\\n" being mangled, but it also hides the one kind of
+    string that really is code: a mixin's method= or target=. Those carry Yarn class
+    descriptors, and sometimes a raw intermediary name like method_38332 that Loom would have
+    remapped at build time. Java has no opinion on any of it, so the file compiles perfectly
+    and the mixin fails to apply at load -- the exact failure this whole tool exists to avoid.
+
+    Only strings that look like descriptors are touched: something with an Lsome/type; in it,
+    or an intermediary name. A message or a config key is left alone.
+    """
+    for index, literal in enumerate(saved):
+        if not literal.startswith('"') or ("L" not in literal and "_" not in literal):
+            continue
+        original = literal
+
+        literal = SLASHED_TYPE.sub(
+            lambda m: "L" + classes.get(m.group(1), m.group(1)) + ";", literal)
+        literal = INTERMEDIARY.sub(lambda m: intermediary.get(m.group(1), m.group(1)), literal)
+
+        # A leading bare method name, as in "populateBiomes(...)V".
+        head = re.match(r'"([A-Za-z_$][A-Za-z0-9_$]*)\(', literal)
+        if head and head.group(1) in members:
+            literal = '"' + members[head.group(1)] + literal[1 + len(head.group(1)):]
+
+        # Overrides apply here too. A method= string is the one place a name appears with no
+        # surrounding code to infer its owner from, so the hand-verified table is often the
+        # only thing that can resolve it.
+        for key, value in (overrides or {}).items():
+            name = key.rpartition("@")[2]
+            if "." in name or name.startswith("literal:"):
+                continue
+            literal = re.sub(r"\b" + re.escape(name) + r"\b", value, literal)
+
+        if literal != original:
+            saved[index] = literal
+
+
 def unmask(text: str, saved: list[str]) -> str:
     return re.sub(r"\x00(\d+)\x00", lambda m: saved[int(m.group(1))], text)
 
@@ -166,7 +223,8 @@ def mask_declarations(text: str, saved: list[str]):
     return DECLARATION.sub(stash, text), saved
 
 
-def translate(text: str, classes, members, simple_names, owned=None):
+def translate(text: str, classes, members, simple_names, owned=None, overrides=None,
+              path_hint=None, intermediary=None):
     """Rewrite one source file. Returns (new_text, renamed_counter)."""
     renamed = collections.Counter()
     text, saved = mask(text)
@@ -226,22 +284,63 @@ def translate(text: str, classes, members, simple_names, owned=None):
 
     text = IDENT.sub(swap_simple, text)
 
+    # Nested types written as Outer.Inner where Outer has just been renamed and Inner has not.
+    # The bare-name pass cannot do these: when a file declares its own class with the same simple
+    # name as the Minecraft one -- FastNoise has a MaterialRuleContext extending Minecraft's --
+    # the bare name must stay the mod's and only the qualified form is Minecraft's. Keying on the
+    # already-Mojang outer name is what tells the two apart.
+    #
+    # `extends SurfaceRules.MaterialRuleContext` left unfixed is not one error; every inherited
+    # field and method then fails too, which is where twenty of these came from.
+    for yarn_fq, mojang_fq in classes.items():
+        if "$" not in yarn_fq:
+            continue
+        yarn_inner = yarn_fq.rsplit("$", 1)[-1]
+        mojang_outer = mojang_fq.rsplit("/", 1)[-1].rsplit("$", 2)[0]
+        mojang_inner = mojang_fq.rsplit("$", 1)[-1]
+        if yarn_inner == mojang_inner or not VALID_IDENT.match(mojang_inner):
+            continue
+        qualified = f"{mojang_outer}.{yarn_inner}"
+        if qualified in text:
+            text = text.replace(qualified, f"{mojang_outer}.{mojang_inner}")
+            renamed["nested"] += 1
+
 
     def resolve(name: str) -> str | None:
-        direct = members.get(name)
-        if direct is not None:
-            return direct
+        """The Mojang name, but only when the owning class is one this file uses.
+
+        Requiring the owner to be in scope is what keeps this off types that are not
+        Minecraft's. Accepting any globally-unambiguous name instead rewrote Integer.MIN_VALUE
+        to Integer.MIN_AMPLIFIER and List.toArray to List.adjustArgs, because Yarn happens to
+        have members by those names and nothing asked whose object was being called.
+
+        It also removes the need to special-case this. and super.: a class extending a
+        Minecraft type reaches inherited fields that way and must be translated, while a mod's
+        own field survives because its name is not owned by anything in scope.
+        """
         if not owned or name not in owned:
             return None
-        hits = {mojang for mojang, owner in owned[name]
-                if owner in in_scope or owner.rsplit("/", 1)[-1] in simple_in_scope}
+        # The outer name counts as in scope for a nested owner. A file importing SurfaceRules
+        # uses SurfaceRules$Context without ever naming it, so comparing the whole tail found
+        # nothing and every inherited member of such a class went untranslated.
+        def visible(owner: str) -> bool:
+            tail = owner.rsplit("/", 1)[-1]
+            return (owner in in_scope
+                    or tail in simple_in_scope
+                    or tail.split("$", 1)[0] in simple_in_scope)
+
+        hits = {mojang for mojang, owner in owned[name] if visible(owner)}
         return next(iter(hits)) if len(hits) == 1 else None
 
     def swap_member(match: re.Match) -> str:
         name = match.group(1)
         if name in JAVA_KEYWORDS:
             return match.group(0)
-        if OWN_MEMBER.search(text, 0, match.start()):
+        # A static call on a type this file does not import from Minecraft is not Minecraft's.
+        # List.of(x) became List.direct(x) until this looked at what was left of the dot.
+        before = text[max(0, match.start() - 80):match.start()]
+        recv = re.search(r"([A-Za-z_$][A-Za-z0-9_$]*)\s*\.\s*$", before)
+        if recv and recv.group(1)[:1].isupper() and recv.group(1) not in simple_in_scope:
             return match.group(0)
         target = resolve(name)
         if target is None or target == name:
@@ -250,6 +349,40 @@ def translate(text: str, classes, members, simple_names, owned=None):
         return match.group(0).replace(name, target)
 
     text = MEMBER_ACCESS.sub(swap_member, text)
+
+    # Hand-verified last word. Everything above works from the mapping alone and stops where the
+    # mapping stops being enough -- a name whose owner cannot be inferred from the text, or one
+    # that is legitimately ambiguous. Those are looked up once against the jar with javap and
+    # listed in an overrides file, which is a small honest table rather than a cleverer guess.
+    for key, mojang_name in (overrides or {}).items():
+        scope, _, yarn_name = key.rpartition("@")
+        if scope and scope not in (path_hint or ""):
+            continue
+        if yarn_name.startswith("literal:"):
+            # Plain text, no word boundaries. The escape hatch for a name whose correct
+            # translation depends on the receiver and where the receiver is not a bare
+            # identifier -- sections[i].isEmpty() is LevelChunkSection.hasOnlyAir(), while
+            # state.getFluidState().isEmpty() in the same file keeps its name.
+            literal = yarn_name[len("literal:"):]
+            if literal in text:
+                text = text.replace(literal, mojang_name)
+                renamed["override"] += 1
+            continue
+        if "." in yarn_name:
+            # Qualified: Owner.member, so only that receiver is touched. Needed where the bare
+            # name is far too common to rewrite globally -- Data.data() becomes storage() while
+            # every other data in the file stays put.
+            owner, _, member = yarn_name.partition(".")
+            pattern = re.compile(r"\b" + re.escape(owner) + r"\s*\.\s*" + re.escape(member) + r"\b")
+            replacement = f"{owner}.{mojang_name}"
+        else:
+            pattern = re.compile(r"\b" + re.escape(yarn_name) + r"\b")
+            replacement = mojang_name
+        if pattern.search(text):
+            text = pattern.sub(replacement, text)
+            renamed["override"] += 1
+
+    translate_annotation_strings(saved, classes, intermediary or {}, members, overrides)
     return unmask(text, saved), renamed
 
 
@@ -261,7 +394,16 @@ def main() -> int:
     root = pathlib.Path(sys.argv[2])
     dry = "--dry-run" in sys.argv
 
-    classes, method_table, field_table, owned = load(tiny)
+    overrides: dict[str, str] = {}
+    for arg in sys.argv[3:]:
+        if arg.startswith("--overrides="):
+            for line in pathlib.Path(arg.split("=", 1)[1]).read_text(encoding="utf-8").splitlines():
+                line = line.split("#", 1)[0].strip()
+                if "=" in line:
+                    yarn, mojang = line.split("=", 1)
+                    overrides[yarn.strip()] = mojang.strip()
+
+    classes, method_table, field_table, owned, intermediary = load(tiny)
     print(f"loaded {len(classes)} classes, {len(method_table)} method names, "
           f"{len(field_table)} field names")
 
@@ -287,7 +429,8 @@ def main() -> int:
     files = sorted(root.rglob("*.java"))
     for path in files:
         original = path.read_text(encoding="utf-8", errors="replace")
-        updated, renamed = translate(original, classes, members, simple_names, owned)
+        updated, renamed = translate(original, classes, members, simple_names, owned, overrides,
+                                     str(path).replace(chr(92), '/'), intermediary)
         total.update(renamed)
         if updated != original and not dry:
             path.write_text(updated, encoding="utf-8")

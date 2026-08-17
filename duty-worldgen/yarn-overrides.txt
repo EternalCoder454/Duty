@@ -1,0 +1,82 @@
+# Yarn -> Mojang names that tools/yarn2mojang.py cannot infer from the text alone.
+#
+# Each was resolved once with javap against the 26.1.2 jar. They fall into two kinds:
+# names whose owner is a local variable, so the receiver's type is invisible to a
+# non-type-resolving translator; and names that are genuinely ambiguous across classes
+# and need a human to say which one this mod meant.
+#
+# Regenerate the port with:
+#   python tools/yarn2mojang.py <mappings.tiny> duty-worldgen/src/main/java \
+#          --overrides=duty-worldgen/yarn-overrides.txt
+
+# --- receiver is a local, so the type is not visible in the text ---
+getBottomY = getMinY                  # LevelHeightAccessor
+getDefaultState = defaultBlockState   # Block
+asVec3 = getPos                       # ChunkAccess
+
+# --- nested type names the outer-qualified pass cannot reach ---
+Entries = ParameterList               # Climate.Entries -> Climate.ParameterList
+Counter = CountConsumer               # PalettedContainer.Counter -> CountConsumer
+TreeNode = Node                       # Climate.RTree.TreeNode -> Climate.RTree.Node
+
+# --- ambiguous across owners; javap settles it ---
+paletteProvider = strategy            # PalettedContainer
+getSquaredDistance = distance         # Climate.RTree.Node
+
+# --- bare field/method references the after-dot pass cannot see ---
+fluidHeight = waterHeight             # SurfaceRules.Context
+estimateSurfaceHeight = getMinSurfaceLevel   # SurfaceRules.Context
+
+# --- method declarations, which are bare and so invisible to the after-dot pass ---
+initHorizontalContext = updateXZ      # SurfaceRules.Context
+initVerticalContext = updateY         # SurfaceRules.Context
+getState = getBlock                   # BlockColumn
+setState = setBlock                   # BlockColumn
+getKey = unwrapKey                    # Holder
+
+# --- qualified: Owner.member, where the bare name is too common to touch globally ---
+data.data = storage                   # PalettedContainer.Data.data() -> storage()
+Identifier.of = fromNamespaceAndPath
+
+# --- file-scoped, with scope@name ---
+BiomePredicate.java@get = test        # SurfaceRules.Condition.test()
+
+# --- @Shadow declarations: bare, so the call sites were renamed and these were not ---
+createChunkNoiseSampler = createNoiseChunk   # NoiseBasedChunkGenerator
+populateNoise = doFill                       # NoiseBasedChunkGenerator
+
+# --- Palette.get is valueFor; BitStorage.get stays get, hence the qualification ---
+palette.get = valueFor
+array.get = valueFor
+section.isEmpty = hasOnlyAir          # LevelChunkSection
+biomeContainer = biomes               # LevelChunkSection
+
+# --- ShortList.add, reached through a chained call so only file scope can target it ---
+FastNoiseGen.java@offset = add
+MaterialRuleContext.java@offset = add
+
+# --- sections[i].isEmpty(): an indexed receiver, so only file scope can target it.
+# --- File-scoped rather than global because hasOnlyAir = isEmpty above goes the other way
+# --- for FluidState, and a global rule would fight it.
+
+index = idFor                         # Palette.idFor(value, resize)
+getData = getRaw                      # BitStorage.getRaw()
+
+# --- yarn isEmpty is isEmpty on FluidState but hasOnlyAir on LevelChunkSection, and both
+# --- occur in the same files, so these are matched on the receiver text itself.
+literal:sections[i].isEmpty() = sections[i].hasOnlyAir()
+literal:section.isEmpty() = section.hasOnlyAir()
+literal:getFluidState().hasOnlyAir() = getFluidState().isEmpty()
+
+# --- DensityFunction.sample(NoisePos) is compute(FunctionContext) in Mojang. Literal because
+# --- Climate.Sampler.sample keeps its name elsewhere in this same file.
+literal:sampler.sample(this) = sampler.compute(this)
+
+# --- resultNode is an Apache Commons MutableObject, so its setter is setValue. The member
+# --- pass rewrote it to a Minecraft name that happened to be unique in scope.
+literal:resultNode.bindValue( = resultNode.setValue(
+
+# --- mixin method= targets. A descriptor string has no surrounding code to infer an owner
+# --- from, so these are resolved once against the jar and listed here.
+populateBiomes = doCreateBiomes        # NoiseBasedChunkGenerator
+generateSurface = buildSurface         # NoiseBasedChunkGenerator

@@ -30,7 +30,7 @@ public abstract class NoiseChunkGeneratorMixin {
   @Shadow @Final private Holder<NoiseGeneratorSettings> settings;
 
   @Shadow
-  private NoiseChunk createChunkNoiseSampler(
+  private NoiseChunk createNoiseChunk(
       final ChunkAccess chunk,
       final StructureManager world,
       final Blender blender,
@@ -40,12 +40,12 @@ public abstract class NoiseChunkGeneratorMixin {
 
   @WrapOperation(
       method =
-          "buildSurface(Lnet/minecraft/world/ChunkRegion;Lnet/minecraft/world/gen/StructureAccessor;Lnet/minecraft/world/gen/noise/NoiseConfig;Lnet/minecraft/world/chunk/Chunk;)V",
+          "buildSurface(Lnet/minecraft/server/level/WorldGenRegion;Lnet/minecraft/world/level/StructureManager;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/chunk/ChunkAccess;)V",
       at =
           @At(
               value = "INVOKE",
               target =
-                  "Lnet/minecraft/world/gen/chunk/NoiseChunkGenerator;buildSurface(Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/world/gen/HeightContext;Lnet/minecraft/world/gen/noise/NoiseConfig;Lnet/minecraft/world/gen/StructureAccessor;Lnet/minecraft/world/biome/source/BiomeAccess;Lnet/minecraft/registry/Registry;Lnet/minecraft/world/gen/chunk/Blender;)V"))
+                  "Lnet/minecraft/world/level/levelgen/NoiseBasedChunkGenerator;buildSurface(Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/world/level/levelgen/WorldGenerationContext;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/StructureManager;Lnet/minecraft/world/level/biome/BiomeManager;Lnet/minecraft/core/Registry;Lnet/minecraft/world/level/levelgen/blending/Blender;)V"))
   private void zenxarch$buildSurface(
       final NoiseBasedChunkGenerator chunkGenerator,
       final ChunkAccess chunk,
@@ -73,7 +73,7 @@ public abstract class NoiseChunkGeneratorMixin {
       return;
     }
 
-    final var chunks = FastSurfaceGen.addSectionsInFrustum(chunkRegion, chunk);
+    final var chunks = FastSurfaceGen.collectChunks(chunkRegion, chunk);
 
     if (chunks == null) {
       op.call(
@@ -91,11 +91,11 @@ public abstract class NoiseChunkGeneratorMixin {
     var sampler =
         chunk.getOrCreateNoiseChunk(
             chunkx ->
-                this.createChunkNoiseSampler(chunkx, structureAccessor, blender, noiseConfig));
+                this.createNoiseChunk(chunkx, structureAccessor, blender, noiseConfig));
 
     var settings = this.settings.value();
 
-    FastSurfaceGen.generateSurface(
+    FastSurfaceGen.buildSurface(
         (SurfaceBuilderAccessor) noiseConfig.surfaceSystem(),
         noiseConfig,
         biomeAccess,

@@ -41,7 +41,7 @@ public final class FastCopyBufferDataIntoChunks {
 
     for (int chunkOffZ = 0; chunkOffZ < batchSize; chunkOffZ++) {
       for (int chunkOffX = 0; chunkOffX < batchSize; chunkOffX++) {
-        var chunk = chunks.getFirstAvailable(startingPos.x() + chunkOffX, startingPos.z() + chunkOffZ);
+        var chunk = chunks.get(startingPos.x() + chunkOffX, startingPos.z() + chunkOffZ);
         if (chunk.getPersistedStatus().isOrAfter(ChunkStatus.NOISE)) continue;
         copyDataIntoChunk(
             chunkOffX,
@@ -110,7 +110,7 @@ public final class FastCopyBufferDataIntoChunks {
   }
 
   private static long getLong(MemorySegment rawData, int idx) {
-    return rawData.getFirstAvailable(ValueLayout.JAVA_LONG, idx);
+    return rawData.get(ValueLayout.JAVA_LONG, idx);
   }
 
   private static void handleLong(
@@ -142,7 +142,7 @@ public final class FastCopyBufferDataIntoChunks {
     }
   }
 
-  private static final Heightmap.Type[] heightmaps =
+  private static final Heightmap.Types[] heightmaps =
       HeightmapUtil.calculateHeightmaps(ChunkStatus.NOISE);
 
   private static void finalizeChunks(

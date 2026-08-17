@@ -23,7 +23,7 @@ public abstract class NoiseChunkGeneratorMixin {
   @Shadow @Final private Holder<NoiseGeneratorSettings> settings;
 
   @Shadow
-  private NoiseChunk createChunkNoiseSampler(
+  private NoiseChunk createNoiseChunk(
       final ChunkAccess chunk,
       final StructureManager world,
       final Blender blender,
@@ -33,8 +33,8 @@ public abstract class NoiseChunkGeneratorMixin {
 
   @WrapMethod(
       method =
-          "populateBiomes(Lnet/minecraft/world/gen/chunk/Blender;Lnet/minecraft/world/gen/noise/NoiseConfig;Lnet/minecraft/world/gen/StructureAccessor;Lnet/minecraft/world/chunk/Chunk;)V")
-  private void zenxarch$populateBiomes(
+          "doCreateBiomes(Lnet/minecraft/world/level/levelgen/blending/Blender;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/StructureManager;Lnet/minecraft/world/level/chunk/ChunkAccess;)V")
+  private void zenxarch$doCreateBiomes(
       final Blender blender,
       final RandomState noiseConfig,
       final StructureManager structureAccessor,
@@ -43,7 +43,7 @@ public abstract class NoiseChunkGeneratorMixin {
     var sampler =
         chunk.getOrCreateNoiseChunk(
             chunkx ->
-                this.createChunkNoiseSampler(chunkx, structureAccessor, blender, noiseConfig));
+                this.createNoiseChunk(chunkx, structureAccessor, blender, noiseConfig));
 
     var original = ((ChunkGeneratorAccessor) this).zenxarch$getBiomeSource();
 
@@ -54,6 +54,6 @@ public abstract class NoiseChunkGeneratorMixin {
       return;
     }
 
-    FastBiomeGen.populateBiomes(chunk, supplier, sampler, noiseConfig, this.settings);
+    FastBiomeGen.doCreateBiomes(chunk, supplier, sampler, noiseConfig, this.settings);
   }
 }

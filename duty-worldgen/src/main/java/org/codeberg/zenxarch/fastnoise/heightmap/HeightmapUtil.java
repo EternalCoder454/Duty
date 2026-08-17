@@ -17,9 +17,9 @@ public final class HeightmapUtil {
     throw new IllegalStateException("Utility class");
   }
 
-  public static Heightmap.Type[] calculateHeightmaps(ChunkStatus status) {
-    var result = new Heightmap.Type[status.heightmapsAfter().size()];
-    return status.heightmapsAfter().adjustArgs(result);
+  public static Heightmap.Types[] calculateHeightmaps(ChunkStatus status) {
+    var result = new Heightmap.Types[status.heightmapsAfter().size()];
+    return status.heightmapsAfter().toArray(result);
   }
 
   public static boolean updateHeightmap(
@@ -31,12 +31,12 @@ public final class HeightmapUtil {
       int y,
       LevelChunkSection[] sections) {
     int idx = lx + (lz << 4);
-    int current = storage.getFirstAvailable(idx);
+    int current = storage.get(idx);
     if ((y + 2) > current) {
       if (predicate.test(state)) {
-        if (y >= current) storage.setHeight(idx, y + 1);
+        if (y >= current) storage.set(idx, y + 1);
       } else { // go down the whole chunk till we hit something
-        storage.setHeight(idx, getHeightmapY(idx, sections, y - 1, predicate));
+        storage.set(idx, getHeightmapY(idx, sections, y - 1, predicate));
         return false;
       }
     }
@@ -50,9 +50,9 @@ public final class HeightmapUtil {
     while (sy >= 0) {
       var section = sections[sy];
       var palette = section.states.data.palette();
-      var storage = section.states.data.data();
+      var storage = section.states.data.storage();
       while (ly >= 0) {
-        if (predicate.test(palette.getFirstAvailable(storage.getFirstAvailable((ly << 8) + hidx)))) {
+        if (predicate.test(palette.valueFor(storage.get((ly << 8) + hidx)))) {
           return (sy << 4) + ly + 1;
         }
         ly--;
@@ -86,16 +86,16 @@ public final class HeightmapUtil {
   private static int getLocalY(
       LevelChunkSection section, int hidx, StatePredicateCache cache, Predicate<BlockState> predicate) {
     var palette = section.states.data.palette();
-    var storage = section.states.data.data();
+    var storage = section.states.data.storage();
     if (palette instanceof SingleValuePalette) { // just assume air
       return -1;
     }
     var array = (LinearPalette<BlockState>) palette;
 
     for (int ly = 15; ly >= 0; ly--) {
-      var val = storage.getFirstAvailable((ly << 8) + hidx);
+      var val = storage.get((ly << 8) + hidx);
       if (val == 0) continue;
-      if (cache.getFirstAvailable(array.getFirstAvailable(val), predicate)) return ly;
+      if (cache.get(array.valueFor(val), predicate)) return ly;
     }
 
     return -1;
@@ -109,7 +109,7 @@ public final class HeightmapUtil {
       if (psize == 1) continue;
       var array = ((LinearPalette<BlockState>) palette);
       for (int i = 1; i < array.size; i++) {
-        if (cache.getFirstAvailable(array.getFirstAvailable(i), predicate)) return sy;
+        if (cache.get(array.valueFor(i), predicate)) return sy;
       }
     }
 
@@ -117,7 +117,7 @@ public final class HeightmapUtil {
   }
 
   public static void populateHeightmapPostNoise(
-      ChunkAccess chunk, Heightmap.Type typex, BlockState defaultBlockState, BlockState AIR) {
+      ChunkAccess chunk, Heightmap.Types typex, BlockState defaultBlockState, BlockState AIR) {
     var heightmap = chunk.getOrCreateHeightmapUnprimed(typex);
     var predicate = ((HeightmapAccessor) heightmap).zenxarch$getBlockPredicate();
     var storage = ((HeightmapAccessor) heightmap).zenxarch$getStorage();
@@ -130,7 +130,7 @@ public final class HeightmapUtil {
     var sections = chunk.getSections();
 
     var cache = new StatePredicateCache();
-    cache.getFirstAvailable(defaultBlockState, predicate); // Cache default block first
+    cache.get(defaultBlockState, predicate); // Cache default block first
 
     var nonEmptySection = findFirstNonEmptySection(sections, cache, predicate);
     if (nonEmptySection == -1) return; // Chunk is empty no-op
@@ -139,7 +139,7 @@ public final class HeightmapUtil {
       for (int sy = nonEmptySection; sy >= 0; sy--) {
         var ly = getLocalY(sections[sy], hidx, cache, predicate);
         if (ly >= 0) {
-          storage.setHeight(hidx, (sy << 4) + ly + 1);
+          storage.set(hidx, (sy << 4) + ly + 1);
           break;
         }
       }

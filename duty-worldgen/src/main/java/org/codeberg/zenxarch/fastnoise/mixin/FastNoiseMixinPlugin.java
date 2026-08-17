@@ -30,7 +30,7 @@ public final class FastNoiseMixinPlugin implements IMixinConfigPlugin {
 
     if (!name.startsWith("mixin.")) return false;
 
-    for (var key : config.propertySet()) {
+    for (var key : config.keySet()) {
       if (name.startsWith(key) && !config.getBoolean(key)) return false;
     }
 

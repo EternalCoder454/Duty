@@ -62,7 +62,7 @@ fi
 # jars, or the single duty-all jar that nests them. They carry the same mod ids, so having
 # both present is a duplicate-mod error rather than a double dose of anything. The pack uses
 # the separate jars because that is what it already has installed.
-MODULES=(duty-memory duty-client duty-fixerupper duty-server duty-essentials duty-innovative)
+MODULES=(duty-memory duty-client duty-fixerupper duty-server duty-essentials duty-worldgen duty-innovative)
 
 # Liteminer lives in its own repository next door and depends on duty-framework. It used to be
 # installed on every run, because it was forgotten once and that was the fix. The clean pack is
@@ -91,7 +91,7 @@ done
 
 echo "==> removing stale duty jars from the pack"
 found=0
-for old in "$PACK/mods"/duty-*.jar "$PACK/mods"/liteminer-*.jar; do
+for old in "$PACK/mods"/duty-*.jar "$PACK/mods"/liteminer-*.jar "$PACK/mods"/zfastnoise-*.jar; do
   [ -e "$old" ] || continue
   echo "  - $(basename "$old")"
   rm -f "$old"
@@ -117,7 +117,7 @@ done
 # Mods under external/ ship with Duty but keep their own build, because their toolchain is not
 # Duty's. See external/README.md. Skipped rather than fatal when the build is unavailable: a
 # missing optional mod should not stop the five that are ready from reaching the pack.
-if [ "${WITH_EXTERNAL:-1}" = "1" ] && [ -d "$ROOT/external/fastnoise" ]; then
+if [ "${WITH_EXTERNAL:-0}" = "1" ] && [ -d "$ROOT/external/fastnoise" ]; then
   echo "==> external: fastnoise"
   if ( cd "$ROOT/external/fastnoise" && TMP=C:/gtmp TEMP=C:/gtmp ./gradlew build --console=plain -q ) >/dev/null 2>&1; then
     fnjar=$(ls "$ROOT/external/fastnoise/build/libs/"*.jar 2>/dev/null \

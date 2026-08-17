@@ -33,11 +33,11 @@ public class FastPaletteIndexCache {
 
   private int getIdx(int sy, PalettedContainer<BlockState> container, BlockState state) {
     if (states[sy] == state) return indices[sy];
-    var index = container.data.palette().index(state, container);
+    var idFor = container.data.palette().idFor(state, container);
     states[sy] = state;
-    indices[sy] = index;
-    if (stillArray[sy]) stillArray[sy] = container.data.configuration().globalPaletteBitsInMemory() == 4;
-    return index;
+    indices[sy] = idFor;
+    if (stillArray[sy]) stillArray[sy] = container.data.configuration().bitsInMemory() == 4;
+    return idFor;
   }
 
   public void updateBlock(
@@ -47,7 +47,7 @@ public class FastPaletteIndexCache {
     if (stillArray[sy]) {
       final int dataIdx = y << 4 | z;
       final int shift = x << 2;
-      final var data = storage.getData();
+      final var data = storage.getRaw();
       data[dataIdx] &= ~(0xFL << shift);
       data[dataIdx] |= ((long) idx) << shift;
     } else storage.set((y << 4 | z) << 4 | x, idx);
