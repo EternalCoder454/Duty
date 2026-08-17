@@ -5,6 +5,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.permissions.Permissions;
+import net.dutymod.framework.DutyMetrics;
 import net.dutymod.fixerupper.duck.IProfilingServerFunctionManager;
 
 import static net.minecraft.commands.Commands.literal;
@@ -31,6 +32,45 @@ public class FixerUpperCommands {
                                 return 0;
                             }
                         }))
+                .then(literal("metrics").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
+                        .executes(context -> sendReport(context.getSource()))
+                        .then(literal("on").executes(context -> {
+                            DutyMetrics.setEnabled(true);
+                            context.getSource().sendSuccess(() -> Component.literal(
+                                    "Duty measurement on. Only what happens from now is counted."), false);
+                            return 1;
+                        }))
+                        .then(literal("off").executes(context -> {
+                            DutyMetrics.setEnabled(false);
+                            context.getSource().sendSuccess(() -> Component.literal(
+                                    "Duty measurement off. What was collected is kept."), false);
+                            return 1;
+                        }))
+                        .then(literal("reset").executes(context -> {
+                            DutyMetrics.reset();
+                            context.getSource().sendSuccess(() -> Component.literal(
+                                    "Duty measurements cleared."), false);
+                            return 1;
+                        }))
+                        .then(literal("log").executes(context -> {
+                            DutyMetrics.reportToLog();
+                            context.getSource().sendSuccess(() -> Component.literal(
+                                    "Duty performance report written to the log."), false);
+                            return 1;
+                        })))
         );
+    }
+
+    /**
+     * Prints the report into chat, a line at a time.
+     *
+     * <p>Split rather than sent as one component because the report is a fixed-width table and chat
+     * wraps: one line per message keeps the columns lined up.
+     */
+    private static int sendReport(CommandSourceStack source) {
+        for (String line : DutyMetrics.report().split("\n")) {
+            source.sendSuccess(() -> Component.literal(line), false);
+        }
+        return 1;
     }
 }

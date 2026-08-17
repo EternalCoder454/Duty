@@ -110,6 +110,65 @@ real hazard, not a theoretical one.
 
 CI runs the same suite per branch; see `.github/workflows/build.yml`.
 
+## Measuring
+
+The checkers above answer "is it wired up". `DutyMetrics` in the framework answers "is it
+worth keeping".
+
+Before it, every module measured itself differently — culling kept `lastPassMillis` on the
+task object, the structure watchdog tracked its own elapsed time, FixerUpper timed startup
+with bespoke mixins — and most of those numbers were written and never read. The culling
+timings sat there for months with nothing displaying them.
+
+Two primitives. Hold the handle in a `static final` field so the registry lookup happens
+once at class-init, never on the measured path:
+
+```java
+private static final DutyMetrics.Timer PASS = DutyMetrics.timer("client.culling.pass");
+private static final DutyMetrics.Counter HIDDEN = DutyMetrics.counter("client.culling.hidden");
+
+long started = PASS.begin();
+try { runPass(); } finally { PASS.end(started); }
+HIDDEN.add(count);
+```
+
+`PASS.open()` gives the same thing as try-with-resources, at one allocation per call — fine
+off the hot paths, not fine on them.
+
+**Off by default, and off means off.** `begin()` returns on a `volatile boolean` read
+without touching a clock; `end()` and `record()` do the same. That matters because these are
+meant for per-frame and per-tick paths, where `System.nanoTime()` is itself the expensive
+part — a VDSO call on Linux, a QPC on Windows, tens of nanoseconds, which is real money at
+sixty frames a second across thousands of entities.
+
+Counters are the exception: they always count, because a `LongAdder` increment is cheap and
+the number is usually wanted precisely when nobody thought to switch measuring on first.
+
+Reading it:
+
+| | |
+|---|---|
+| `/duty metrics` | the report, in chat |
+| `/duty metrics on` / `off` | toggle without a restart |
+| `/duty metrics reset` / `log` | clear, or dump to the log |
+| `framework.metrics` | on at startup |
+| `framework.metrics_report_seconds` | periodic report to the log; 0 is off |
+
+Timers report calls, total, mean and worst, sorted by **total** rather than mean — a cheap
+thing done constantly is usually the problem, and sorting by mean hides it behind whatever
+ran twice. `recentMillis()` is a rolling average for debug-screen lines, since an all-time
+mean stops moving after a few thousand samples and cannot show that something just got
+slower.
+
+Counts and totals go through `LongAdder` because Duty measures from the render thread, the
+server thread and its own workers, sometimes on the same timer. The rolling average is an
+unsynchronised `volatile double`: two threads finishing at once lose one sample, which is
+not worth a CAS loop on a number whose only job is to be displayed.
+
+Where a module already keeps a last-value field for its own display, it keeps it — the F3
+culling line needs the last pass exactly, and has to work whether or not measurement is on.
+The metrics call sits alongside and adds the shape over time.
+
 ## Two rules the design enforces
 
 - **Must work alongside Sodium, C2ME and other mods.** Every optimization sits behind a

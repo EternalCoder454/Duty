@@ -54,6 +54,19 @@ public final class CullTask implements Runnable {
      * counters rather than a snapshot, so a torn read shows a slightly stale number, never a wrong
      * one.
      */
+    /**
+     * The same three numbers, accumulated rather than last-only.
+     *
+     * <p>Static finals so the registry lookup happens once at class-init rather than per pass; see
+     * {@link net.dutymod.framework.DutyMetrics}.
+     */
+    private static final net.dutymod.framework.DutyMetrics.Timer PASS_TIME =
+            net.dutymod.framework.DutyMetrics.timer("client.culling.pass");
+    private static final net.dutymod.framework.DutyMetrics.Counter TRACED =
+            net.dutymod.framework.DutyMetrics.counter("client.culling.traced");
+    private static final net.dutymod.framework.DutyMetrics.Counter HIDDEN =
+            net.dutymod.framework.DutyMetrics.counter("client.culling.hidden");
+
     public volatile int lastPassTraced = 0;
 
     public volatile int lastPassHidden = 0;
@@ -131,9 +144,19 @@ public final class CullTask implements Runnable {
                 passHidden = 0;
                 cullBlockEntities(cameraNow);
                 cullEntities(cameraNow);
-                lastPassMillis = (System.nanoTime() - start) / 1_000_000.0;
+                long elapsed = System.nanoTime() - start;
+                lastPassMillis = elapsed / 1_000_000.0;
                 lastPassTraced = passTraced;
                 lastPassHidden = passHidden;
+
+                // The fields above stay because the F3 line wants the last pass exactly, and it
+                // has to work whether or not measurement is switched on. What these add is the
+                // shape over time -- how many passes, the worst one, the mean -- which is what
+                // answers "does this earn its thread" and which a single last-value cannot.
+                // No-ops when framework.metrics is off, which is the default.
+                PASS_TIME.record(elapsed);
+                TRACED.add(passTraced);
+                HIDDEN.add(passHidden);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
