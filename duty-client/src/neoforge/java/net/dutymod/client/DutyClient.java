@@ -45,6 +45,13 @@ public class DutyClient {
         // Block entity groups have to be registered before anything asks which ones are baked.
         Registry.init();
 
+        // The HUD cache reads its own config and allocates framebuffers, so it only starts when
+        // the feature is on -- the mixins are already gone in that case, and initialising a cache
+        // nothing renders through would just be allocation.
+        if (net.dutymod.framework.DutyConfig.get(ClientOptions.HUD_CACHE)) {
+            net.dutymod.client.hudcache.platform.neoforge.NeoforgeEntrypoint.init();
+        }
+
         QuietNeoForge.register(modBus);
 
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> {

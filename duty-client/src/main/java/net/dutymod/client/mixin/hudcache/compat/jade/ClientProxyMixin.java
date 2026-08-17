@@ -1,0 +1,19 @@
+package net.dutymod.client.mixin.hudcache.compat.jade;
+
+import net.dutymod.client.hudcache.compat.jade.JadeCompat;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+
+@Pseudo
+@Mixin(targets = "snownee.jade.util.ClientProxy", remap = false)
+public class ClientProxyMixin {
+	// TODO
+	//? >=1.21.10 {
+	@Redirect(method = "getBossBarRect", at = @At(value = "FIELD", target = "Lsnownee/jade/util/ClientProxy;bossbarShown:Z"))
+	private static boolean getBossBarRect() {
+		return JadeCompat.bossBarShown;
+	}
+	//?}
+}

@@ -1,0 +1,146 @@
+package net.dutymod.client.hudcache.compat.sodium;
+
+//? if sodium_legacy {
+/*import com.google.common.collect.ImmutableList;
+import net.dutymod.client.hudcache.Constants;
+import net.dutymod.client.hudcache.Gnetum;
+import net.dutymod.client.hudcache.GnetumConfig;
+import net.dutymod.client.hudcache.util.AnyBooleanValue;
+import net.dutymod.client.hudcache.util.Beautifier;
+import net.caffeinemc.mods.sodium.client.gui.options.OptionGroup;
+import net.caffeinemc.mods.sodium.client.gui.options.OptionImpact;
+import net.caffeinemc.mods.sodium.client.gui.options.OptionImpl;
+import net.caffeinemc.mods.sodium.client.gui.options.OptionPage;
+import net.caffeinemc.mods.sodium.client.gui.options.control.ControlValueFormatter;
+import net.caffeinemc.mods.sodium.client.gui.options.control.CyclingControl;
+import net.caffeinemc.mods.sodium.client.gui.options.control.SliderControl;
+import net.caffeinemc.mods.sodium.client.gui.options.control.TickBoxControl;
+import net.caffeinemc.mods.sodium.client.gui.options.storage.OptionStorage;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class LegacySodiumPage extends OptionPage {
+	public LegacySodiumPage() {
+		super(Component.literal("Gnetum"), groups());
+	}
+
+	private static OptionImpl<?, Boolean> enabledOption;
+
+	public static final OptionStorage<?> STORAGE = new OptionStorage<>() {
+		@Override
+		public Object getData() {
+			return new Object();
+		}
+
+		@Override
+		public void save() {
+			Gnetum.config.save();
+		}
+	};
+
+	private static ImmutableList<OptionGroup> groups() {
+		List<OptionGroup> groups = new ArrayList<>();
+
+		var general = OptionGroup.createBuilder();
+
+		enabledOption = OptionImpl.createBuilder(boolean.class, STORAGE)
+				.setName(Component.translatable("gnetum.config.enabled"))
+				.setTooltip(Component.translatable("gnetum.config.enabled.tooltip"))
+				.setImpact(OptionImpact.HIGH)
+				.setControl(TickBoxControl::new)
+				.setBinding((opts, value) -> {
+					if (Gnetum.config.enabled.get() != value) {
+						Gnetum.config.enabled.next();
+					}
+				}, opts -> Gnetum.config.enabled.get())
+				.build();
+		general.add(enabledOption);
+		general.add(configure(OptionImpl.createBuilder(boolean.class, STORAGE))
+				.setName(Component.translatable("gnetum.config.showFps"))
+				.setTooltip(Component.translatable("gnetum.config.showFps.tooltip"))
+				.setControl(TickBoxControl::new)
+				.setBinding((opts, value) -> {
+					if (Gnetum.config.showHudFps.get() != value) {
+						Gnetum.config.showHudFps.next();
+					}
+				}, opts -> Gnetum.config.showHudFps.get())
+				.build());
+		general.add(configure(OptionImpl.createBuilder(boolean.class, STORAGE))
+				.setName(Component.translatable("gnetum.config.downscale"))
+				.setTooltip(Component.translatable("gnetum.config.downscale.tooltip"))
+				.setImpact(OptionImpact.LOW)
+				.setControl(TickBoxControl::new)
+				.setBinding((opts, value) -> {
+					if (Gnetum.config.downscale.get() != value) {
+						Gnetum.config.downscale.next();
+					}
+				}, opts -> Gnetum.config.downscale.get())
+				.build());
+		general.add(configure(OptionImpl.createBuilder(int.class, STORAGE))
+				.setName(Component.translatable("gnetum.config.numberOfPasses"))
+				.setTooltip(Component.translatable("gnetum.config.numberOfPasses.tooltip"))
+				.setImpact(OptionImpact.MEDIUM)
+				.setControl(option -> new SliderControl(option, 2, 10, 1, ControlValueFormatter.number()))
+				.setBinding((opts, value) -> Gnetum.config.setNumberOfPasses(value), opts -> Gnetum.config.getNumberOfPasses())
+				.build());
+		general.add(configure(OptionImpl.createBuilder(int.class, STORAGE))
+				.setName(Component.translatable("gnetum.config.maxFps"))
+				.setTooltip(Component.translatable("gnetum.config.maxFps.tooltip"))
+				.setImpact(OptionImpact.MEDIUM)
+				.setControl(option -> new SliderControl(option, 5, Constants.UNLIMITED_FPS, 5, i -> i == Constants.UNLIMITED_FPS ? Component.translatable("options.framerateLimit.max") : Component.translatable("options.framerate", i)))
+				.setBinding((opts, value) -> Gnetum.config.setMaxFps(value), opts -> Gnetum.config.getRawMaxFps())
+				.build());
+		general.add(configure(OptionImpl.createBuilder(int.class, STORAGE))
+				.setName(Component.translatable("gnetum.config.screenMaxFps"))
+				.setTooltip(Component.translatable("gnetum.config.screenMaxFps.tooltip"))
+				.setImpact(OptionImpact.MEDIUM)
+				.setControl(option -> new SliderControl(option, 5, Constants.SCREEN_UNLIMITED_FPS, 5, i -> i == Constants.SCREEN_UNLIMITED_FPS ? Component.translatable("options.framerateLimit.max") : Component.translatable("options.framerate", i)))
+				.setBinding((opts, value) -> Gnetum.config.screenMaxFps = value, opts -> Gnetum.config.screenMaxFps)
+				.build());
+
+		groups.add(general.build());
+		groups.add(elements());
+
+		return ImmutableList.copyOf(groups);
+	}
+
+	private static OptionGroup elements() {
+		var group = OptionGroup.createBuilder();
+
+		int i = 0;
+		for (var element : Gnetum.config.map.entrySet()) {
+			var name = Beautifier.beautify(element.getKey());
+			var tooltip = elementTooltip(element.getKey());
+			group.add(configure(OptionImpl.createBuilder(AnyBooleanValue.class, STORAGE))
+					.setName(Component.literal(name))
+					.setTooltip(tooltip)
+					.setBinding((opts, v) -> element.getValue().enabled.value = v, (opts) -> element.getValue().enabled.value)
+					.setControl(opts -> new CyclingControl<>(opts, AnyBooleanValue.class))
+					.setImpact(OptionImpact.VARIES).build());
+		}
+		return group.build();
+	}
+
+	private static Component elementTooltip(String name) {
+		var key = "gnetum.config.element." + name + ".tooltip";
+		boolean hasTooltip = I18n.exists(key);
+		if (hasTooltip) {
+			return Component.literal(I18n.get(key));
+		}
+		else {
+			return Component.literal(Beautifier.beautify(name));
+		}
+	}
+
+	private static <S, T> OptionImpl.Builder<S, T> configure(OptionImpl.Builder<S, T> builder) {
+		//? >=1.21.1 {
+		return builder.setEnabled(enabledOption::getValue);
+		//? } else {
+		/^return builder;
+		^///? }
+	}
+}
+*///?}

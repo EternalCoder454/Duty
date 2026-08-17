@@ -1,0 +1,60 @@
+package net.dutymod.client.hudcache;
+
+import net.dutymod.client.hudcache.util.AnyBooleanValue;
+import net.dutymod.client.hudcache.util.TriStateBoolean;
+
+public class CachedElement {
+	public static final int RECORDED_TIME = 5;
+    public TriStateBoolean enabled;
+	transient int pass = 1;
+	transient final double[] time = new double[RECORDED_TIME];
+	transient final String name;
+	private transient double timeBegin;
+	private transient int timeIndex;
+
+    public CachedElement(String name) {
+        this(name, new TriStateBoolean(AnyBooleanValue.AUTO));
+    }
+
+    public CachedElement(String name, TriStateBoolean enabled) {
+		this.name = name;
+        this.enabled = enabled;
+    }
+
+	public void next() {
+		if (++timeIndex >= RECORDED_TIME) {
+			timeIndex = 0;
+		}
+	}
+
+	public void begin() {
+		timeBegin = Gnetum.time().get();
+		Gnetum.currentElement = this;
+	}
+
+	public void end() {
+		Gnetum.currentElement = null;
+		var timeEnd = Gnetum.time().get();
+		time[timeIndex] = timeEnd - timeBegin;
+		next();
+	}
+
+	public boolean shouldRender() {
+		return (enabled.get() && Gnetum.pass == pass) ||
+				(!enabled.get());
+	}
+
+	//? <=1.21.4{
+	/*public boolean shouldRenderAsCached() {
+		return enabled.get() && Gnetum.pass == pass;
+	}
+
+	public boolean shouldRenderAsUncached() {
+		return !enabled.get();
+	}
+	*///? }
+
+	public boolean isUncached() {
+		return !enabled.get();
+	}
+}

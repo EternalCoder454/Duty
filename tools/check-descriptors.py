@@ -55,6 +55,22 @@ _members_cache: dict[str, set[str] | None] = {}
 
 
 
+def strip_block_comments(text: str) -> str:
+    """Remove /* ... */ so commented-out code is not read as real annotations.
+
+    Duty absorbed sources that were written with stonecutter, whose way of selecting a branch for
+    one Minecraft version is to comment out the others in place. This tree currently holds 23 live
+    mixin method targets and 31 sitting inside those comments -- and reading the commented ones
+    reported seven methods as missing from 26.1.2 when every one of them belonged to a branch for
+    a different version.
+
+    That failure mode is worse than no check: a checker that reports things which are not wrong
+    teaches everyone to stop reading it. Line comments are left alone, since an annotation cannot
+    span one.
+    """
+    return re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+
+
 def source_files(module_dir):
     """Every Java file in a module, across all source sets.
 
@@ -109,7 +125,7 @@ def main() -> int:
 
     for module in modules:
         for src in sorted(source_files(ROOT / module)):
-            text = src.read_text(encoding="utf-8", errors="replace")
+            text = strip_block_comments(src.read_text(encoding="utf-8", errors="replace"))
             refs: set[str] = set()
             for literal in ANNOTATION_STRING.findall(text):
                 refs.update(CLASS_REF.findall(literal))

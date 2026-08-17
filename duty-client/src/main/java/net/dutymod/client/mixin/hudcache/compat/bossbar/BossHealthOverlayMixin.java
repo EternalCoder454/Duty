@@ -1,0 +1,55 @@
+package net.dutymod.client.mixin.hudcache.compat.bossbar;
+
+import net.dutymod.client.hudcache.compat.jade.JadeCompat;
+import net.dutymod.client.hudcache.compat.xaerominimap.XaeroMinimapCompat;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.BossHealthOverlay;
+import net.minecraft.world.BossEvent;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(BossHealthOverlay.class)
+public class BossHealthOverlayMixin {
+	//? >26 {
+	@Inject(method = "extractRenderState", at = @At("HEAD"))
+	//? } else {
+	/*@Inject(method = "render", at = @At("HEAD"))
+	*///? }
+	private void gnetum$render$0(GuiGraphicsExtractor guiGraphics, CallbackInfo ci) {
+		//? if jade {
+		JadeCompat.bossBarShown = false;
+		//? }
+		//? if xaerominimap {
+		/*XaeroMinimapCompat.bossBarShown = false;
+		*///? }
+	}
+
+	//? >26 {
+	@Inject(method = "extractRenderState", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V", ordinal = 0))
+	//? } else >=1.21.1 {
+	/*@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V", ordinal = 0))
+	*///? } else {
+	/*@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/BossHealthOverlay;drawBar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/world/BossEvent;)V", ordinal = 0))
+	*///? }
+	private void gnetum$render$1(GuiGraphicsExtractor guiGraphics, CallbackInfo ci) {
+		//? if jade {
+		JadeCompat.bossBarShown = true;
+		//? }
+		//? if xaerominimap {
+		/*XaeroMinimapCompat.bossBarShown = true;
+		*///? }
+	}
+
+	//? >26 {
+	@Inject(method = "extractBar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/world/BossEvent;)V", at = @At("HEAD"))
+	//? } else {
+	/*@Inject(method = "drawBar(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILnet/minecraft/world/BossEvent;)V", at = @At("HEAD"))
+	*///? }
+	private void gnetum$drawBar(GuiGraphicsExtractor guiGraphics, int i, int j, BossEvent bossEvent, CallbackInfo ci) {
+		//? if xaerominimap {
+		/*XaeroMinimapCompat.bossBarHeight = j + 19;
+		*///? }
+	}
+}

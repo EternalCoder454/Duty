@@ -23,6 +23,12 @@ ticks too; and optimizes particle rendering.
 [[mixins]]
 config = "duty_client.mixins.json"
 
+# HUD framebuffer cache (Gnetum). Its own config because the plugin refuses to apply the mixins at
+# all when the feature is off -- these redirect HUD drawing through a framebuffer rather than tune
+# it, and a half-installed indirection is a black screen rather than a slow one.
+[[mixins]]
+config = "duty_client_hudcache.mixins.json"
+
 [[dependencies.duty_client]]
 modId = "neoforge"
 type = "required"

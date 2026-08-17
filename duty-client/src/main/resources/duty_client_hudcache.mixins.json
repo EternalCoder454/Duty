@@ -1,0 +1,40 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.dutymod.client.mixin.hudcache",
+  "compatibilityLevel": "JAVA_25",
+  "plugin": "net.dutymod.client.hudcache.HudCacheMixinPlugin",
+  "client": [
+    "DebugEntryFpsMixin",
+    "DeltaTrackerMixin",
+    "GameRendererAccessor",
+    "GameRendererMixin",
+    "GlStateManagerMixin",
+    "GpuBufferPoolMixin",
+    "GuiAccessor",
+    "GuiMixin",
+    "GuiRenderStateMixin",
+    "GuiRendererAccessor",
+    "Gui_Graphics_Accessor",
+    "HudMixin",
+    "LayeredDrawAccessor",
+    "MappableRingBufferMixin",
+    "MinecraftAccessor",
+    "MinecraftMixin",
+    "RenderPipelineAccessor",
+    "compat.bossbar.BossHealthOverlayMixin",
+    "compat.effects.GuiMixin",
+    "compat.jade.ClientProxyMixin",
+    "compat.journeymap.HudOverlayHandlerMixin",
+    "compat.sodium.SodiumOptionsGUIMixin",
+    "compat.xaerominimap.ClientEventsMixin",
+    "compat.xaerominimap.XaeroMinimapCoreMixin",
+    "neoforge.GuiLayerManagerAccessor",
+    "neoforge.GuiLayerManagerMixin",
+    "neoforge.HudAccessor"
+  ],
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

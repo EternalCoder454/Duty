@@ -13,6 +13,16 @@ public final class ClientOptions {
     // -- Occlusion culling (from EntityCulling) ------------------------------------------------
 
     /** Master switch for the async occlusion culling thread. */
+    /**
+     * Cache the HUD into a framebuffer and refresh it across several frames.
+     *
+     * <p>Off by default, and deliberately. Duty's rule is that anything changing how the game
+     * looks starts off, and this can: an element redrawn every third frame is an element that can
+     * be a third of a frame stale. That is invisible on a hotbar and visible on anything that
+     * animates -- which includes Duty's own F3 lines.
+     */
+    public static final String HUD_CACHE = "client.hud_cache";
+
     public static final String CULLING_ENABLED = "client.culling_enabled";
 
     /** Skip the entity half of culling, keeping block entity culling. */
@@ -93,6 +103,18 @@ public final class ClientOptions {
     public static final String IO_THREAD_PRIORITY = "client.io_thread_priority";
 
     static {
+        DutyConfig.register(HUD_CACHE, false,
+                "Cache the HUD into a framebuffer and spread its refresh over several frames,\n"
+                        + "instead of drawing every element every frame. Cuts HUD draw calls substantially\n"
+                        + "on a busy screen.\n"
+                        + "\n"
+                        + "Off by default because it can be seen: an element refreshed every third frame\n"
+                        + "can be a third of a frame out of date. Harmless on a hotbar, noticeable on\n"
+                        + "anything that animates -- including Duty's own F3 lines, so turn it off again\n"
+                        + "before trusting those to profile something.\n"
+                        + "\n"
+                        + "Everything else about it lives in config/gnetum.json, which it writes itself\n"
+                        + "on first run.");
         DutyConfig.register(CULLING_ENABLED, true,
                 "Hide entities and block entities that are behind solid blocks, decided on a\n"
                         + "background thread by tracing from the camera. This is the single largest\n"
