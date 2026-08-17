@@ -84,6 +84,7 @@ A green build proves the code compiles. It says nothing about whether a mixin ap
 
 ```bash
 python tools/check-shadows.py         # @Shadow members exist on the target, including inherited
+python tools/check-mutable-shadows.py # @Shadow fields that get written are not final without @Mutable
 python tools/check-descriptors.py     # classes and method targets named in annotations exist
 python tools/check-mixin-configs.py   # every config entry resolves to a shipped class
 python tools/check-orphan-mixins.py   # every shipped mixin is listed in some config
@@ -101,7 +102,11 @@ Every one exists because of a specific failure a clean build did not catch:
 - an annotation processor that silently stopped listing 14 mixins after a source-set move —
   classes still shipped, build still green, mixins never applied,
 - checkers that skipped a whole module because their module list was hardcoded,
-- access transformer entries naming classes that no longer exist, which nothing read.
+- access transformer entries naming classes that no longer exist, which nothing read,
+- a ported Fabric mixin assigning a shadowed **final** field, which the JVM only permits
+  from the declaring class's own `<init>` — green build, clean apply, `IllegalAccessError`
+  partway through world creation. Fabric mods rarely say `@Mutable` because loom's access
+  widener drops `final` game-wide, so ported mixins are where this bites.
 
 The checkers compare against **one** Minecraft jar, so each branch needs its own run.
 `tools/_minecraft_jar.py` refuses to run against another version's jar rather than producing
