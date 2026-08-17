@@ -21,9 +21,10 @@ include("duty-annotations")
 // Generates duty-fixerupper's mixin configs at compile time. Not shipped.
 include("fixerupper-mixin-ap")
 
-// The three shipped jars.
+// The shipped jars.
 include("duty-memory")
 include("duty-client")
 include("duty-fixerupper")
 include("duty-server")
+include("duty-essentials")
 include("duty-all")

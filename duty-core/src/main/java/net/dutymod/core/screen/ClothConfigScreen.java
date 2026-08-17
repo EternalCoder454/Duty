@@ -47,6 +47,7 @@ public final class ClothConfigScreen {
             "memory", "Duty: Memory",
             "client", "Duty: Client",
             "server", "Duty: Server",
+            "essentials", "Duty: Essentials",
             "fixerupper", "Duty: FixerUpper");
 
     /**
@@ -107,7 +108,30 @@ public final class ClothConfigScreen {
             Map.entry("packet", "Packet codec"),
             Map.entry("structure_search", "World generation"),
             Map.entry("alternate_current", "Redstone"),
-            Map.entry("async_world_save", "Saving"));
+            Map.entry("async_world_save", "Saving"),
+
+            // Essentials. Rules match the key with its module prefix already stripped, so these
+            // are written without one. The per-command switches come first on purpose: the alias
+            // key "command.home_aliases" contains "home_", and would otherwise be filed under
+            // Homes and warps instead of with the other command switches.
+            Map.entry("command.", "Commands enabled"),
+            Map.entry("homes_limit", "Homes and warps"),
+            Map.entry("home_", "Homes and warps"),
+            Map.entry("warp_", "Homes and warps"),
+            Map.entry("spawn_", "Homes and warps"),
+            Map.entry("back_", "Teleporting"),
+            Map.entry("allow_back_on_death", "Teleporting"),
+            Map.entry("rtp_", "Teleporting"),
+            Map.entry("tpa_", "Teleporting"),
+            Map.entry("sunny_time", "Time and weather"),
+            Map.entry("rainy_time", "Time and weather"),
+            Map.entry("thunder_time", "Time and weather"),
+            Map.entry("max_nick", "Player commands"),
+            Map.entry("allow_colors_in_nick", "Player commands"),
+            Map.entry("god_mode", "Player commands"),
+            Map.entry("fly_allow", "Player commands"),
+            Map.entry("prefix", "Appearance"),
+            Map.entry("primary_color", "Appearance"));
 
     /** {@return the sub-category {@code name} belongs to} */
     private static String subCategoryOf(String name) {

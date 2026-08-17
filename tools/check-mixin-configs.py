@@ -26,7 +26,7 @@ VERSION = "0.1.0"
 
 
 def main() -> int:
-    modules = sys.argv[1:] or ["duty-memory", "duty-client", "duty-fixerupper", "duty-server"]
+    modules = sys.argv[1:] or ["duty-memory", "duty-client", "duty-fixerupper", "duty-server", "duty-essentials"]
     problems = checked = 0
 
     for module in modules:

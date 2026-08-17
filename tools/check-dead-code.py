@@ -16,7 +16,7 @@ import re
 import sys
 import zipfile
 
-for module in sys.argv[1:] or ["duty-memory", "duty-client", "duty-fixerupper", "duty-server"]:
+for module in sys.argv[1:] or ["duty-memory", "duty-client", "duty-fixerupper", "duty-server", "duty-essentials"]:
     src = pathlib.Path(module, "src/main/java")
     if not src.exists():
         continue

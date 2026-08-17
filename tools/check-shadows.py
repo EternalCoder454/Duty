@@ -108,7 +108,7 @@ def main() -> int:
         return 1
     print(f"checking against {jar.name}\n")
 
-    modules = sys.argv[1:] or ["duty-memory", "duty-client", "duty-fixerupper", "duty-server"]
+    modules = sys.argv[1:] or ["duty-memory", "duty-client", "duty-fixerupper", "duty-server", "duty-essentials"]
     problems = skipped = checked = 0
 
     for module in modules:

@@ -39,7 +39,7 @@ INTERESTING = ("lithium", "sodium", "c2me", "scalablelux", "ferritecore", "moder
 def duty_targets() -> dict[str, set[str]]:
     """Internal names of Minecraft classes each Duty module mixes into."""
     found: dict[str, set[str]] = {}
-    for module in ("duty-memory", "duty-client", "duty-fixerupper", "duty-server"):
+    for module in ("duty-memory", "duty-client", "duty-fixerupper", "duty-server", "duty-essentials"):
         for src in (ROOT / module / "src/main/java").rglob("*.java"):
             text = src.read_text(encoding="utf-8", errors="replace")
             m = MIXIN_TARGET.search(text)

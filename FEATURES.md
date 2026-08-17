@@ -837,3 +837,50 @@ what the cache replaces, not that caching sounds fast.)
 Thirteen of the 39 mixins are in `compat/`, patching AdAstra, CableFacades, Lightspeed, ModernFix,
 ProbeJS, WaterMedia, FramedBlocks, Titanium, TravelersBackpack, YACL and Embeddium. **None of those
 eleven mods is installed.** They are inert weight that has to be maintained across every update.
+
+## Necessities — taken, as a fifth module
+
+Reviewed and merged on 2026-08-16 (`DAQEM/Necessities`, branch `26.1.2`, Apache-2.0). The first of
+these where the pack had a real gap: no essentials mod of any kind is installed, so there were no
+homes, no warps, no `/back`, and no moderation commands.
+
+### Why it is its own module
+
+`duty-essentials` is the only Duty module that is not about performance. Folding it into
+`duty-server` would have meant anyone installing that module for its network, redstone and save
+work also getting thirty-five gameplay commands and a homes file. `duty-all` deliberately does not
+nest it either: that jar's meaning is "install Duty and the game gets faster", and quietly adding
+commands to it would change what an existing install does on the next update.
+
+### What was dropped
+
+* **Kits**, as asked. That also removed `KitManager`, the `Kit` model, the kit-cooldown map on every
+  player, and its entry in the persisted player codec.
+* **All three of upstream's library dependencies.** `uilib` was declared in the build and never
+  imported once. `knot` came to five methods -- `hasPermission`, `translatable`, `getId`, `info`,
+  `error` -- which are now on `DutyEssentials.Api`. `yamlconfig` is replaced by `DutyConfig`, so
+  these options appear in Duty's settings screen with everything else rather than in a YAML file of
+  their own.
+* **The networking package.** Upstream ships a ping payload purely so the server can ask "does this
+  client have the mod?", and uses the answer to decide whether to send a rich component or a
+  flattened one. Nothing else called it. Duty: Essentials has no client half, so the answer is
+  always no -- messages are now always flattened server-side, which is what makes them legible on a
+  vanilla client instead of showing raw translation keys.
+* **Two dead classes inherited from upstream**, `InvseeContainer` and `IModel`, neither referenced
+  there or here. `/invsee` opens a vanilla `ChestMenu` directly.
+
+### Permissions
+
+Upstream checks a permission node first and falls back to a level. No permission mod is installed,
+so there is nothing to ask: the node is kept in the signature and the decision falls to the vanilla
+`PermissionSet`. Upstream's two-argument overload has no level at all, and every call site using it
+is administrative (`/broadcast`, `/delwarp`, `/nick` on others), so it maps to game-master rather
+than to "anyone".
+
+### Verification
+
+35 commands registered, which is upstream's 36 less kits. Every command's registered name was
+cross-checked against its config switch -- 35 of each, no command without a switch and no switch
+without a command, after `time` and `weather` turned out to be abstract base classes rather than
+commands. All 96 config keys land in a named settings sub-category with none falling to "Other",
+and no other module's key changed category as a result.

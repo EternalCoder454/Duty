@@ -1,0 +1,35 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "Apache-2.0"
+
+[[mods]]
+modId = "duty_essentials"
+version = "${mod_version}"
+displayName = "Duty: Essentials"
+logoFile = "icon.png"
+authors = "Duty"
+credits = "Derived from Necessities by DAQEM (Apache-2.0)."
+description = '''
+Duty does what it needs to do, perform its duty.
+
+Essentials: homes, warps, /back, random teleport, teleport requests, and the moderation
+and world-control commands a server needs. The one Duty module that is not about
+performance, kept separate so the four that are stay that way.
+'''
+
+[[mixins]]
+config = "duty_essentials.mixins.json"
+
+[[dependencies.duty_essentials]]
+modId = "neoforge"
+type = "required"
+versionRange = "[26.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.duty_essentials]]
+modId = "minecraft"
+type = "required"
+versionRange = "[26.1.2,26.2)"
+ordering = "NONE"
+side = "BOTH"

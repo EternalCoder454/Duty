@@ -31,7 +31,7 @@ PACK="${DUTY_PACK:-/c/Users/Zachary Smith/AppData/Roaming/PrismLauncher/instance
 # jars, or the single duty-all jar that nests them. They carry the same mod ids, so having
 # both present is a duplicate-mod error rather than a double dose of anything. The pack uses
 # the separate jars because that is what it already has installed.
-MODULES=(duty-memory duty-client duty-fixerupper duty-server)
+MODULES=(duty-memory duty-client duty-fixerupper duty-server duty-essentials)
 VERSION="0.1.0"
 
 [ -d "$PACK/mods" ] || { echo "No mods folder at: $PACK/mods"; exit 1; }

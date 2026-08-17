@@ -86,7 +86,7 @@ def main() -> int:
     with zipfile.ZipFile(jar) as zf:
         present = {n[:-6] for n in zf.namelist() if n.endswith(".class")}
 
-    modules = sys.argv[1:] or ["duty-memory", "duty-client", "duty-fixerupper", "duty-server"]
+    modules = sys.argv[1:] or ["duty-memory", "duty-client", "duty-fixerupper", "duty-server", "duty-essentials"]
     problems = checked = 0
     seen_missing: dict[str, list[str]] = {}
     bad_methods: list[tuple[str, str, str]] = []
