@@ -91,8 +91,8 @@ public final class BlockStarLightEngine extends StarLightEngine {
 
         final int currentLevel = this.getLightLevel(worldX, worldY, worldZ);
         final BlockState blockState = this.getBlockState(worldX, worldY, worldZ);
-        this.checkBlockPos.set(worldX, worldY, worldZ);
-        final int emittedLevel = blockState.getLightEmission(lightAccess.getLevel(), this.checkBlockPos) & emittedMask;
+        final int emittedLevel = getLightEmission(blockState, lightAccess.getLevel(), this.checkBlockPos,
+                worldX, worldY, worldZ) & emittedMask;
 
         this.setLightLevel(worldX, worldY, worldZ, emittedLevel);
         // this accounts for change in emitted light that would cause an increase
@@ -120,14 +120,13 @@ public final class BlockStarLightEngine extends StarLightEngine {
     }
 
     protected final BlockPos.MutableBlockPos recalcCenterPos = new BlockPos.MutableBlockPos();
-    protected final BlockPos.MutableBlockPos recalcNeighbourPos = new BlockPos.MutableBlockPos();
 
     @Override
     protected int calculateLightValue(final LightChunkGetter lightAccess, final int worldX, final int worldY, final int worldZ,
                                       final int expect) {
         final BlockState centerState = this.getBlockState(worldX, worldY, worldZ);
-        this.recalcCenterPos.set(worldX, worldY, worldZ);
-        int level = centerState.getLightEmission(lightAccess.getLevel(), this.recalcCenterPos) & 0xF;
+        int level = getLightEmission(centerState, lightAccess.getLevel(), this.recalcCenterPos,
+                worldX, worldY, worldZ) & 0xF;
 
         if (level >= (15 - 1) || level > expect) {
             return level;
@@ -164,7 +163,6 @@ public final class BlockStarLightEngine extends StarLightEngine {
                 // here the block can be conditionally opaque (i.e light cannot propagate from it), so we need to test that
                 // we don't read the blockstate because most of the time this is false, so using the faster
                 // known transparency lookup results in a net win
-                this.recalcNeighbourPos.set(offX, offY, offZ);
                 final VoxelShape neighbourFace = neighbourState.getFaceOcclusionShape(direction.opposite.nms);
                 final VoxelShape thisFace = conditionallyOpaqueState == null ? Shapes.empty() : conditionallyOpaqueState.getFaceOcclusionShape(direction.nms);
                 if (Shapes.faceShapeOccludes(thisFace, neighbourFace)) {
@@ -216,7 +214,6 @@ public final class BlockStarLightEngine extends StarLightEngine {
 
             for (int index = 0; index < (16 * 16 * 16); ++index) {
                 final BlockState state = states.get(index);
-                this.mutablePos4.set(offX | (index & 15), offY | (index >>> 8), offZ | ((index >>> 4) & 15));
                 // mutablePos4, not mutablePos1. Upstream's NeoForge port sets pos4 to this block
                 // and then asks pos1, which nothing in this method ever writes -- it still holds
                 // whatever the last caller left in it. NeoForge lets a block's light emission
@@ -224,7 +221,8 @@ public final class BlockStarLightEngine extends StarLightEngine {
                 // sources when a chunk is first lit, so asking at the wrong position means a
                 // dynamic-emission block is missed (dark patch) or a non-emitting one is treated
                 // as a source. pos4 was added by that same patch for this line.
-                if (state.getLightEmission(lightAccess.getLevel(), this.mutablePos4) <= 0) {
+                if (getLightEmission(state, lightAccess.getLevel(), this.mutablePos4,
+                        offX | (index & 15), offY | (index >>> 8), offZ | ((index >>> 4) & 15)) <= 0) {
                     continue;
                 }
 
@@ -244,7 +242,7 @@ public final class BlockStarLightEngine extends StarLightEngine {
         for (int i = 0, len = positions.size(); i < len; ++i) {
             final BlockPos pos = positions.get(i);
             final BlockState blockState = this.getBlockState(pos.getX(), pos.getY(), pos.getZ());
-            final int emittedLight = blockState.getLightEmission(lightAccess.getLevel(), pos) & emittedMask;
+            final int emittedLight = getLightEmission(blockState, lightAccess.getLevel(), pos) & emittedMask;
 
             if (emittedLight <= this.getLightLevel(pos.getX(), pos.getY(), pos.getZ())) {
                 // some other source is brighter

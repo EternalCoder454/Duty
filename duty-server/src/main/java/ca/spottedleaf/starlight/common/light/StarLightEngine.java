@@ -110,7 +110,6 @@ public abstract class StarLightEngine {
     protected final boolean[][] emptinessMapCache = new boolean[5 * 5][];
 
     protected final BlockPos.MutableBlockPos mutablePos1 = new BlockPos.MutableBlockPos();
-    protected final BlockPos.MutableBlockPos mutablePos2 = new BlockPos.MutableBlockPos();
     protected final BlockPos.MutableBlockPos mutablePos3 = new BlockPos.MutableBlockPos();
     protected final BlockPos.MutableBlockPos mutablePos4 = new BlockPos.MutableBlockPos();
 
@@ -456,6 +455,54 @@ public abstract class StarLightEngine {
     protected abstract void propagateBlockChanges(final LightChunkGetter lightAccess, final ChunkAccess atChunk, final Set<BlockPos> positions);
 
     protected final BlockPos.MutableBlockPos checkBlockPos = new BlockPos.MutableBlockPos();
+
+    /**
+     * {@return the light {@code state} emits at this position}
+     *
+     * <h2>Why this is not just {@code state.getLightEmission(level, pos)}</h2>
+     *
+     * <p>NeoForge lets a block's light emission depend on where it is, so the port replaced every
+     * emission lookup in this engine with the position-aware form. That form is not free. It is a
+     * {@code MutableBlockPos.set} -- three field writes -- followed by
+     * {@code IBlockStateExtension.getLightEmission}, which is {@code self()}, {@code getBlock()},
+     * {@code self()} again and finally {@code Block.getLightEmission(state, level, pos)}, whose
+     * default implementation returns the plain {@code state.getLightEmission()}. Four dispatches
+     * and a position write to reach a value that, for virtually every block in the game, is a
+     * single cached field.
+     *
+     * <p>This is the innermost loop of the light engine -- it runs per block, per propagation step,
+     * per chunk -- so that difference is worth having.
+     *
+     * <p>The port already worked out, once per {@code BlockState} at {@code initCache}, whether a
+     * block genuinely overrides position-aware emission; see {@code BlockStateBaseMixin}. It only
+     * used the answer to skip whole sections in {@code getSources}. Consulting it here as well
+     * costs one {@code getfield} on the state and skips everything above for blocks that cannot
+     * vary -- which is all vanilla blocks and nearly all modded ones. Blocks that do vary take
+     * exactly the path they took before, so behaviour is unchanged.
+     *
+     * <p>The scratch position is written only on that rare branch, which is why callers hand one in
+     * rather than setting it up front.
+     */
+    protected static int getLightEmission(final BlockState state, final BlockGetter level,
+                                          final BlockPos.MutableBlockPos scratch,
+                                          final int worldX, final int worldY, final int worldZ) {
+        if (!((ExtendedAbstractBlockState)state).scalablelux$actuallyDynamicLightEmission()) {
+            return state.getLightEmission();
+        }
+        scratch.set(worldX, worldY, worldZ);
+        return state.getLightEmission(level, scratch);
+    }
+
+    /**
+     * As above, for callers that already hold a real position and so pay no write to reach it.
+     * The four dispatches are still worth skipping.
+     */
+    protected static int getLightEmission(final BlockState state, final BlockGetter level, final BlockPos pos) {
+        if (!((ExtendedAbstractBlockState)state).scalablelux$actuallyDynamicLightEmission()) {
+            return state.getLightEmission();
+        }
+        return state.getLightEmission(level, pos);
+    }
 
     protected abstract void checkBlock(final LightChunkGetter lightAccess, final int worldX, final int worldY, final int worldZ);
 
@@ -1190,7 +1237,6 @@ public abstract class StarLightEngine {
 //                        }
 //                        continue;
 //                    } else {
-                        this.mutablePos1.set(offX, offY, offZ);
                         long flags = 0;
                         if (((ExtendedAbstractBlockState)blockState).scalablelux$isConditionallyFullOpaque()) {
                             final VoxelShape cullingFace = blockState.getFaceOcclusionShape(propagate.getOpposite().nms);
@@ -1226,7 +1272,6 @@ public abstract class StarLightEngine {
             } else {
                 // we actually need to worry about our state here
                 final BlockState fromBlock = this.getBlockState(posX, posY, posZ);
-                this.mutablePos2.set(posX, posY, posZ);
                 for (final AxisDirection propagate : checkDirections) {
                     final int offX = posX + propagate.x;
                     final int offY = posY + propagate.y;
@@ -1272,7 +1317,6 @@ public abstract class StarLightEngine {
 //                        }
 //                        continue;
 //                    } else {
-                        this.mutablePos1.set(offX, offY, offZ);
                         long flags = 0;
                         if (((ExtendedAbstractBlockState)blockState).scalablelux$isConditionallyFullOpaque()) {
                             final VoxelShape cullingFace = blockState.getFaceOcclusionShape(propagate.getOpposite().nms);
@@ -1399,7 +1443,6 @@ public abstract class StarLightEngine {
 //                        }
 //                        continue;
 //                    } else {
-                        this.mutablePos1.set(offX, offY, offZ);
                         long flags = 0;
                         if (((ExtendedAbstractBlockState)blockState).scalablelux$isConditionallyFullOpaque()) {
                             final VoxelShape cullingFace = blockState.getFaceOcclusionShape(propagate.getOpposite().nms);
@@ -1424,7 +1467,7 @@ public abstract class StarLightEngine {
                                             | (FLAG_RECHECK_LEVEL | flags);
                             continue;
                         }
-                        final int emittedLight = blockState.getLightEmission(world, this.mutablePos1) & emittedMask;
+                        final int emittedLight = getLightEmission(blockState, world, this.mutablePos1, offX, offY, offZ) & emittedMask;
                         if (emittedLight != 0) {
                             // re-propagate source
                             // note: do not set recheck level, or else the propagation will fail
@@ -1457,7 +1500,6 @@ public abstract class StarLightEngine {
             } else {
                 // we actually need to worry about our state here
                 final BlockState fromBlock = this.getBlockState(posX, posY, posZ);
-                this.mutablePos2.set(posX, posY, posZ);
                 for (final AxisDirection propagate : checkDirections) {
                     final int offX = posX + propagate.x;
                     final int offY = posY + propagate.y;
@@ -1528,7 +1570,6 @@ public abstract class StarLightEngine {
 //                        }
 //                        continue;
 //                    } else {
-                        this.mutablePos1.set(offX, offY, offZ);
                         long flags = 0;
                         if (((ExtendedAbstractBlockState)blockState).scalablelux$isConditionallyFullOpaque()) {
                             final VoxelShape cullingFace = blockState.getFaceOcclusionShape(propagate.getOpposite().nms);
@@ -1553,7 +1594,7 @@ public abstract class StarLightEngine {
                                             | (FLAG_RECHECK_LEVEL | flags);
                             continue;
                         }
-                        final int emittedLight = blockState.getLightEmission(world, this.mutablePos1) & emittedMask;
+                        final int emittedLight = getLightEmission(blockState, world, this.mutablePos1, offX, offY, offZ) & emittedMask;
                         if (emittedLight != 0) {
                             // re-propagate source
                             // note: do not set recheck level, or else the propagation will fail
