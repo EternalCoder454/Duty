@@ -67,6 +67,48 @@ public final class CullTask implements Runnable {
     private static final net.dutymod.framework.DutyMetrics.Counter HIDDEN =
             net.dutymod.framework.DutyMetrics.counter("client.culling.hidden");
 
+    /**
+     * How many candidates a pass was handed, before any filter.
+     *
+     * <p>Against {@code traced} this says how much of the working set the cheap filters throw away,
+     * which is what distinguishes "a pass was slow because it had a lot to do" from "a pass was
+     * slow for some other reason". A measured 38ms outlier against a 0.8ms mean is what prompted
+     * this; a cumulative average alone could not tell those apart.
+     */
+    private static final net.dutymod.framework.DutyMetrics.Counter CANDIDATES =
+            net.dutymod.framework.DutyMetrics.counter("client.culling.candidates");
+
+    /** A pass slower than this is worth a line in the log, with the context to explain it. */
+    private static final long SLOW_PASS_NANOS = 20_000_000L;
+
+    /** Rate limit, so a genuinely bad situation reports once a minute rather than every pass. */
+    private static final long SLOW_PASS_REPORT_INTERVAL_NANOS = 60_000_000_000L;
+
+    private long lastSlowReportNanos = Long.MIN_VALUE;
+
+    /**
+     * Logs a slow pass, at most once a minute, with what it was given to work with.
+     *
+     * <p>Unconditional rather than gated on metrics: a pass forty times the mean is worth knowing
+     * about whether or not somebody thought to switch measuring on first, and the check is a
+     * comparison against a constant on a path that has just spent milliseconds.
+     */
+    private void reportIfSlow(long elapsedNanos, int candidates) {
+        if (elapsedNanos < SLOW_PASS_NANOS) {
+            return;
+        }
+        long now = System.nanoTime();
+        if (now - lastSlowReportNanos < SLOW_PASS_REPORT_INTERVAL_NANOS) {
+            return;
+        }
+        lastSlowReportNanos = now;
+        DutyLog.warn(String.format(java.util.Locale.ROOT,
+                "Culling pass took %.1fms (%d candidates, %d traced, %d hidden). This runs on its "
+                        + "own thread, so it does not drop a frame, but visibility data was that "
+                        + "stale for a moment.",
+                elapsedNanos / 1.0e6, candidates, passTraced, passHidden));
+    }
+
     public volatile int lastPassTraced = 0;
 
     public volatile int lastPassHidden = 0;
@@ -142,9 +184,14 @@ public final class CullTask implements Runnable {
                 culling.resetCache();
                 passTraced = 0;
                 passHidden = 0;
+                // Sampled before the pass, because both collections are swapped wholesale from the
+                // render thread and could be replaced while this pass walks them.
+                int candidates = blockEntities.size() + entitiesForRendering.size();
                 cullBlockEntities(cameraNow);
                 cullEntities(cameraNow);
                 long elapsed = System.nanoTime() - start;
+                CANDIDATES.add(candidates);
+                reportIfSlow(elapsed, candidates);
                 lastPassMillis = elapsed / 1_000_000.0;
                 lastPassTraced = passTraced;
                 lastPassHidden = passHidden;
@@ -186,13 +233,17 @@ public final class CullTask implements Runnable {
             if (entityWhitelist.contains(entity.getType()) || cullable.duty$isForcedVisible()) {
                 continue;
             }
-            // A glowing entity is deliberately meant to be visible through walls.
-            if (client.shouldEntityAppearGlowing(entity)) {
+            // Distance before the glow test, for the same reason as in cullBlockEntities: both
+            // arms end in setCulled(false) and a continue, so which runs first cannot change the
+            // outcome -- but shouldEntityAppearGlowing walks team and spectator state, and there is
+            // no reason to ask it about an entity that is beyond the tracing distance anyway.
+            if (!entity.position().closerThan(cameraPos, tracingDistance)) {
+                // Further away than we trace. Leave it to the vanilla view distance.
                 cullable.duty$setCulled(false);
                 continue;
             }
-            if (!entity.position().closerThan(cameraPos, tracingDistance)) {
-                // Further away than we trace. Leave it to the vanilla view distance.
+            // A glowing entity is deliberately meant to be visible through walls.
+            if (client.shouldEntityAppearGlowing(entity)) {
                 cullable.duty$setCulled(false);
                 continue;
             }
@@ -231,20 +282,30 @@ public final class CullTask implements Runnable {
             if (entry == null) {
                 break;
             }
-            BlockEntity blockEntity = entry.getValue();
-            if (blockEntityWhitelist.contains(blockEntity.getType())) {
-                continue;
-            }
-            if (client.getBlockEntityRenderDispatcher().getRenderer(blockEntity) == null) {
-                continue; // Nothing draws it, so there is nothing to skip.
-            }
-            if (!(blockEntity instanceof Cullable cullable) || cullable.duty$isForcedVisible()) {
-                continue;
-            }
+            // Distance first, and the order matters more than it looks.
+            //
+            // This map is every block entity in a 17x17 chunk area (BLOCK_ENTITY_CHUNK_RADIUS = 8),
+            // which in a storage-heavy base is thousands of entries. The 64-block cutoff below is
+            // four chunks, so the large majority of that map is rejected right here -- and every
+            // check that used to run before this one was paid for entries that were about to be
+            // thrown away. The dispatcher lookup was the expensive one.
+            //
+            // All four filters here are pure `continue` with no side effects, so reordering them
+            // cannot change what ends up culled; it only changes what gets asked.
             BlockPos pos = entry.getKey();
             // 64 blocks is the fixed vanilla block entity render distance.
             if (!closerThan(pos, cameraPos, 64)) {
                 continue;
+            }
+            BlockEntity blockEntity = entry.getValue();
+            if (blockEntityWhitelist.contains(blockEntity.getType())) {
+                continue;
+            }
+            if (!(blockEntity instanceof Cullable cullable) || cullable.duty$isForcedVisible()) {
+                continue;
+            }
+            if (client.getBlockEntityRenderDispatcher().getRenderer(blockEntity) == null) {
+                continue; // Nothing draws it, so there is nothing to skip.
             }
             AABB box = EntityCulling.boundingBoxFor(blockEntity, pos);
             if (box.getXsize() > hitboxLimit || box.getYsize() > hitboxLimit || box.getZsize() > hitboxLimit) {
