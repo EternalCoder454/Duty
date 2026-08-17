@@ -189,138 +189,14 @@ public class FixerUpperMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public void postApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {
-        if(mixinClassName.equals("net.dutymod.fixerupper.common.mixin.perf.reduce_blockstate_cache_rebuilds.BlockStateBaseMixin")) {
-            try {
-                applyBlockStateCacheScan(targetClass);
-            } catch(RuntimeException e) {
-                FixerUpperMixinPlugin.instance.logger.error("Applying blockstate cache ASM patch failed", e);
-            }
-        }
+        // Upstream ran an ASM scan here for a reduce_blockstate_cache_rebuilds mixin. That feature
+        // was never ported into Duty, so the name matched nothing and the scan never ran. It is not
+        // worth restoring: it existed because old Forge rebuilt the blockstate cache at many points
+        // during startup, and on 26.1.2 the cache is rebuilt from three call sites in total --
+        // Blocks' bootstrap plus NeoForge's DataMapHooks and BlockCallbacks -- all at startup or
+        // reload. See FEATURES.md.
         FixerUpperPlatformHooks.INSTANCE.applyASMTransformers(mixinClassName, targetClass);
     }
 
-    private void applyBlockStateCacheScan(ClassNode targetClass) {
-        Set<String> initCacheMethodNames = ImmutableSet.of("m_60611_", "func_215692_c", "method_26200", "initCache");
-        Set<String> whitelistedInjections = ImmutableSet.of(
-                "getFluidState", "method_26227", "m_60819_", "func_204520_s"
-        );
-        Map<String, MethodNode> injectorMethodNames = new HashMap<>();
-        Map<String, MethodNode> allMethods = new HashMap<>();
-        Map<String, String> injectorMixinSource = new HashMap<>();
-        String descriptor = Type.getDescriptor(MixinMerged.class);
-        for(MethodNode m : targetClass.methods) {
-            if((m.access & Opcodes.ACC_STATIC) != 0)
-                continue;
-            allMethods.put(m.name, m);
-            Set<AnnotationNode> seenNodes = new HashSet<>();
-            if(m.invisibleAnnotations != null) {
-                for(AnnotationNode ann : m.invisibleAnnotations) {
-                    if(ann.desc.equals(descriptor)) {
-                        seenNodes.add(ann);
-                    }
-                }
-            }
-            if(m.visibleAnnotations != null) {
-                for(AnnotationNode ann : m.visibleAnnotations) {
-                    if(ann.desc.equals(descriptor)) {
-                        seenNodes.add(ann);
-                    }
-                }
-            }
-            if(seenNodes.size() > 0) {
-                injectorMethodNames.put(m.name, m);
-                for(AnnotationNode node : seenNodes) {
-                    for(int i = 0; i < node.values.size(); i += 2) {
-                        if(Objects.equals(node.values.get(i), "mixin")) {
-                            injectorMixinSource.put(m.name, (String)node.values.get(i + 1));
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        Set<String> cacheCalledInjectors = new HashSet<>();
-        // Search for initCache in the class
-        for(MethodNode m : targetClass.methods) {
-            if((m.access & Opcodes.ACC_STATIC) != 0)
-                continue;
-            if(initCacheMethodNames.contains(m.name)) {
-                // This is it. Check for any injectors it calls
-                for(AbstractInsnNode n : m.instructions) {
-                    if(n instanceof MethodInsnNode) {
-                        MethodInsnNode invoke = (MethodInsnNode)n;
-                        if(((MethodInsnNode)n).owner.equals(targetClass.name) && injectorMethodNames.containsKey(((MethodInsnNode)n).name)) {
-                            cacheCalledInjectors.add(invoke.name);
-                        }
-                    }
-                }
-                break;
-            }
-        }
-        Set<String> accessedFieldNames = new HashSet<>();
 
-        // Make a map of all injected methods called by initCache
-        Map<String, MethodNode> writingMethods = new HashMap<>(injectorMethodNames);
-        writingMethods.keySet().retainAll(cacheCalledInjectors);
-
-        // Recursively check the injected methods for any methods they may call
-        int previousSize = 0;
-        Set<String> checkedCalls = new HashSet<>();
-        while(writingMethods.size() > previousSize) {
-            previousSize = writingMethods.size();
-            List<String> keysToCheck = new ArrayList<>(writingMethods.keySet());
-            for(String name : keysToCheck) {
-                if(!checkedCalls.add(name))
-                    continue;
-                for(AbstractInsnNode n : writingMethods.get(name).instructions) {
-                    if(n instanceof MethodInsnNode) {
-                        MethodInsnNode invokeNode = (MethodInsnNode)n;
-                        if(invokeNode.owner.equals(targetClass.name)) {
-                            MethodNode theMethod = allMethods.get(invokeNode.name);
-                            if(theMethod != null)
-                                writingMethods.put(invokeNode.name, theMethod);
-                        }
-                    }
-                }
-            }
-        }
-
-        // We now know all methods that have been injected into initCache, and their callers. See what fields they write to
-        writingMethods.forEach((name, method) -> {
-            for(AbstractInsnNode n : method.instructions) {
-                if(n instanceof FieldInsnNode) {
-                    FieldInsnNode fieldAcc = (FieldInsnNode)n;
-                    if(fieldAcc.getOpcode() == Opcodes.PUTFIELD && fieldAcc.owner.equals(targetClass.name)) {
-                        accessedFieldNames.add(fieldAcc.name);
-                    }
-                }
-            }
-        });
-        // Lastly, scan all injected methods and see if they retrieve from the field. If so, inject a generateCache
-        // call at the start.
-        injectorMethodNames.forEach((name, method) -> {
-            // skip whitelisted injectors, and injectors called by initCache itself (to prevent recursion)
-            if(whitelistedInjections.contains(name) || cacheCalledInjectors.contains(name))
-                return;
-            boolean needInjection = false;
-            for(AbstractInsnNode n : method.instructions) {
-                if(n instanceof FieldInsnNode) {
-                    FieldInsnNode fieldAcc = (FieldInsnNode)n;
-                    if(fieldAcc.getOpcode() == Opcodes.GETFIELD && accessedFieldNames.contains(fieldAcc.name)) {
-                        needInjection = true;
-                        break;
-                    }
-                }
-            }
-            if(needInjection) {
-                FixerUpperMixinPlugin.instance.logger.info("Injecting BlockStateBase cache population hook into {} from {}",
-                        name, injectorMixinSource.getOrDefault(name, "[unknown mixin]"));
-                // inject this.duty$generateCache() at method head
-                InsnList injection = new InsnList();
-                injection.add(new VarInsnNode(Opcodes.ALOAD, 0));
-                injection.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL, targetClass.name, "duty$generateCache", "()V"));
-                method.instructions.insert(injection);
-            }
-        });
-    }
 }

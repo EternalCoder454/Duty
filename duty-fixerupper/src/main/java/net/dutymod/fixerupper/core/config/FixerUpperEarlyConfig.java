@@ -342,24 +342,7 @@ public class FixerUpperEarlyConfig {
             disableIfModPresent("mixin.bugfix.packet_leak", "memoryleakfix");
         }
 
-        checkBlockstateCacheRebuilds();
         checkModelDataManager();
-    }
-
-    private void checkBlockstateCacheRebuilds() {
-        if(!FixerUpperPlatformHooks.INSTANCE.isDevEnv())
-            return;
-        try {
-            URL deobfClass = isFabric ?
-                    FixerUpperEarlyConfig.class.getResource("/net/minecraft/world/level/Level.class") :
-                    FixerUpperEarlyConfig.class.getClassLoader().getResource("/net/minecraft/world/level/Level.class");
-            if(deobfClass == null) {
-                LOGGER.warn("We are in a non-Mojmap dev environment. Disabling blockstate cache patch");
-                this.options.get("mixin.perf.reduce_blockstate_cache_rebuilds").asBoolean().addModOverride(false, "[not mojmap]");
-            }
-        } catch(Throwable e) {
-            e.printStackTrace();
-        }
     }
 
     private void checkModelDataManager() {

@@ -1,6 +1,7 @@
 package net.dutymod.server.mixin.biome;
 
 import net.dutymod.server.biome.biome.BiomeEnvelopeSelector;
+import net.dutymod.server.biome.BiomeSpyCompat;
 import net.dutymod.server.biome.structure.StructureChecker;
 import net.dutymod.server.structure.StructureSearchBudget;
 import com.mojang.datafixers.util.Pair;
@@ -40,7 +41,19 @@ public abstract class ChunkGeneratorMixin {
             Set<Holder<Structure>> pStructureHoldersSet, LevelReader pLevel, StructureManager pStructureManager, int pX, int pY, int pZ, boolean pSkipKnownStructures, long pSeed, RandomSpreadStructurePlacement pSpreadPlacement, CallbackInfoReturnable<Pair<BlockPos, Holder<Structure>>> cir
     ) {
         BiomeSource biomeSource = ((StructureCheckAccessor) (((StructureManagerAccessor) pStructureManager).getStructureCheck())).getBiomeSource();
-        if (!(biomeSource instanceof MultiNoiseBiomeSource)) return;
+        if (!(biomeSource instanceof MultiNoiseBiomeSource)) {
+            // Standing aside is correct, not a failure to handle. This search works by testing a
+            // structure's biome list against the climate envelope of the multi-noise source. A mod
+            // that wraps the source -- Lithostitched's InjectorBiomeSource, Biolith's equivalent --
+            // changes which biomes actually generate, so the envelope underneath it no longer
+            // describes the world. Reading through the wrapper would make /locate confidently
+            // report that a structure is not there when it is, which is worse than being slow.
+            //
+            // What was wrong was doing it in silence: the only symptom was /locate quietly going
+            // back to vanilla speed. One line, once, turns that into something you can find.
+            BiomeSpyCompat.reportUnsupported(biomeSource);
+            return;
+        }
         cir.cancel();
 
         int spacing = pSpreadPlacement.spacing();

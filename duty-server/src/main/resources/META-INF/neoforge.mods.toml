@@ -72,13 +72,10 @@ versionRange = "[0,)"
 ordering = "NONE"
 side = "BOTH"
 
-# Compat mixins for TerraBlender apply only when it is present; see the mixin plugin.
-[[dependencies.duty_server]]
-modId = "terrablender"
-type = "optional"
-versionRange = "[0,)"
-ordering = "AFTER"
-side = "BOTH"
+# No entry for the biome-layering mods. TerraBlender's was here for compat mixins that were never
+# ported, and the modern equivalents -- Lithostitched, Biolith -- do not need load ordering: they
+# wrap the biome source at runtime, and BiomeSpy checks for that when a search actually happens.
+# See BiomeSpyCompat.
 
 # e4mc wraps the connection in its own tunnel and installs handlers around the cipher. The
 # native encryption mixins stand down when it is present; see NetMixinPlugin.

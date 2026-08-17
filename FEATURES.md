@@ -884,3 +884,58 @@ cross-checked against its config switch -- 35 of each, no command without a swit
 without a command, after `time` and `weather` turned out to be abstract base classes rather than
 commands. All 96 config keys land in a named settings sub-category with none falling to "Other",
 and no other module's key changed category as a result.
+
+## Two dangling references, cleared 2026-08-16
+
+Both were found by `tools/check-class-strings.py`, written after the service-file rename crashed
+startup. Neither was fatal; both named something that did not exist, so a feature quietly did
+nothing.
+
+### FixerUpper's blockstate cache patch: removed, not restored
+
+`FixerUpperMixinPlugin.postApply` ran an ASM scan whenever it saw a mixin called
+`perf.reduce_blockstate_cache_rebuilds.BlockStateBaseMixin`. That mixin was never ported into Duty,
+so the name matched nothing and roughly 120 lines of ASM never ran. The option override in
+`FixerUpperEarlyConfig` and the help text in nine language files were orphaned the same way -- and
+the help text called it "**A key optimization**", which is why this needed deciding rather than
+just deleting.
+
+Restoring it would mean writing the lazy-cache mixin from scratch. It is not worth it, on the same
+grounds Fastload was rejected: the problem it solves has mostly gone. ModernFix's description is
+explicit that the cost came from Forge rebuilding the blockstate cache "at many points" during
+startup. On 26.1.2 the cache is rebuilt from three call sites in total -- `Blocks`' bootstrap, plus
+NeoForge's `DataMapHooks` and `NeoForgeRegistryCallbacks$BlockCallbacks` -- and all three run at
+startup or reload rather than during play. Against that, a lazy blockstate cache is an intricate
+change to a structure that drives collision, lighting and solidity, and FixerUpper's
+`cache_blockstate_cache_arrays` already reduces what each rebuild costs.
+
+So the hook, the override and the nine orphaned help entries are gone. If the feature is ever
+wanted, it is a fresh implementation, not a rewiring.
+
+### BiomeSpy's compat gate: replaced with a report
+
+`BiomeMixinPlugin` gated a `compat.terrablender` mixin package that was never ported, so the test
+could only ever be false. TerraBlender is also not how a 26.1 pack layers biomes; Lithostitched and
+Biolith are.
+
+Removing the gate exposed the more interesting problem. BiomeSpy begins with
+
+    if (!(biomeSource instanceof MultiNoiseBiomeSource)) return;
+
+and Lithostitched's `InjectorBiomeSource` extends `BiomeSource`, not `MultiNoiseBiomeSource`, and
+holds the real source as a delegate. So whenever its biome injector is in use, BiomeSpy turns
+itself off and `/locate` silently returns to vanilla speed.
+
+**Standing aside is the right behaviour.** The search decides where a structure can generate by
+testing its biome list against the climate envelope of the multi-noise source. A mod that wraps the
+source changes which biomes actually generate, so reading the envelope underneath would describe a
+world that is not being played, and `/locate` would confidently report a structure missing when it
+is there. Slow and correct beats fast and wrong.
+
+What was wrong was the silence. `BiomeSpyCompat` now logs one line the first time it meets a source
+type it cannot use, naming the class. Once per type, not per call -- a single `/locate` reaches
+this thousands of times.
+
+Checked against the installed pack: five mods ship biome data, but all five use NeoForge's
+`biome_modifier` system, which does not wrap the source. Nothing uses Lithostitched's
+`biome_injector`, so BiomeSpy is active today. The report is there for the mod that changes that.
