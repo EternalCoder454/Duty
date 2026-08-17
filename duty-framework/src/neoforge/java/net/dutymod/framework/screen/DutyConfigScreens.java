@@ -1,6 +1,7 @@
 package net.dutymod.framework.screen;
 
 import net.dutymod.framework.DutyLog;
+import net.minecraft.client.Minecraft;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -50,6 +51,28 @@ public final class DutyConfigScreens {
             // A screen is a convenience. If Cloth changes its API under us, the mod must still
             // start -- the properties file remains the authoritative way to configure Duty.
             DutyLog.warn("Could not register the Duty settings screen: " + t);
+        }
+    }
+
+    /**
+     * Opens the settings screen, for a command or a button that is not the mod list entry.
+     *
+     * <p>{@return whether it opened}. False means Cloth Config is not installed, and the caller
+     * should say so rather than appear to do nothing -- there is no screen to show, and the
+     * properties file is the way to configure Duty without it.
+     *
+     * <p>Client-only, like everything else here.
+     */
+    public static boolean open(Minecraft minecraft) {
+        if (FMLEnvironment.getDist() != Dist.CLIENT || !ModList.get().isLoaded(CLOTH_CONFIG)) {
+            return false;
+        }
+        try {
+            minecraft.setScreen(ClothConfigScreen.create(minecraft.screen));
+            return true;
+        } catch (Throwable t) {
+            DutyLog.warn("Could not open the Duty settings screen: " + t);
+            return false;
         }
     }
 }
