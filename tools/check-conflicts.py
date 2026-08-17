@@ -15,16 +15,22 @@ Usage:
     python tools/check-conflicts.py [--pack PATH]
 """
 
+import os
 import re
 import sys
 import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_PACK = Path(
+
+# The pack Duty is actually deployed to, matching tools/deploy.sh. Override with DUTY_PACK to
+# check against a different one -- the kitchen-sink pack has far more mods and therefore far more
+# conflict surface, which is worth a run before shipping something that patches a shared class.
+DEFAULT_PACK = Path(os.environ.get(
+    "DUTY_PACK",
     r"C:\Users\Zachary Smith\AppData\Roaming\PrismLauncher"
-    r"\instances\Eternally Planetary(1)\minecraft"
-)
+    r"\instances\Eternally Dutified\minecraft",
+))
 
 MIXIN_TARGET = re.compile(r"@Mixin\s*\(\s*(?:value\s*=\s*)?\{?([^)]*?)\)", re.S)
 CLASS_TOKEN = re.compile(r"([A-Za-z_][\w.]*)\.class")

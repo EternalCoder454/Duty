@@ -83,7 +83,15 @@ It stages to `install-mods/`, deletes every `duty-*.jar` already in the pack, co
 by SHA-256. Test pack:
 
 ```
-C:\Users\Zachary Smith\AppData\Roaming\PrismLauncher\instances\Eternally Planetary(1)\minecraft
+C:\Users\Zachary Smith\AppData\Roaming\PrismLauncher\instances\Eternally Dutified\minecraft
+```
+
+Duty, Sodium, Lithium, Sodium Extra, plus spark, a zoom and a keybind search. Deliberately
+small, so a measurement is about Duty rather than about whatever else was installed. The
+older kitchen-sink pack is still reachable:
+
+```
+DUTY_PACK=\"/c/.../Eternally Planetary(1)/minecraft\" bash tools/deploy.sh
 ```
 
 ---
