@@ -91,6 +91,23 @@ public final class NeoForgePlatform implements DutyPlatform {
     }
 
     @Override
+    public java.util.Map<String, String> installedMods() {
+        // The loading list, not ModList: this is asked from a report that can be triggered before
+        // mods finish constructing, and the loading list exists at both times. See modVersion.
+        var loading = FMLLoader.getCurrent().getLoadingModList();
+        if (loading == null) {
+            return java.util.Map.of();
+        }
+        java.util.Map<String, String> out = new java.util.TreeMap<>();
+        for (var file : loading.getModFiles()) {
+            for (var mod : file.getMods()) {
+                out.put(mod.getModId(), mod.getVersion().toString());
+            }
+        }
+        return java.util.Collections.unmodifiableMap(out);
+    }
+
+    @Override
     public boolean isDevelopment() {
         return !FMLLoader.getCurrent().isProduction();
     }

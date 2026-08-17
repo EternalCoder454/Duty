@@ -64,6 +64,19 @@ public interface DutyPlatform {
     /** {@return {@code modId}'s display name, or the id itself if it is absent} */
     String modName(String modId);
 
+    /**
+     * {@return every installed mod, id to version, in no particular order}
+     *
+     * <p>For the report, and it is the single most useful thing in it. A crash caused by a mod
+     * being the wrong version looks exactly like a crash caused by a bug until somebody lists what
+     * is actually loaded -- which is how an hour went into a stock Iris sitting next to the fork
+     * built to replace it.
+     *
+     * <p>Implementations return an unmodifiable map and never null; an empty map means the loader
+     * was asked too early, not that nothing is installed.
+     */
+    java.util.Map<String, String> installedMods();
+
     /** {@return whether this is a development environment} */
     boolean isDevelopment();
 

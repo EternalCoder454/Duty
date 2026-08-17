@@ -220,7 +220,53 @@ public final class DutyReport {
         out.append("\n-- Environment ----------------------------\n");
         appendEnvironment(out);
 
+        out.append("\n-- Installed mods -------------------------\n");
+        appendMods(out);
+
         return out.toString();
+    }
+
+    /**
+     * Lists every installed mod and its version.
+     *
+     * <p>The most useful section here, and the reason it exists: a crash caused by a mod being the
+     * wrong version is indistinguishable from a crash caused by a bug until somebody lists what is
+     * actually loaded. An hour went into exactly that -- a stock Iris sitting beside the fork built
+     * to replace it -- and one line of this section would have shown it at a glance.
+     *
+     * <p>Duty's own modules are pulled to the top, because "which build am I running" is the first
+     * question about any of them.
+     */
+    private static void appendMods(StringBuilder out) {
+        java.util.Map<String, String> mods;
+        try {
+            mods = Platform.get().installedMods();
+        } catch (Throwable t) {
+            out.append("  unavailable (").append(t.getClass().getSimpleName()).append(")\n");
+            return;
+        }
+        if (mods.isEmpty()) {
+            out.append("  none reported -- asked before the loader had a list\n");
+            return;
+        }
+
+        List<String> ours = new ArrayList<>();
+        List<String> others = new ArrayList<>();
+        for (java.util.Map.Entry<String, String> entry : mods.entrySet()) {
+            String line = String.format(Locale.ROOT, "  %-38s %s", entry.getKey(), entry.getValue());
+            (entry.getKey().startsWith("duty") ? ours : others).add(line);
+        }
+
+        out.append("  ").append(mods.size()).append(" mod(s)\n\n");
+        for (String line : ours) {
+            out.append(line).append('\n');
+        }
+        if (!ours.isEmpty() && !others.isEmpty()) {
+            out.append('\n');
+        }
+        for (String line : others) {
+            out.append(line).append('\n');
+        }
     }
 
     private static void appendEnvironment(StringBuilder out) {

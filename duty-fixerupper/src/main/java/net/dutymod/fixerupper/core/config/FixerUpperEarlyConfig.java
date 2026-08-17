@@ -618,9 +618,21 @@ public class FixerUpperEarlyConfig {
      */
     private String describe(String name, Option<?> option) {
         StringBuilder out = new StringBuilder();
+
+        // The description first, because it is the only line that says what the option does.
+        // Seventy-four options previously shared three comment lines between them -- a category
+        // word and two sentences of boilerplate -- which told a reader nothing they could act on.
+        String help = OptionDescriptions.get(name);
+        if (help != null) {
+            for (String line : wrap(help, 76)) {
+                out.append(line).append('\n');
+            }
+            out.append('\n');
+        }
+
         String category = OptionCategories.getCategoryForOption(name);
         if (category != null && !category.isEmpty()) {
-            out.append(category).append('\n');
+            out.append("Category: ").append(category).append('\n');
         }
         if (option.isModDefined()) {
             out.append("Overridden for compatibility with another installed mod; changing this\n")
@@ -628,6 +640,26 @@ public class FixerUpperEarlyConfig {
         }
         out.append("Requires a restart. Delete the line to return to the default.");
         return out.toString();
+    }
+
+    /** Greedy wrap, so a long description does not become one unreadable comment line. */
+    private static List<String> wrap(String text, int width) {
+        List<String> lines = new ArrayList<>();
+        StringBuilder line = new StringBuilder(width);
+        for (String word : text.split("\\s+")) {
+            if (line.length() > 0 && line.length() + 1 + word.length() > width) {
+                lines.add(line.toString());
+                line.setLength(0);
+            }
+            if (line.length() > 0) {
+                line.append(' ');
+            }
+            line.append(word);
+        }
+        if (line.length() > 0) {
+            lines.add(line.toString());
+        }
+        return lines;
     }
 
     /** Writes every user-set option back to {@link DutyConfig}. */
