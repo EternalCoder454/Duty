@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(NoiseChunk.class)
 public interface ChunkNoiseSamplerAccessor {
-  @Invoker("createMultiNoiseSampler")
+  @Invoker("cachedClimateSampler")
   public Sampler zenxarch$createMultiNoiseSampler(
       final NoiseRouter noiseRouter, final List<Climate.ParameterPoint> spawnTarget);
 }

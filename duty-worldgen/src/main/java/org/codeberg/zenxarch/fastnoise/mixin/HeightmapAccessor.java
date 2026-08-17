@@ -9,9 +9,9 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(Heightmap.class)
 public interface HeightmapAccessor {
-  @Accessor("storage")
+  @Accessor("data")
   public BitStorage zenxarch$getStorage();
 
-  @Accessor("blockPredicate")
+  @Accessor("isOpaque")
   public Predicate<BlockState> zenxarch$getBlockPredicate();
 }

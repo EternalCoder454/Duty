@@ -54,6 +54,8 @@ CLASS_LITERAL = re.compile(r"([A-Za-z_][\w.]*)\.class")
 # method = "a"  |  method = {"a", "b"}
 METHOD_SPEC = re.compile(r"method\s*=\s*(\{[^}]*\}|\"[^\"]*\")", re.S)
 STRING = re.compile(r"\"([^\"]*)\"")
+# @Accessor("name") / @Invoker("name") -- a member on the @Mixin target itself.
+ACCESSOR_SPEC = re.compile(r'@(?:Accessor|Invoker)\s*\(\s*"([A-Za-z_$][A-Za-z0-9_$]*)"')
 
 
 def find_minecraft_jar() -> pathlib.Path | None:
@@ -104,6 +106,12 @@ def methods_of(binary_name: str, jar: pathlib.Path) -> set[str] | None:
             pending = "<init>" if match.group(1) in constructor_names else match.group(1)
         else:
             pending = None
+            # A field: no parentheses, ends in a semicolon. Collected because @Accessor names
+            # fields far more often than methods, and without these every field accessor read
+            # as missing.
+            field = re.match(r"^[\w.$<>\[\], ]*?([\w$]+);$", stripped)
+            if field:
+                names.add(field.group(1))
     _method_cache[binary_name] = names
     return names
 
@@ -151,6 +159,21 @@ def check_file(path: pathlib.Path, jar: pathlib.Path):
             known[target] = found
     if not known:
         return problems, unknown
+
+    # @Accessor / @Invoker name a member on the @Mixin target directly. They were not checked
+    # here at first, and duty_worldgen shipped @Accessor("storage") against a field Mojang calls
+    # data: it compiled, both other checks passed, and the game died at load with "No candidates
+    # were found matching storage". Exactly the failure this file exists to prevent, missed
+    # because the name lives somewhere the method= scan never looked.
+    for accessor_name in ACCESSOR_SPEC.findall(text):
+        ok = False
+        for found in known.values():
+            ok = ok or any(m.split("(")[0] == accessor_name for m in found)
+        if not ok:
+            problems.append(
+                f"{path.name}: @Accessor/@Invoker '{accessor_name}' not found in "
+                + ", ".join(known)
+            )
 
     for spec_group in METHOD_SPEC.findall(text):
         for spec in STRING.findall(spec_group):

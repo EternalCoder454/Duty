@@ -166,6 +166,40 @@ def mask(text: str):
 
 SLASHED_TYPE = re.compile(r"L([a-z][A-Za-z0-9_/$]*);")
 INTERMEDIARY = re.compile(r"\b((?:method|field|class)_\d+)\b")
+ACCESSOR = re.compile(r'@(?:Accessor|Invoker)\s*\(\s*"([A-Za-z_$][A-Za-z0-9_$]*)"')
+
+
+def translate_accessors(text: str, mixin_target: str | None, owned) -> tuple[str, int]:
+    """Rename the field and method names inside @Accessor and @Invoker.
+
+    These are the one case that resolves exactly. Everywhere else the receiver's type has to
+    be guessed at; here the @Mixin annotation names the owning class outright, so the member
+    can be looked up on that class and nothing else. No ambiguity, no heuristic.
+
+    They are also invisible to every other pass: the name lives in a string, strings are
+    masked to protect escapes, and the descriptor pass skips anything that does not look like
+    a descriptor. So @Accessor("storage") sailed through a clean compile and both checkers and
+    failed at load with "No candidates were found matching storage" -- Mojang calls that field
+    data.
+    """
+    if not mixin_target or not owned:
+        return text, 0
+
+    count = 0
+
+    def swap(match: re.Match) -> str:
+        nonlocal count
+        yarn_name = match.group(1)
+        hits = {mojang for mojang, owner in owned.get(yarn_name, ()) if owner == mixin_target}
+        if len(hits) != 1:
+            return match.group(0)
+        mojang_name = next(iter(hits))
+        if mojang_name == yarn_name:
+            return match.group(0)
+        count += 1
+        return match.group(0).replace(f'"{yarn_name}"', f'"{mojang_name}"')
+
+    return ACCESSOR.sub(swap, text), count
 
 
 def translate_annotation_strings(saved: list[str], classes, intermediary, members, overrides=None):
@@ -227,6 +261,25 @@ def translate(text: str, classes, members, simple_names, owned=None, overrides=N
               path_hint=None, intermediary=None):
     """Rewrite one source file. Returns (new_text, renamed_counter)."""
     renamed = collections.Counter()
+
+    # The accessor pass runs on raw text: its names live inside string literals, which
+    # mask() is about to hide. The @Mixin target tells us exactly which class owns them.
+    target_match = re.search(r'@Mixin\s*\(([^)]*)\)', text, re.S)
+    mixin_target = None
+    if target_match:
+        literal = re.search(r'([A-Za-z_$][\w.$]*)\.class', target_match.group(1))
+        if literal:
+            simple = literal.group(1).split('.')[-1]
+            for yarn_fq, mojang_fq in classes.items():
+                if yarn_fq.rsplit('/', 1)[-1].rsplit('$', 1)[-1] == simple:
+                    mixin_target = mojang_fq
+                    break
+                if mojang_fq.rsplit('/', 1)[-1].rsplit('$', 1)[-1] == simple:
+                    mixin_target = mojang_fq
+                    break
+    text, accessor_count = translate_accessors(text, mixin_target, owned)
+    renamed['accessor'] += accessor_count
+
     text, saved = mask(text)
 
     # Fully-qualified names first: imports and any inline use. Longest first so an inner class

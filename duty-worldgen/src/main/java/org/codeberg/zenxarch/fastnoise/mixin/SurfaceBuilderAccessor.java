@@ -14,13 +14,13 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(SurfaceSystem.class)
 public interface SurfaceBuilderAccessor {
 
-  @Accessor("defaultState")
+  @Accessor("defaultBlock")
   public BlockState zenxarch$defaultBlockState();
 
-  @Invoker("isDefaultBlock")
+  @Invoker("isStone")
   public boolean zenxarch$isDefaultBlock(BlockState state);
 
-  @Invoker("placeBadlandsPillar")
+  @Invoker("erodedBadlandsExtension")
   public void zenxarch$placeBadlandsPillar(
       final BlockColumn column,
       final int x,
@@ -28,7 +28,7 @@ public interface SurfaceBuilderAccessor {
       final int surfaceY,
       final LevelHeightAccessor chunk);
 
-  @Invoker("placeIceberg")
+  @Invoker("frozenOceanExtension")
   public void zenxarch$placeIceberg(
       final int minY,
       final Biome biome,
