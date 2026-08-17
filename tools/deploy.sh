@@ -114,6 +114,26 @@ for m in "${MODULES[@]}"; do
   fi
 done
 
+# Mods under external/ ship with Duty but keep their own build, because their toolchain is not
+# Duty's. See external/README.md. Skipped rather than fatal when the build is unavailable: a
+# missing optional mod should not stop the five that are ready from reaching the pack.
+if [ "${WITH_EXTERNAL:-1}" = "1" ] && [ -d "$ROOT/external/fastnoise" ]; then
+  echo "==> external: fastnoise"
+  if ( cd "$ROOT/external/fastnoise" && TMP=C:/gtmp TEMP=C:/gtmp ./gradlew build --console=plain -q ) >/dev/null 2>&1; then
+    fnjar=$(ls "$ROOT/external/fastnoise/build/libs/"*.jar 2>/dev/null \
+              | grep -viE "sources|dev|-slim" | head -1)
+    if [ -n "$fnjar" ]; then
+      rm -f "$PACK/mods"/zfastnoise-*.jar
+      cp "$fnjar" "$PACK/mods/$(basename "$fnjar")"
+      echo "  OK   $(basename "$fnjar")"
+    else
+      echo "  --   built but produced no jar; skipped"
+    fi
+  else
+    echo "  --   build failed; leaving the installed copy alone"
+  fi
+fi
+
 echo
 echo "Installed. After launching, confirm mixins actually applied:"
 echo "  grep -c 'from duty_' \"$PACK/logs/debug.log\""

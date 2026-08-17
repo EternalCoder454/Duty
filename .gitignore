@@ -33,3 +33,7 @@ desktop.ini
 run/
 logs/
 *.log
+
+# Vendored mods keep their own build; their outputs are not Duty's.
+external/*/build/
+external/*/.gradle/
