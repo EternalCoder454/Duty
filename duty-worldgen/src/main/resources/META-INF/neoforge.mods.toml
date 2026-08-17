@@ -1,0 +1,44 @@
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "MPL-2.0"
+
+[[mods]]
+modId = "duty_worldgen"
+version = "${mod_version}"
+displayName = "Duty: WorldGen"
+logoFile = "icon.png"
+authors = "Duty"
+credits = "Derived from FastNoise by ZenXArch (MPL-2.0), ported from Yarn to Mojang mappings."
+description = '''
+Duty does what it needs to do, perform its duty.
+
+WorldGen: faster noise sampling, surface building and biome lookup. This is the whole cost
+of generating a chunk, so it is the module that matters when a world is being made rather
+than played -- pregeneration, exploring new ground, or anything that renders terrain the
+game has not built yet.
+'''
+
+[[mixins]]
+config = "duty_worldgen.mixins.json"
+
+[[dependencies.duty_worldgen]]
+modId = "neoforge"
+type = "required"
+versionRange = "[26.1,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.duty_worldgen]]
+modId = "minecraft"
+type = "required"
+versionRange = "[26.1.2,26.2)"
+ordering = "NONE"
+side = "BOTH"
+
+# The mod this is derived from. Running both would apply the same mixins twice.
+[[dependencies.duty_worldgen]]
+modId = "zfastnoise"
+type = "incompatible"
+versionRange = ""
+ordering = "NONE"
+side = "BOTH"
