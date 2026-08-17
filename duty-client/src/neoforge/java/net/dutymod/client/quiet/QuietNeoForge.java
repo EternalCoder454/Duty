@@ -1,5 +1,6 @@
 package net.dutymod.client.quiet;
 
+import net.dutymod.client.culling.DebugEntryCulling;
 import net.minecraft.resources.Identifier;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.RegisterDebugEntriesEvent;
@@ -25,5 +26,9 @@ public final class QuietNeoForge {
         modBus.addListener(RegisterDebugEntriesEvent.class, event ->
                 event.register(Identifier.fromNamespaceAndPath("duty_client", "fps_history"),
                         new DebugEntryFpsHistory()));
+
+        modBus.addListener(RegisterDebugEntriesEvent.class, event ->
+                event.register(Identifier.fromNamespaceAndPath("duty_client", "culling"),
+                        new DebugEntryCulling()));
     }
 }

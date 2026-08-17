@@ -58,6 +58,11 @@ public final class EntityCulling {
     private final boolean nametagsThroughWalls;
 
     private CullTask cullTask;
+
+    /** The running cull task, or null before the client is far enough along. Read by the F3 entry. */
+    public CullTask task() {
+        return cullTask;
+    }
     private Thread cullThread;
     private boolean started;
     private int tickCounter;

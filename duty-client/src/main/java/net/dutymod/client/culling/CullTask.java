@@ -42,6 +42,27 @@ public final class CullTask implements Runnable {
     /** Milliseconds the last pass took. Read by the debug overlay. */
     public volatile double lastPassMillis = 0;
 
+    /**
+     * How many objects the last pass actually traced, and how many it hid.
+     *
+     * <p>{@link #lastPassMillis} was already recorded and never read by anything, which made the
+     * cost of culling unmeasurable -- and an optimization whose cost nobody can see is one nobody
+     * can reason about. These feed {@link net.dutymod.client.culling.DebugEntryCulling}, so the
+     * question "is this worth what it costs" has an answer on screen instead of an opinion.
+     *
+     * <p>Written from the culling thread and read from the render thread, hence volatile. They are
+     * counters rather than a snapshot, so a torn read shows a slightly stale number, never a wrong
+     * one.
+     */
+    public volatile int lastPassTraced = 0;
+
+    public volatile int lastPassHidden = 0;
+
+    /** Accumulated during a pass on the culling thread only, then published to the two above. */
+    private int passTraced;
+
+    private int passHidden;
+
     private final OcclusionCullingInstance culling;
     private final Minecraft client = Minecraft.getInstance();
     private final Set<BlockEntityType<?>> blockEntityWhitelist;
@@ -106,9 +127,13 @@ public final class CullTask implements Runnable {
                 requestCull = false;
                 lastPos.set(cameraNow.x, cameraNow.y, cameraNow.z);
                 culling.resetCache();
+                passTraced = 0;
+                passHidden = 0;
                 cullBlockEntities(cameraNow);
                 cullEntities(cameraNow);
                 lastPassMillis = (System.nanoTime() - start) / 1_000_000.0;
+                lastPassTraced = passTraced;
+                lastPassHidden = passHidden;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
@@ -157,7 +182,12 @@ public final class CullTask implements Runnable {
             }
             aabbMin.set(box.minX, box.minY, box.minZ);
             aabbMax.set(box.maxX, box.maxY, box.maxZ);
-            cullable.duty$setCulled(!culling.isAABBVisible(aabbMin, aabbMax, lastPos));
+            boolean hidden = !culling.isAABBVisible(aabbMin, aabbMax, lastPos);
+            cullable.duty$setCulled(hidden);
+            passTraced++;
+            if (hidden) {
+                passHidden++;
+            }
         }
     }
 
@@ -200,7 +230,12 @@ public final class CullTask implements Runnable {
             }
             aabbMin.set(box.minX, box.minY, box.minZ);
             aabbMax.set(box.maxX, box.maxY, box.maxZ);
-            cullable.duty$setCulled(!culling.isAABBVisible(aabbMin, aabbMax, lastPos));
+            boolean hidden = !culling.isAABBVisible(aabbMin, aabbMax, lastPos);
+            cullable.duty$setCulled(hidden);
+            passTraced++;
+            if (hidden) {
+                passHidden++;
+            }
         }
     }
 

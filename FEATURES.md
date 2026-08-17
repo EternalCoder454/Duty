@@ -1186,3 +1186,57 @@ per call from a `final` field that never changes. Hoisted to a field.
 flagged as per-call allocation. Both are wrong to change: `makeShapes` and model `bake` run at
 startup and resource reload, not per tick, and the boxing is the price of a deduplication cache
 that already pays for itself in memory. Optimising cold code is how a pass makes something worse.
+
+## GPU occlusion culling — investigated, not taken
+
+Prompted by Quantified API (QAPI), which offers CPU/Vulkan/OpenCL compute routing and targets a
+superset of Duty's four combinations. The question was whether Duty's occlusion culling would be
+better on the GPU.
+
+**It would not, and the reason is structural rather than a matter of tuning.**
+
+### The cheap form of GPU culling is not available
+
+GPU occlusion culling normally means testing bounding boxes against the *depth buffer the game has
+already drawn* -- hardware occlusion queries, or a hierarchical-Z pass. That is cheap because the
+scene depth is a by-product of rendering that already happened.
+
+QAPI exposes general compute lanes: `preferVulkan`, `preferOpenCL`, `vulkanWorkload`,
+`openclWorkload`. It has no path to Minecraft's rendered depth buffer and no occlusion-query
+support -- checked, not assumed. So the depth-buffer approach is not on offer through it.
+
+### What is left costs more than it saves
+
+Without depth, a GPU implementation has to do what the CPU tracer does: march rays through the
+block grid. That grid lives in Java, on the CPU. Duty traces to 128 blocks, so the region around
+the camera is roughly 257³ -- about 17 million voxels, some megabytes even at one bit each -- and
+it would have to be uploaded whenever the camera moves, which is whenever a pass runs.
+
+Against that:
+
+* **The CPU tracer is not on the critical path.** It runs on its own thread, sleeps 10ms between
+  passes, and skips the pass entirely when the camera has not moved. It costs no frame time at all.
+* **The GPU is the contended resource.** In a modded client with Sodium and shaders, the GPU is
+  usually what the frame is waiting on. Moving work from an idle background thread onto the
+  bottleneck is the wrong direction even if the work itself were free.
+* **Readback adds latency to a decision that is already asynchronous**, and culling latency shows
+  up as entities popping in.
+
+Moving work off a thread nobody is waiting on and onto the thing everyone is waiting on is not an
+optimization.
+
+### What came out of it instead
+
+`CullTask` had always recorded `lastPassMillis` and **nothing had ever read it**, so the most
+expensive thing Duty does had no visible cost. That is a bad position to decide from -- the whole
+GPU question is "is this expensive enough to be worth moving", and the number was sitting in a
+field nobody printed.
+
+There is now a `Duty culling: 1.8ms, 142 traced, 96 hidden` line on the F3 screen, counting both
+halves of the pass. The three figures answer different questions: time is per pass and only when
+the camera moves, so it is a worst case; traced is what survived the distance, size and whitelist
+filters; hidden is the actual saving, since each one is a render call that did not happen. High
+time with low hidden means the tracing is not paying for itself.
+
+Revisit if a depth-buffer path ever becomes reachable -- that version of the idea is sound, and it
+is the one Sodium and the shader mods already use.
