@@ -15,7 +15,9 @@ public class SchedulingUtil {
             }
         }
         final SimpleTask simpleTask = new SimpleTask(task, lockTokens.toArray(LockToken[]::new));
-        GlobalExecutors.prioritizedScheduler.schedule(simpleTask, 60);
+        // The call that starts the scheduler's threads, and the only one. C2ME overwrites this
+        // whole method, so on a setup with C2ME the threads are never created; see GlobalExecutors.
+        GlobalExecutors.prioritizedScheduler().schedule(simpleTask, 60);
     }
 
     public static boolean isExternallyManaged() {

@@ -26,7 +26,8 @@ public class SimpleTask extends Task {
 
     @Override
     public void propagateException(Throwable t) {
-        t.printStackTrace();
+        ca.spottedleaf.starlight.common.ScalableLuxEntrypoint.LOGGER.error(
+                "Light scheduling task failed", t);
     }
 
     @Override

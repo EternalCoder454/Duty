@@ -22,7 +22,7 @@ public class SimpleTask extends Task {
 
     @Override
     public void propagateException(Throwable t) {
-        t.printStackTrace();
+        net.dutymod.framework.DutyLog.error("Scheduled task failed", t);
     }
 
     @Override

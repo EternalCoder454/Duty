@@ -1,5 +1,6 @@
 package ca.spottedleaf.starlight.common.light;
 
+import ca.spottedleaf.starlight.common.ScalableLuxEntrypoint;
 import ca.spottedleaf.starlight.common.chunk.ExtendedChunk;
 import ca.spottedleaf.starlight.common.thread.GlobalExecutors;
 import ca.spottedleaf.starlight.common.thread.SchedulingUtil;
@@ -640,7 +641,12 @@ public final class StarLightInterface {
                                 threadedLevelLightEngine.tryScheduleUpdate();
                             }
                         } catch (Throwable t) {
-                            t.printStackTrace();
+                            // Was printStackTrace, which on a server goes to stdout with no
+                            // level, no logger name and no timestamp -- and this is a lighting
+                            // failure on a worker thread, exactly the thing someone will be
+                            // grepping the log for.
+                            ScalableLuxEntrypoint.LOGGER.error(
+                                    "Light update task failed for chunk " + pos, t);
                         }
                     },
                     CoordinateUtils.getChunkX(pos),
@@ -848,7 +854,7 @@ public final class StarLightInterface {
                 try {
                     tasks = this.chunkTasks.get(key);
                 } catch (Throwable t) {
-                    t.printStackTrace();
+                    ScalableLuxEntrypoint.LOGGER.error("Failed reading queued light tasks", t);
                     this.tasksLock.unlockRead(stamp);
                     throw t;
                 }
