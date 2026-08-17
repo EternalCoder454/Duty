@@ -66,6 +66,17 @@ public final class DutyConfig {
         register(key, Integer.toString(defaultValue), comment);
     }
 
+    /**
+     * Declares a fractional option.
+     *
+     * <p>Stored as {@link Double#toString}, which round-trips exactly, so a value written back is
+     * the value that was read -- and both it and {@code parseDouble} are locale-independent, which
+     * {@code String.format("%f")} is not.
+     */
+    public static synchronized void register(String key, double defaultValue, String comment) {
+        register(key, Double.toString(defaultValue), comment);
+    }
+
     /** Declares a free-text option. Used for enum-valued settings, which are stored by name. */
     public static synchronized void register(String key, String defaultValue, String comment) {
         OPTIONS.put(key, new Option(key, defaultValue, comment));
@@ -113,6 +124,37 @@ public final class DutyConfig {
             DutyLog.warn("Config key '" + key + "' has non-numeric value '" + raw + "'; using default "
                     + option.defaultValue());
             value = Integer.parseInt(option.defaultValue());
+        }
+        if (value < min || value > max) {
+            DutyLog.warn("Config key '" + key + "' value " + value + " is outside [" + min + ", " + max
+                    + "]; clamping.");
+            value = Math.max(min, Math.min(max, value));
+        }
+        return value;
+    }
+
+    /**
+     * {@return the value of a fractional option, clamped into range}
+     *
+     * <p>Mirrors {@link #getInt}: an unparseable value falls back to the default and says so, and
+     * an out-of-range one is clamped rather than rejected, because a config that refuses to load
+     * over one bad number is worse than one that carries on with a sane one.
+     */
+    public static synchronized double getDouble(String key, double min, double max) {
+        Option option = requireOption(key);
+        String raw = rawValue(option);
+        double value;
+        try {
+            value = Double.parseDouble(raw.trim());
+        } catch (NumberFormatException e) {
+            DutyLog.warn("Config key '" + key + "' has non-numeric value '" + raw + "'; using default "
+                    + option.defaultValue());
+            value = Double.parseDouble(option.defaultValue());
+        }
+        if (Double.isNaN(value)) {
+            DutyLog.warn("Config key '" + key + "' is not a number; using default "
+                    + option.defaultValue());
+            value = Double.parseDouble(option.defaultValue());
         }
         if (value < min || value > max) {
             DutyLog.warn("Config key '" + key + "' value " + value + " is outside [" + min + ", " + max
