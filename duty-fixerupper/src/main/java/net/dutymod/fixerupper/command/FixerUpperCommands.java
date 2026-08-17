@@ -6,6 +6,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.permissions.Permissions;
 import net.dutymod.framework.DutyConfig;
+import net.dutymod.framework.DutyLog;
+import net.dutymod.framework.DutyReport;
 import net.dutymod.framework.DutyMetrics;
 import net.dutymod.fixerupper.duck.IProfilingServerFunctionManager;
 
@@ -42,6 +44,27 @@ public class FixerUpperCommands {
                                             + (changed == 1 ? " setting changed." : " settings changed.")), false);
                             return 1;
                         }))
+                .then(literal("report").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
+                        .executes(context -> {
+                            // To the log and a file rather than chat: the report is long and
+                            // fixed-width, and the point of it is to be handed to somebody else.
+                            for (String line : DutyReport.generate().split("\n")) {
+                                DutyLog.info(line);
+                            }
+                            java.nio.file.Path path = DutyReport.writeToFile();
+                            context.getSource().sendSuccess(() -> Component.literal(path == null
+                                    ? "Duty report written to the log."
+                                    : "Duty report written to the log and to " + path), false);
+                            return 1;
+                        })
+                        .then(literal("findings").executes(context -> {
+                            // Just the conclusions, short enough to read in chat.
+                            for (DutyReport.Finding finding : DutyReport.findings()) {
+                                context.getSource().sendSuccess(() -> Component.literal(
+                                        "[" + finding.severity() + "] " + finding.title()), false);
+                            }
+                            return 1;
+                        })))
                 .then(literal("metrics").requires(source -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
                         .executes(context -> sendReport(context.getSource()))
                         .then(literal("on").executes(context -> {

@@ -159,6 +159,43 @@ Reading it:
 | `framework.metrics` | on at startup |
 | `framework.metrics_report_seconds` | periodic report to the log; 0 is off |
 | `/duty reload` | re-read `duty.properties` without a restart |
+| `/duty report` | findings + numbers + environment, to the log and `logs/duty-report.txt` |
+| `/duty report findings` | just the conclusions, short enough for chat |
+
+### The report
+
+`DutyMetrics` answers "what did this cost". `DutyReport` answers "what should I look at",
+because reading the table still meant knowing that a worst case forty times the mean is a
+spike rather than a slow path, that a total means nothing without the window it was
+collected over, and that a timer with no samples means the session never exercised it
+rather than that it is free. Those judgements are mechanical, so it makes them.
+
+Generic rules, applied to every timer:
+
+| Finding | Trigger |
+|---|---|
+| *spikes* | worst ≥ 8× median, worst ≥ 5ms, ≥ 20 samples |
+| *consistently slow* | p99 within 2× of median, median ≥ 5ms, ≥ 20 samples |
+| *stalled* | ≤ 5 calls, worst ≥ 100ms |
+| *busiest thing measured* | ≥ 2% of a window of at least a second — top timer only |
+
+The sample floor is not decoration: one sample has median == p99 == worst, which trips
+*consistently slow* every time and says it about something that happened once. It reported
+a single `/locate` as a systemic problem before that guard existed.
+
+Percentiles come from a fixed 256-bucket log histogram on each timer — four buckets per
+octave, so a value is known to within about 19%. That is ample for "is p99 near the median
+or near the worst", and costs one atomic increment per sample with no allocation and no
+growth however long it runs.
+
+Rules that need to know what a number *means* — that traced-versus-hidden is a hit rate,
+that a watchdog firing is a failure rather than a fast search — live in
+`DutyReport.contributor`, registered by the module that knows. Culling and the structure
+watchdog have one each.
+
+The report deliberately stops at description. A spike finding names the ratio and the
+candidate count; it does not name a cause, because the data does not contain one. Every
+threshold is stated in the finding text so a reader can disagree with it.
 
 Both routes are live: the command sets the flag directly, and editing the file then
 reloading works because `DutyConfig.onReload` lets a module refresh a value it caches.

@@ -80,6 +80,17 @@ public final class DutyMetrics {
     private static volatile boolean initialized;
     private static volatile Thread reporter;
 
+    /**
+     * When the current measurement window started, or 0 if measurement has never been on.
+     *
+     * <p>Without this a total is a number with no denominator. "21 seconds of lighting"
+     * means nothing until you know whether it was collected over nine minutes or ninety;
+     * with it, the report can say what share of the window a thing actually occupied, which
+     * is the form that tells you whether to care.
+     */
+    private static volatile long windowStartedNanos;
+
+
     private DutyMetrics() {}
 
     /**
@@ -106,6 +117,7 @@ public final class DutyMetrics {
 
         enabled = DutyConfig.get(ENABLED);
         if (enabled) {
+            windowStartedNanos = System.nanoTime();
             startReporterIfConfigured();
         }
 
@@ -113,8 +125,12 @@ public final class DutyMetrics {
         // and leave this cached copy stale -- the file would say one thing and the game do another,
         // which is worse than not supporting reload at all.
         DutyConfig.onReload(() -> {
+            boolean was = enabled;
             enabled = DutyConfig.get(ENABLED);
             if (enabled) {
+                if (!was) {
+                    windowStartedNanos = System.nanoTime();
+                }
                 startReporterIfConfigured();
             }
             DutyLog.info("Duty measurement is now " + (enabled ? "on" : "off") + " (config reload).");
@@ -126,6 +142,12 @@ public final class DutyMetrics {
         return enabled;
     }
 
+    /** {@return nanoseconds since measurement last started, or 0 if it never has} */
+    public static long windowNanos() {
+        long started = windowStartedNanos;
+        return started == 0L ? 0L : System.nanoTime() - started;
+    }
+
     /**
      * Turns measurement on or off at runtime.
      *
@@ -135,6 +157,9 @@ public final class DutyMetrics {
      */
     public static void setEnabled(boolean value) {
         init();
+        if (value && !enabled) {
+            windowStartedNanos = System.nanoTime();
+        }
         enabled = value;
         if (value) {
             startReporterIfConfigured();
@@ -161,6 +186,7 @@ public final class DutyMetrics {
 
     /** Forgets every recorded sample, keeping the handles valid. */
     public static void reset() {
+        windowStartedNanos = enabled ? System.nanoTime() : 0L;
         for (Timer timer : TIMERS.values()) {
             timer.reset();
         }
@@ -296,11 +322,71 @@ public final class DutyMetrics {
     public static final class Timer {
         private static final double EMA_WEIGHT = 0.1d;
 
+        /**
+         * Sample counts, bucketed by magnitude, for percentiles.
+         *
+         * <p>A mean and a worst cannot tell "one bad sample" from "half the samples are bad", and
+         * that difference is the whole question when deciding whether something is worth chasing.
+         * A 38ms worst against a 0.8ms mean is a spike; the same worst with a 20ms median is a
+         * different problem entirely.
+         *
+         * <p>Buckets are four per power of two, so a value is known to within about 19% -- ample
+         * for "is the 99th percentile near the mean or near the worst", and far cheaper than
+         * keeping samples. One array of longs per timer, one atomic increment per sample, no
+         * allocation and no growth however long it runs.
+         */
+        private static final int BUCKETS_PER_OCTAVE = 4;
+        private static final int BUCKET_COUNT = 64 * BUCKETS_PER_OCTAVE;
+
         private final String name;
         private final LongAdder count = new LongAdder();
         private final LongAdder totalNanos = new LongAdder();
         private final AtomicLong maxNanos = new AtomicLong();
+        private final java.util.concurrent.atomic.AtomicLongArray histogram =
+                new java.util.concurrent.atomic.AtomicLongArray(BUCKET_COUNT);
         private volatile double recentMillis;
+
+        /** {@return the bucket a duration falls in} */
+        private static int bucketOf(long nanos) {
+            if (nanos <= 0) {
+                return 0;
+            }
+            int octave = 63 - Long.numberOfLeadingZeros(nanos);
+            // Position within the octave, from the bits just below the leading one.
+            int within = octave == 0 ? 0
+                    : (int)((nanos >>> (octave - 2 < 0 ? 0 : octave - 2)) & (BUCKETS_PER_OCTAVE - 1));
+            int index = octave * BUCKETS_PER_OCTAVE + within;
+            return Math.min(index, BUCKET_COUNT - 1);
+        }
+
+        /** {@return the upper bound of a bucket, in nanoseconds} */
+        private static double bucketUpperNanos(int index) {
+            int octave = index / BUCKETS_PER_OCTAVE;
+            int within = index % BUCKETS_PER_OCTAVE;
+            double base = Math.scalb(1.0d, octave);
+            return base * (1.0d + (within + 1.0d) / BUCKETS_PER_OCTAVE);
+        }
+
+        /**
+         * {@return the duration below which {@code fraction} of samples fall, in milliseconds}
+         *
+         * <p>Approximate to the bucket width. Returns 0 when nothing has been recorded.
+         */
+        public double percentileMillis(double fraction) {
+            long total = count();
+            if (total == 0) {
+                return 0.0d;
+            }
+            long target = (long)Math.ceil(fraction * total);
+            long seen = 0;
+            for (int i = 0; i < BUCKET_COUNT; i++) {
+                seen += histogram.get(i);
+                if (seen >= target) {
+                    return bucketUpperNanos(i) / 1.0e6;
+                }
+            }
+            return maxNanos() / 1.0e6;
+        }
 
         private Timer(String name) {
             this.name = name;
@@ -341,6 +427,7 @@ public final class DutyMetrics {
             count.increment();
             totalNanos.add(nanos);
             maxNanos.accumulateAndGet(nanos, Math::max);
+            histogram.incrementAndGet(bucketOf(nanos));
 
             double millis = nanos / 1.0e6;
             double previous = recentMillis;
@@ -394,6 +481,9 @@ public final class DutyMetrics {
             totalNanos.reset();
             maxNanos.set(0);
             recentMillis = 0.0d;
+            for (int i = 0; i < BUCKET_COUNT; i++) {
+                histogram.set(i, 0L);
+            }
         }
 
         @Override

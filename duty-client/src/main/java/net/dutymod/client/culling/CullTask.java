@@ -78,6 +78,47 @@ public final class CullTask implements Runnable {
     private static final net.dutymod.framework.DutyMetrics.Counter CANDIDATES =
             net.dutymod.framework.DutyMetrics.counter("client.culling.candidates");
 
+    static {
+        // What the generic rules cannot know: that these three counters are a funnel, and that the
+        // ratios between them are the answer to "is this feature worth its thread".
+        net.dutymod.framework.DutyReport.contributor(findings -> {
+            long candidates = CANDIDATES.value();
+            long traced = TRACED.value();
+            long hidden = HIDDEN.value();
+            if (traced == 0) {
+                return;
+            }
+            long passes = Math.max(1L, PASS_TIME.count());
+            double hitRate = 100.0 * hidden / traced;
+
+            findings.add(new net.dutymod.framework.DutyReport.Finding(
+                    net.dutymod.framework.DutyReport.Severity.INFO,
+                    "Culling hid " + String.format(java.util.Locale.ROOT, "%.1f%%", hitRate)
+                            + " of what it traced",
+                    String.format(java.util.Locale.ROOT,
+                            "%d of %d traced, about %d skipped renders per pass. Each of those is "
+                                    + "a draw that did not happen, against %.3fms of tracing per "
+                                    + "pass on a background thread.",
+                            hidden, traced, hidden / passes,
+                            PASS_TIME.totalNanos() / 1.0e6 / passes)));
+
+            if (candidates > 0) {
+                double survived = 100.0 * traced / candidates;
+                if (survived < 10.0) {
+                    findings.add(new net.dutymod.framework.DutyReport.Finding(
+                            net.dutymod.framework.DutyReport.Severity.INFO,
+                            "Most culling candidates are rejected before tracing",
+                            String.format(java.util.Locale.ROOT,
+                                    "%d of %d candidates reached a ray trace (%.1f%%). The cheap "
+                                            + "filters are carrying the work, which is what they "
+                                            + "are for -- but it also means their order matters "
+                                            + "more than the tracing does.",
+                                    traced, candidates, survived)));
+                }
+            }
+        });
+    }
+
     /** A pass slower than this is worth a line in the log, with the context to explain it. */
     private static final long SLOW_PASS_NANOS = 20_000_000L;
 

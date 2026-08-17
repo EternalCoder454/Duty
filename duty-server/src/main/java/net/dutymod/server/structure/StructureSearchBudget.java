@@ -73,6 +73,35 @@ public final class StructureSearchBudget {
     private static final DutyMetrics.Counter TIMED_OUT =
             DutyMetrics.counter("server.structure.search_timed_out");
 
+    static {
+        // A search that ran to the watchdog is not "slow", it is a search that could not finish --
+        // a distinction no generic timer rule can draw, since a timed-out search looks like a fast
+        // one that happened to stop.
+        net.dutymod.framework.DutyReport.contributor(findings -> {
+            long timedOut = TIMED_OUT.value();
+            long searches = SEARCH.count();
+            if (timedOut > 0) {
+                findings.add(new net.dutymod.framework.DutyReport.Finding(
+                        net.dutymod.framework.DutyReport.Severity.PROBLEM,
+                        "Structure searches are hitting the watchdog",
+                        String.format(java.util.Locale.ROOT,
+                                "%d of %d search(es) gave up and reported 'not found' without "
+                                        + "finishing. The structure may genuinely not be in range, "
+                                        + "or %s is too low for how far apart this pack spaces it.",
+                                timedOut, searches, TIMEOUT_SECONDS)));
+            } else if (searches > 0 && SEARCH.maxNanos() / 1.0e6 >= 250.0d) {
+                findings.add(new net.dutymod.framework.DutyReport.Finding(
+                        net.dutymod.framework.DutyReport.Severity.NOTICE,
+                        "A structure search held the server thread",
+                        String.format(java.util.Locale.ROOT,
+                                "worst %.0fms across %d search(es). Well inside the watchdog, but "
+                                        + "long enough to be felt as a hitch. Cold searches load "
+                                        + "chunks; a repeat of the same /locate should be quick.",
+                                SEARCH.maxNanos() / 1.0e6, searches)));
+            }
+        });
+    }
+
     /** Starts the clock for a search on this thread. Cheap enough to call unconditionally. */
     public static void arm(HolderSet<Structure> targets) {
         int seconds = DutyConfig.getInt(TIMEOUT_SECONDS, 0, 3600);
