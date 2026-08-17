@@ -31,7 +31,30 @@
 // Only the NeoForge set is wired into the jar today, because that is the target this build produces.
 // The remaining three need their own toolchains; see FEATURES.md for what each still needs.
 
+plugins {
+    `maven-publish`
+}
+
 base.archivesName = "duty-framework"
+
+// Publishable so other projects can build against it.
+//
+// Duty's own modules consume this as a project dependency and nest it with JarJar. A separate mod
+// -- Liteminer is the first -- needs it as a real artifact instead, and `publishToMavenLocal` is
+// enough for that: both live on this machine, and neither is published anywhere public.
+//
+// Only the framework publishes. The feature modules are not libraries and nothing should compile
+// against them.
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+            groupId = rootProject.property("group") as String
+            artifactId = "duty-framework"
+            version = rootProject.property("mod_version") as String
+        }
+    }
+}
 
 repositories {
     maven("https://maven.shedaniel.me/") {
