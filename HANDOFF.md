@@ -9,7 +9,7 @@ several of the traps below cost a full session each to find.
 
 A performance mod for **Minecraft 26.1.2 on NeoForge 26.1.2.95**, Java 25, built by merging
 existing mods and dropping everything that only exists to support older versions. Private,
-personal build. Owner: Zachary Smith. Project root:
+personal build. Owner: EternalHell. Project root:
 
 ```
 C:\Users\Zachary Smith\Documents\Projects\Minecraft\Duty
