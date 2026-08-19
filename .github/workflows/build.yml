@@ -58,6 +58,14 @@ jobs:
           distribution: temurin
           java-version: ${{ steps.target.outputs.java }}
 
+      # The checkers come from the shared repository rather than a copy in this one. The copy
+      # here defaulted to a hardcoded list of five modules, and Duty has more than five, so it had
+      # been checking part of the project and reporting a clean pass on the rest.
+      - uses: actions/checkout@v4
+        with:
+          repository: EternalCoder454/mc-tools
+          path: mc-tools
+
       - uses: gradle/actions/setup-gradle@v4
         with:
           # Keyed by branch: the targets download different Minecraft artifacts, and one shared
@@ -68,14 +76,14 @@ jobs:
         run: ./gradlew build --no-daemon --stacktrace
 
       # The checkers are the reason a green build means anything here. Each compares source against
-      # the patched Minecraft jar for this branch -- tools/_minecraft_jar.py refuses to run against
+      # the patched Minecraft jar for this branch, and _minecraft_jar.py refuses to run against
       # another version's jar, so a cache leaking one in cannot silently produce a wrong answer.
       - name: Verify against Minecraft ${{ steps.target.outputs.minecraft }}
         run: |
           set -e
           for check in shadows descriptors mixin-configs orphan-mixins class-strings; do
             echo "::group::check-$check"
-            python3 "tools/check-$check.py"
+            python3 "mc-tools/check-$check.py"
             echo "::endgroup::"
           done
 
@@ -83,7 +91,7 @@ jobs:
         # Informational: it lists overlaps with mods in a reference pack. There is no pack on a
         # runner, so it says so and exits cleanly rather than needing continue-on-error -- a step
         # that is always allowed to fail is a step nobody reads.
-        run: python3 tools/check-conflicts.py
+        run: python3 mc-tools/check-conflicts.py
 
       - uses: actions/upload-artifact@v4
         if: success()
