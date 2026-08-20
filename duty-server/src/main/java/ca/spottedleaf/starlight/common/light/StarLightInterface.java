@@ -723,15 +723,26 @@ public final class StarLightInterface {
                             final SkyStarLightEngine skyEngine = this.getSkyLightEngine();
                             final BlockStarLightEngine blockEngine = this.getBlockLightEngine();
 
-                            LightQueue.ChunkTasks tasks = queue.takeTask(pos);
-                            if (tasks != null) {
-                                try {
+                            // takeTask is inside the finally's reach on purpose. It was outside,
+                            // so anything it threw -- and it opens with a requireNonNull -- left
+                            // both engines acquired and unreferenced. The catch below logs and
+                            // moves on, so the pool would quietly lose two engines per failure and
+                            // build fresh ones, each carrying its own caches and queues.
+                            boolean handled = false;
+                            try {
+                                final LightQueue.ChunkTasks tasks = queue.takeTask(pos);
+                                if (tasks != null) {
                                     handleUpdateInternal(tasks, skyEngine, blockEngine);
-                                } finally {
-                                    this.releaseSkyLightEngine(skyEngine);
-                                    this.releaseBlockLightEngine(blockEngine);
+                                    handled = true;
                                 }
+                            } finally {
+                                this.releaseSkyLightEngine(skyEngine);
+                                this.releaseBlockLightEngine(blockEngine);
+                            }
 
+                            // After the engines are back, as before: this schedules more work and
+                            // there is no reason to hold them across it.
+                            if (handled) {
                                 threadedLevelLightEngine.tryScheduleUpdate();
                             }
                         } catch (Throwable t) {
