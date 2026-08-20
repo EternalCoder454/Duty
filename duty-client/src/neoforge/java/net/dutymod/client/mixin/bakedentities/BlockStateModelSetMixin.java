@@ -19,7 +19,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import net.minecraft.client.renderer.block.BlockStateModelSet;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 
 @Mixin(BlockStateModelSet.class)
@@ -40,32 +39,30 @@ public class BlockStateModelSetMixin {
 
         if(!SettingsManager.MOD_TOGGLE.getValue()) return;
         try{ // In case of another mod trying to access the block states before the entity model set is populated
-            RandomSource random = RandomSource.create(42);
-
             BlockStateModel model;
 
             if(Registry.isSupported("sign", state) && SettingsManager.OPTIMISED_SIGNS.getValue()){
-                model = obeBlockRenderer.getStandingSignModel(state, random, obe$getOriginalModel(state));
+                model = obeBlockRenderer.getStandingSignModel(state, obe$getOriginalModel(state));
                 if(model != null) cir.setReturnValue(model);
             }
             else if(Registry.isSupported("hanging_sign", state) && SettingsManager.OPTIMISED_SIGNS.getValue()){
-                model = obeBlockRenderer.getHangingSignModel(state, random, obe$getOriginalModel(state));
+                model = obeBlockRenderer.getHangingSignModel(state, obe$getOriginalModel(state));
                 if(model != null) cir.setReturnValue(model);
             }
             else if(Registry.isSupported("bed", state) && SettingsManager.OPTIMISED_BEDS.getValue()){
-                model = obeBlockRenderer.getBedModel(state, random, obe$getOriginalModel(state));
+                model = obeBlockRenderer.getBedModel(state, obe$getOriginalModel(state));
                 if(model != null) cir.setReturnValue(model);
             }
             else if(Registry.isSupported("skull", state) && SettingsManager.OPTIMISED_SKULLS.getValue()){
-                model = obeBlockRenderer.getSkullBlockModel(state, random, obe$getOriginalModel(state));
+                model = obeBlockRenderer.getSkullBlockModel(state, obe$getOriginalModel(state));
                 if(model != null) cir.setReturnValue(model);
             }
             else if(Registry.isSupported("chest", state) && SettingsManager.OPTIMISED_CHESTS.getValue()){
-                model = obeBlockRenderer.getChestModel(state, random, obe$getOriginalModel(state));
+                model = obeBlockRenderer.getChestModel(state, obe$getOriginalModel(state));
                 if(model != null) cir.setReturnValue(model);
             }
             else if(Registry.isSupported("banner", state) && SettingsManager.OPTIMISED_BANNERS.getValue()){
-                model = obeBlockRenderer.getBannerModel(state, random, obe$getOriginalModel(state));
+                model = obeBlockRenderer.getBannerModel(state, obe$getOriginalModel(state));
                 if(model != null) cir.setReturnValue(model);
             }
             // else if(Registry.isSupported("bell", state)){
@@ -75,15 +72,15 @@ public class BlockStateModelSetMixin {
             //     if(model != null) cir.setReturnValue(model);
             // }
             else if(Registry.isSupported("copper_golem_statue", state) && SettingsManager.OPTIMISED_COPPER_GOLEMS.getValue()){
-                model = obeBlockRenderer.getCopperGolemStatueModel(state, random, obe$getOriginalModel(state));
+                model = obeBlockRenderer.getCopperGolemStatueModel(state, obe$getOriginalModel(state));
                 if(model != null) cir.setReturnValue(model);
             }
             else if(Registry.isSupported("shulker_box", state) && SettingsManager.OPTIMISED_SHULKER_BOXES.getValue()){
-                model = obeBlockRenderer.getShulkerBoxModel(state, random, obe$getOriginalModel(state));
+                model = obeBlockRenderer.getShulkerBoxModel(state, obe$getOriginalModel(state));
                 if(model != null) cir.setReturnValue(model);
             }
             else if(Registry.isSupported("decorated_pot", state) && SettingsManager.OPTIMISED_DECORATED_POTS.getValue()){
-                model = obeBlockRenderer.getDecoratedPotModel(state, random, obe$getOriginalModel(state));
+                model = obeBlockRenderer.getDecoratedPotModel(state, obe$getOriginalModel(state));
                 if(model != null) cir.setReturnValue(model);
             }
         }

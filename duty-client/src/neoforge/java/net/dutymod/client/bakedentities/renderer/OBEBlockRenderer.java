@@ -25,7 +25,6 @@ import net.minecraft.client.renderer.blockentity.BedRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -50,8 +49,6 @@ public class OBEBlockRenderer {
         BlockEntityExt ext = (BlockEntityExt)be;
         if (ext == null || !ext.isSupportedBlockEntity() || !ext.hasSpecialRenderer() || !ext.isEnabled()) return null;
 
-        RandomSource random = RandomSource.create(seed);
-
         String group = Registry.getGroup(state);
         SpecialModelProvider customModelProvider = SpecialModelGetter.getSpecialModelProvider(state, group);
         if(ext.renderMode() == RenderMode.TERRAIN || ext.renderMode() == RenderMode.INTERMEDIATE){
@@ -75,14 +72,19 @@ public class OBEBlockRenderer {
                 return model;
             }
         }
-        else if(!customModelProvider.shouldShowOriginalWhenHidden()){
+        // RenderMode.ENTITY lands here, and customModelProvider is nullable: getSpecialModelProvider
+        // returns null on four paths, and the checks above only establish that the block entity is
+        // supported, has a special renderer and is enabled, not that anything is registered for it.
+        // Without this guard a supported entity-mode block entity with no provider threw a
+        // NullPointerException on the chunk model path.
+        else if(customModelProvider != null && !customModelProvider.shouldShowOriginalWhenHidden()){
             return new BlockEntityStateModel(originalModel.particleMaterial());
         }
 
         return null;
     }
 
-    public BlockStateModel getStandingSignModel(BlockState state, RandomSource random, BlockStateModel originalModel){
+    public BlockStateModel getStandingSignModel(BlockState state, BlockStateModel originalModel){
         BlockStateModel cached = ResourceUtil.getModel(state);
         if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
@@ -97,7 +99,7 @@ public class OBEBlockRenderer {
         return model;
     }
 
-    public BlockStateModel getHangingSignModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
+    public BlockStateModel getHangingSignModel(BlockState state, BlockStateModel originalModel) {
         BlockStateModel cached = ResourceUtil.getModel(state);
         if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
@@ -110,7 +112,7 @@ public class OBEBlockRenderer {
         return ResourceUtil.getModel(layerLocation, MaterialGetter.getMaterial(state, "hanging_sign"), state, poseStack, SettingsManager.SIGN_AMBIENT_OCCLUSION.getValue(), originalModel.particleMaterial());
     }
 
-    public BlockStateModel getSkullBlockModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
+    public BlockStateModel getSkullBlockModel(BlockState state, BlockStateModel originalModel) {
         BlockStateModel cached = ResourceUtil.getModel(state);
         if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
@@ -122,7 +124,7 @@ public class OBEBlockRenderer {
         return ResourceUtil.getModel(layerLocation, MaterialGetter.getMaterial(state, "skull"), state, poseStack, getAmbientOcclusion("skull"), originalModel.particleMaterial());
     }
 
-    public BlockStateModel getBedModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
+    public BlockStateModel getBedModel(BlockState state, BlockStateModel originalModel) {
         BlockStateModel cached = ResourceUtil.getModel(state);
         if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
@@ -141,7 +143,7 @@ public class OBEBlockRenderer {
         return model;
     }
 
-    public BlockStateModel getChestModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
+    public BlockStateModel getChestModel(BlockState state, BlockStateModel originalModel) {
         BlockStateModel cached = ResourceUtil.getModel(state);
         if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
@@ -156,7 +158,7 @@ public class OBEBlockRenderer {
         return model;
     }
 
-    public BlockStateModel getBannerModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
+    public BlockStateModel getBannerModel(BlockState state, BlockStateModel originalModel) {
         BlockStateModel cached = ResourceUtil.getModel(state);
         if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
@@ -169,7 +171,7 @@ public class OBEBlockRenderer {
         return ResourceUtil.getModel(layerLocation, MaterialGetter.getMaterial(state, "banner"), state, poseStack, getAmbientOcclusion("banner"), originalModel.particleMaterial());
     }
 
-    public BlockStateModel getCopperGolemStatueModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
+    public BlockStateModel getCopperGolemStatueModel(BlockState state, BlockStateModel originalModel) {
         BlockStateModel cached = ResourceUtil.getModel(state);
         if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
@@ -182,7 +184,7 @@ public class OBEBlockRenderer {
         return ResourceUtil.getModel(layerLocation, MaterialGetter.getMaterial(state, "copper_golem_statue"), state, poseStack, getAmbientOcclusion("copper_golem_statue"), originalModel.particleMaterial());
     }
 
-    public BlockStateModel getShulkerBoxModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
+    public BlockStateModel getShulkerBoxModel(BlockState state, BlockStateModel originalModel) {
         BlockStateModel cached = ResourceUtil.getModel(state);
         if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();
@@ -201,7 +203,7 @@ public class OBEBlockRenderer {
         return model;
     }
 
-    public BlockStateModel getDecoratedPotModel(BlockState state, RandomSource random, BlockStateModel originalModel) {
+    public BlockStateModel getDecoratedPotModel(BlockState state, BlockStateModel originalModel) {
         BlockStateModel cached = ResourceUtil.getModel(state);
         if(cached != null) return cached;
         PoseStack poseStack = new PoseStack();

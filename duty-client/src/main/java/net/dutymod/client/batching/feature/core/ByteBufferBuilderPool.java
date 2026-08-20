@@ -91,6 +91,18 @@ public class ByteBufferBuilderPool {
                     } else {
                         Batching.LOGGER.warn("\t<No stack trace available. Enable debug_only_detailed_memory_leak_detection in the config to get stack traces>");
                     }
+                    // Drop the mapping too, or the leak detector leaks. BUFFER_BUILDER_MAPPING is
+                    // an identity map holding strong references, so an entry reclaimed from IN_USE
+                    // and left in the map keeps both the Entry and its ByteBufferBuilder, and the
+                    // builder owns off-heap memory. One retained pair per leak reported, for the
+                    // life of the process.
+                    //
+                    // The builder is deliberately not closed. Whoever failed to return it may still
+                    // be writing to it, and freeing the native buffer under them turns a leak into
+                    // a crash. Releasing our own reference is the most that can be done safely: if
+                    // they later return it, the lookup misses, IN_USE.remove(null) is false, and
+                    // the call is a no-op exactly as before.
+                    BUFFER_BUILDER_MAPPING.remove(entry.bufferBuilder);
                     return true;
                 }
                 return false;
