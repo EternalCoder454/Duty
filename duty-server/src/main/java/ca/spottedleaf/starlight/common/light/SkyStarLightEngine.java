@@ -633,22 +633,7 @@ public final class SkyStarLightEngine extends StarLightEngine {
                 fromShape = Shapes.empty();
             }
 
-//            final int opacityIfCached = ((ExtendedAbstractBlockState)current).getOpacityIfCached();
             // does light propagate from the top down?
-//            if (opacityIfCached != -1) {
-//                if (opacityIfCached != 0) {
-//                    // we cannot propagate 15 through this
-//                    break;
-//                }
-//                // most of the time it falls here.
-//                // add to propagate
-//                // light set delayed until we determine if this nibble section is null
-//                this.appendToIncreaseQueue(
-//                        ((worldX + (worldZ << 6) + (startY << (6 + 6)) + encodeOffset) & ((1L << (6 + 6 + 16)) - 1))
-//                                | (15L << (6 + 6 + 16)) // we know we're at full lit here
-//                                | (propagateDirection << (6 + 6 + 16 + 4))
-//                );
-//            } else {
                 mutablePos.set(worldX, startY, worldZ);
                 long flags = 0L;
                 if (((ExtendedAbstractBlockState)current).scalablelux$isConditionallyFullOpaque()) {
@@ -674,7 +659,6 @@ public final class SkyStarLightEngine extends StarLightEngine {
                                 | (propagateDirection << (6 + 6 + 16 + 4))
                                 | flags
                 );
-//            }
 
             above = current;
 
