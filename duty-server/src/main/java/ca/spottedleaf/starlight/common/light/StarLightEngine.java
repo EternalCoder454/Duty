@@ -274,6 +274,20 @@ public abstract class StarLightEngine {
         }
     }
 
+    /**
+     * Ends a pass, whatever happened during it.
+     *
+     * <p>Called from a finally at every top level entry point, and never nested: the two public
+     * checkChunkEdges overloads call the protected one, which has no cleanup of its own. That is
+     * what makes this the right place to reset state that must not outlive a pass, and the caches
+     * above already rely on it.
+     *
+     * <p>The queue lengths are here because an engine is pooled, and a pass that throws between
+     * appending and draining would otherwise park a live length on it. Positions are encoded
+     * against the pass's own {@code encodeOffset}, so the next pass would decode them against a
+     * different one and write light at coordinates unrelated to anything it was asked about. The
+     * throw is already logged and swallowed by the scheduled task, so nothing else would notice.
+     */
     protected final void destroyCaches() {
         Arrays.fill(this.sectionCache, null);
         Arrays.fill(this.nibbleCache, null);
@@ -282,7 +296,19 @@ public abstract class StarLightEngine {
         if (this.isClientSide) {
             Arrays.fill(this.notifyUpdateCache, false);
         }
+        this.increaseQueueInitialLength = 0;
+        this.decreaseQueueInitialLength = 0;
+        this.resetPropagationScratch();
     }
+
+    /**
+     * Clears subclass scratch state that must not survive a pass.
+     *
+     * <p>Empty here because the block engine keeps none. See the sky engine, whose column heightmap
+     * restores itself entry by entry as it consumes them, and therefore does not restore the ones
+     * it never reached.
+     */
+    protected void resetPropagationScratch() {}
 
     protected final BlockState getBlockState(final int worldX, final int worldY, final int worldZ) {
         final LevelChunkSection section = this.sectionCache[(worldX >> 4) + 5 * (worldZ >> 4) + (5 * 5) * (worldY >> 4) + this.chunkSectionIndexOffset];

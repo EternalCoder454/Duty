@@ -57,6 +57,24 @@ public final class SkyStarLightEngine extends StarLightEngine {
         this.nullPropagationCheckCache = new boolean[WorldUtil.getTotalLightSections(world)];
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>{@link #heightMapBlockChange} restores each entry as it consumes it, which is enough for a
+     * pass that finishes and nothing at all for one that throws partway: every column it had not
+     * reached keeps its value. The engine then goes back in the pool, and the next chunk to use it
+     * reads those as its own changed columns, because the index is chunk relative.
+     *
+     * <p>{@code nullPropagationCheckCache} is already cleared at all four entry points. It is
+     * cleared here too so that "an engine between passes is clean" holds without having to check
+     * which of the two mechanisms covers a given field.
+     */
+    @Override
+    protected void resetPropagationScratch() {
+        Arrays.fill(this.heightMapBlockChange, Integer.MIN_VALUE);
+        Arrays.fill(this.nullPropagationCheckCache, false);
+    }
+
     @Override
     protected void initNibble(final int chunkX, final int chunkY, final int chunkZ, final boolean extrude, final boolean initRemovedNibbles) {
         if (chunkY < this.minLightSection || chunkY > this.maxLightSection || this.getChunkInCache(chunkX, chunkZ) == null) {
