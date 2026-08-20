@@ -3,6 +3,7 @@ package net.dutymod.client.occlusion;
 import java.util.Arrays;
 import java.util.BitSet;
 
+import net.dutymod.framework.DutyLog;
 import net.dutymod.client.occlusion.cache.ArrayOcclusionCache;
 import net.dutymod.client.occlusion.cache.OcclusionCache;
 import net.dutymod.client.occlusion.util.MathUtilities;
@@ -141,8 +142,16 @@ public class OcclusionCullingInstance {
 
             return false;
         } catch (Throwable t) {
-            // Failsafe
-            t.printStackTrace();
+            // Failsafe: anything that goes wrong means "visible", the answer that cannot hide
+            // something a player should be able to see.
+            //
+            // Reported once per session rather than once per failure. This runs per entity per
+            // frame, and a fault that happens once usually happens again next frame on the same
+            // geometry, so printing a stack trace here meant thousands a second: the log floods,
+            // and the printing costs far more than the culling it stood in for.
+            DutyLog.warnOnce("culling.trace-failed",
+                    "Occlusion culling failed, so anything it cannot decide is being drawn."
+                            + " Reported once; any further failures are silent. " + t);
         }
         return true;
     }
