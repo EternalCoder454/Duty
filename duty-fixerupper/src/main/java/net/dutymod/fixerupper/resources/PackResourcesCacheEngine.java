@@ -25,8 +25,15 @@ import java.util.stream.Stream;
  */
 public class PackResourcesCacheEngine {
     private static final Joiner SLASH_JOINER = Joiner.on('/');
+    /**
+     * Interns the directory components of a resource path, so the tree below holds one string per
+     * distinct directory name rather than one per path that mentions it.
+     *
+     * <p>Bounded by the number of distinct directory names in a pack, which is small: assets,
+     * minecraft, textures, block and so on. Leaf file names are deliberately not interned, because
+     * they are nearly all distinct and interning them would keep every one alive for nothing.
+     */
     private static final ConcurrentHashMap<String, String> PATH_COMPONENT_INTERNER = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<String, String[]> CACHED_SPLIT_PATHS = new ConcurrentHashMap<>();
 
     static class Node {
         Map<String, Node> children;
@@ -220,15 +227,4 @@ public class PackResourcesCacheEngine {
         node.collectResources(resourceNamespace, this.rootPathsByType.get(type).resolve(resourceNamespace), components, 0, maxDepth, output);
     }
 
-    private static String[] decompose(String path) {
-        String[] components = path.split("/");
-        for (int i = 0; i < components.length; i++) {
-            components[i] = PATH_COMPONENT_INTERNER.computeIfAbsent(components[i], Function.identity());
-        }
-        return components;
-    }
-
-    public static String[] decomposeCached(String path) {
-        return CACHED_SPLIT_PATHS.computeIfAbsent(path, PackResourcesCacheEngine::decompose);
-    }
 }
