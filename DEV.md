@@ -275,8 +275,13 @@ Targeting one version at a time is what makes this possible:
 | ConditionalMixin | Particle Core's mixin gating | `DutyClientMixinPlugin` |
 | TRansitionLib | EntityCulling's cross-version shims | direct calls |
 | Lombok | EntityCulling's generated setters | written out |
-| `net.lenni0451:reflect` | Jasione's classloader lookup | `StackWalker` |
-| knot, uilib, yamlconfig | Necessities' platform, UI and config | `DutyPlatform`, `DutyConfig` — uilib was declared and never imported |
+| `net.lenni0451:Reflect` | Jasione's classloader lookup | `StackWalker`, in Jasione only. See below |
+| knot, uilib, yamlconfig | Necessities' platform, UI and config | `DutyPlatform`, `DutyConfig`. uilib was declared and never imported |
+
+**`net.lenni0451:Reflect` is still shipped.** It came out of Jasione, which is what that row
+records. Batching still uses it in two places, `IrisCompat` and the map atlas mixin, so
+`duty-client` declares it and JarJars it into the jar. Reading that row as "Duty no longer carries
+Reflect" is wrong, and it matters when judging what a module pulls in.
 
 ## 🧠 Where the reasoning lives
 

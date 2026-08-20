@@ -81,7 +81,12 @@ jobs:
       - name: Verify against Minecraft ${{ steps.target.outputs.minecraft }}
         run: |
           set -e
-          for check in shadows descriptors mixin-configs orphan-mixins class-strings; do
+          # mutable-shadows is here because HANDOFF names the failure it catches: a ported mixin
+          # assigning a shadowed final field, which compiles, applies cleanly, and throws
+          # IllegalAccessError partway through world creation. Ported Fabric mixins are where it
+          # bites, because loom's access widener drops final game-wide and so they rarely say
+          # @Mutable.
+          for check in shadows mutable-shadows descriptors mixin-configs orphan-mixins class-strings; do
             echo "::group::check-$check"
             python3 "mc-tools/check-$check.py"
             echo "::endgroup::"
