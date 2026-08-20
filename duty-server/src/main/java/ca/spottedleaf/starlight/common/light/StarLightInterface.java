@@ -382,9 +382,16 @@ public final class StarLightInterface {
     }
 
     protected final void releaseSkyLightEngine(final SkyStarLightEngine engine) {
-        if (this.cachedSkyPropagators == null) {
+        // The engine is null exactly when the pool is, because getSkyLightEngine builds one when
+        // the pool is empty. Stated rather than relied on: callers release in a finally without
+        // checking, and both the trim below and ArrayDeque.addFirst would throw on null.
+        if (this.cachedSkyPropagators == null || engine == null) {
             return;
         }
+        // Before the handover, so the write is published by the same monitor that publishes the
+        // engine itself. This pool is held for the life of the world, so an engine parked here
+        // keeps whatever its propagation queues grew to during the worst relight it ever ran.
+        engine.trimQueuesIfPersistentlyUnderused();
         synchronized (this.cachedSkyPropagators) {
             this.cachedSkyPropagators.addFirst(engine);
         }
@@ -406,9 +413,10 @@ public final class StarLightInterface {
     }
 
     protected final void releaseBlockLightEngine(final BlockStarLightEngine engine) {
-        if (this.cachedBlockPropagators == null) {
+        if (this.cachedBlockPropagators == null || engine == null) {
             return;
         }
+        engine.trimQueuesIfPersistentlyUnderused();
         synchronized (this.cachedBlockPropagators) {
             this.cachedBlockPropagators.addFirst(engine);
         }

@@ -1119,10 +1119,91 @@ public abstract class StarLightEngine {
     // whether the propagation needs to consider if its block is conditionally transparent
     protected static final long FLAG_HAS_SIDED_TRANSPARENT_BLOCKS = Long.MIN_VALUE;
 
-    protected long[] increaseQueue = new long[16 * 16 * 16];
+    /**
+     * Starting capacity of both propagation queues, and the floor they shrink back to.
+     *
+     * <p>4096 longs is 32KB each, so an untouched engine costs 64KB in queues.
+     */
+    protected static final int QUEUE_BASELINE_LENGTH = 16 * 16 * 16;
+
+    /**
+     * How many consecutive releases must find the queues oversized before they are shrunk.
+     *
+     * <p>The point is to distinguish a burst from a plateau. Shrinking on the first idle release
+     * would collapse the queue between two chunks of worldgen and grow it straight back, which
+     * costs a copy each way and achieves nothing. Requiring a run of releases means a sustained
+     * workload keeps its capacity, because any one pass that needs it lifts the peak again and
+     * resets the count, while a burst that has genuinely ended gives it back.
+     */
+    protected static final int UNDERUSED_RELEASES_BEFORE_TRIM = 8;
+
+    protected long[] increaseQueue = new long[QUEUE_BASELINE_LENGTH];
     protected int increaseQueueInitialLength;
-    protected long[] decreaseQueue = new long[16 * 16 * 16];
+    protected long[] decreaseQueue = new long[QUEUE_BASELINE_LENGTH];
     protected int decreaseQueueInitialLength;
+
+    /**
+     * The most either queue has actually used since the last shrink decision, and how many
+     * decisions in a row have found the capacity far larger than that.
+     *
+     * <p>Both queues only ever double. Nothing gave the capacity back, and a pooled engine is held
+     * by its {@code StarLightInterface} for the life of the world, so one pathological relight left
+     * every engine in that pool carrying its high water mark forever, times two queues, times one
+     * pool per dimension.
+     */
+    protected int increaseQueuePeak;
+    protected int decreaseQueuePeak;
+    protected int queueUnderusedStreak;
+
+    /**
+     * Gives back queue capacity an engine has stopped needing, before it goes back in the pool.
+     *
+     * <p>Called on release rather than at the end of a pass: an engine returning to the pool may
+     * sit there indefinitely, and that is exactly when holding megabytes of {@code long[]} is pure
+     * cost. A pass that is about to run again wants its capacity.
+     *
+     * <p>Shrinks to fit the observed peak rather than to the baseline, so an engine that genuinely
+     * works at a larger size settles there instead of oscillating.
+     */
+    public final void trimQueuesIfPersistentlyUnderused() {
+        final boolean oversized =
+                (this.increaseQueue.length > QUEUE_BASELINE_LENGTH
+                        && this.increaseQueue.length > (this.increaseQueuePeak << 2))
+                || (this.decreaseQueue.length > QUEUE_BASELINE_LENGTH
+                        && this.decreaseQueue.length > (this.decreaseQueuePeak << 2));
+
+        if (!oversized) {
+            // The capacity is earning its place. Start a fresh window rather than holding an old
+            // peak that would keep answering this question for work that has already finished.
+            this.queueUnderusedStreak = 0;
+            this.increaseQueuePeak = 0;
+            this.decreaseQueuePeak = 0;
+            return;
+        }
+
+        if (++this.queueUnderusedStreak < UNDERUSED_RELEASES_BEFORE_TRIM) {
+            // Deliberately does not reset the peaks. They accumulate across the window, so one
+            // heavy pass inside it lifts the peak and takes the queues out of "oversized" again.
+            return;
+        }
+
+        this.increaseQueue = new long[fitQueueLength(this.increaseQueuePeak)];
+        this.decreaseQueue = new long[fitQueueLength(this.decreaseQueuePeak)];
+        this.queueUnderusedStreak = 0;
+        this.increaseQueuePeak = 0;
+        this.decreaseQueuePeak = 0;
+    }
+
+    /** {@return the smallest power of two that holds {@code peak}, never below the baseline} */
+    private static int fitQueueLength(final int peak) {
+        if (peak <= QUEUE_BASELINE_LENGTH) {
+            return QUEUE_BASELINE_LENGTH;
+        }
+        final int rounded = Integer.highestOneBit(peak - 1) << 1;
+        // Only reachable if peak is within a factor of two of Integer.MAX_VALUE, which the queue
+        // cannot reach, but a negative length would be a far worse failure than a large array.
+        return rounded > 0 ? rounded : peak;
+    }
 
     protected final long[] resizeIncreaseQueue() {
         return this.increaseQueue = Arrays.copyOf(this.increaseQueue, this.increaseQueue.length * 2);
@@ -1350,6 +1431,13 @@ public abstract class StarLightEngine {
 //                    }
                 }
             }
+        }
+
+        // What the pass actually needed, for the shrink policy in trimQueuesIfPersistentlyUnderused.
+        // queueLength is the high water mark: every append went through it, and the resize above
+        // only grows the array when it is reached.
+        if (queueLength > this.increaseQueuePeak) {
+            this.increaseQueuePeak = queueLength;
         }
     }
 
@@ -1625,6 +1713,10 @@ public abstract class StarLightEngine {
 //                    }
                 }
             }
+        }
+
+        if (queueLength > this.decreaseQueuePeak) {
+            this.decreaseQueuePeak = queueLength;
         }
 
         // propagate sources we clobbered
