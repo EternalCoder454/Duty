@@ -7,6 +7,7 @@ import ca.spottedleaf.starlight.common.util.WorldUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.ShortCollection;
 import it.unimi.dsi.fastutil.shorts.ShortIterator;
+import net.dutymod.framework.DutyMetrics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
@@ -1191,7 +1192,23 @@ public abstract class StarLightEngine {
      * <p>Shrinks to fit the observed peak rather than to the baseline, so an engine that genuinely
      * works at a larger size settles there instead of oscillating.
      */
+    /**
+     * What the propagation queues actually cost, and whether they are being given back.
+     *
+     * <p>Static so the registry lookup happens once at class init rather than per release. These
+     * exist because the shrink policy below is otherwise unobservable: whether it ever fires, and
+     * whether it fires so often that it is thrashing, are both invisible from the outside.
+     */
+    private static final DutyMetrics.Gauge QUEUE_CAPACITY =
+            DutyMetrics.gauge("server.lighting.queue_entries");
+    private static final DutyMetrics.Counter QUEUE_TRIMS =
+            DutyMetrics.counter("server.lighting.queue_trims");
+
     public final void trimQueuesIfPersistentlyUnderused() {
+        // Sampled on release rather than per pass: this is where the level settles, and a gauge
+        // read on the propagation path would be measuring the thing it is meant to be watching.
+        QUEUE_CAPACITY.record((long) this.increaseQueue.length + this.decreaseQueue.length);
+
         final boolean oversized =
                 (this.increaseQueue.length > QUEUE_BASELINE_LENGTH
                         && this.increaseQueue.length > (this.increaseQueuePeak << 2))
@@ -1215,6 +1232,7 @@ public abstract class StarLightEngine {
 
         this.increaseQueue = new long[fitQueueLength(this.increaseQueuePeak)];
         this.decreaseQueue = new long[fitQueueLength(this.decreaseQueuePeak)];
+        QUEUE_TRIMS.increment();
         this.queueUnderusedStreak = 0;
         this.increaseQueuePeak = 0;
         this.decreaseQueuePeak = 0;

@@ -307,6 +307,25 @@ public final class DutyReport {
      * attributed by every timer to whichever call it interrupted, so without a GC line a 45ms
      * culling spike and a 45ms GC pause are the same observation wearing different labels.
      */
+    /**
+     * {@return a byte count at a readable scale}
+     *
+     * <p>Allocation rates span three or four orders of magnitude between an idle menu and a world
+     * being generated, so a fixed unit is unreadable at one end or the other.
+     */
+    private static String bytes(long value) {
+        if (value < 1024L) {
+            return value + " B";
+        }
+        if (value < 1024L * 1024L) {
+            return String.format(Locale.ROOT, "%.1f KiB", value / 1024.0d);
+        }
+        if (value < 1024L * 1024L * 1024L) {
+            return String.format(Locale.ROOT, "%.1f MiB", value / (1024.0d * 1024.0d));
+        }
+        return String.format(Locale.ROOT, "%.2f GiB", value / (1024.0d * 1024.0d * 1024.0d));
+    }
+
     private static void appendGcFinding(List<Finding> out, long max, long liveSet) {
         long collections = DutyGc.count();
         if (collections == 0L) {
@@ -322,6 +341,15 @@ public final class DutyReport {
                 collections, DutyGc.majorCount(), DutyGc.totalPauseMillis(), worst,
                 DutyGc.worstCause().isEmpty() ? "cause unknown" : DutyGc.worstCause(),
                 collectors.isEmpty() ? "unknown" : collectors);
+
+        // The rate belongs next to the pauses, because on its own each is misleading. Pauses say
+        // whether the collector is coping; the rate says how much it is being asked to do, and a
+        // module whose purpose is to allocate less should be read on the second.
+        final double allocationRate = DutyGc.allocationBytesPerSecond();
+        if (allocationRate >= 0.0d) {
+            base = base + String.format(Locale.ROOT, " Allocating %s/s (%s total since startup).",
+                    bytes((long) allocationRate), bytes(DutyGc.allocatedBytes()));
+        }
 
         if (concurrent) {
             // Reporting a concurrent cycle as a stall is the one mistake this section could make

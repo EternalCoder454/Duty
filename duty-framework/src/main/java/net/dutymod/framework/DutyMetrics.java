@@ -80,6 +80,16 @@ public final class DutyMetrics {
     private static final Map<String, Timer> TIMERS = new ConcurrentHashMap<>();
     private static final Map<String, Counter> COUNTERS = new ConcurrentHashMap<>();
 
+    /**
+     * Levels, as opposed to durations and totals.
+     *
+     * <p>A timer answers "how long did that take" and a counter "how many times". Neither answers
+     * "how big is it now", which is the shape of a queue's capacity, a pool's size or a cache's
+     * occupancy. Those were unmeasurable, so a question like "did the light engine give its queue
+     * capacity back" could only be reasoned about rather than read.
+     */
+    private static final Map<String, Gauge> GAUGES = new ConcurrentHashMap<>();
+
     private static volatile boolean initialized;
     private static volatile Thread reporter;
 
@@ -92,6 +102,14 @@ public final class DutyMetrics {
      * is the form that tells you whether to care.
      */
     private static volatile long windowStartedNanos;
+
+    /**
+     * When this class was initialised, which is as close to "session start" as it can see.
+     *
+     * <p>Separate from the measurement window because counters run whether or not measuring is on,
+     * so their totals need a span even when there is no window.
+     */
+    private static volatile long sessionStartedNanos;
 
 
     private DutyMetrics() {}
@@ -108,6 +126,7 @@ public final class DutyMetrics {
             return;
         }
         initialized = true;
+        sessionStartedNanos = System.nanoTime();
 
         DutyConfig.register(ENABLED, false,
                 "Measure what Duty's own work costs and report it. Off by default because the\n"
@@ -154,6 +173,22 @@ public final class DutyMetrics {
     public static long windowNanos() {
         long started = windowStartedNanos;
         return started == 0L ? 0L : System.nanoTime() - started;
+    }
+
+    /**
+     * {@return nanoseconds a counter's total was accumulated over}
+     *
+     * <p>The measurement window when measuring is on, and the whole session otherwise. Counters
+     * collect either way, so without this fallback their rates were blank in exactly the reports
+     * where the totals were the only numbers present.
+     */
+    public static long counterWindowNanos() {
+        final long window = windowNanos();
+        if (window > 0L) {
+            return window;
+        }
+        final long since = sessionStartedNanos;
+        return since == 0L ? 0L : System.nanoTime() - since;
     }
 
     /**
@@ -204,6 +239,17 @@ public final class DutyMetrics {
         return COUNTERS.computeIfAbsent(name, Counter::new);
     }
 
+    /**
+     * {@return the gauge with this name, creating it if needed}
+     *
+     * <p>Hold the handle in a {@code static final} like the others, so the registry lookup happens
+     * once at class init rather than every time a level is recorded.
+     */
+    public static Gauge gauge(String name) {
+        init();
+        return GAUGES.computeIfAbsent(name, Gauge::new);
+    }
+
     /** Forgets every recorded sample, keeping the handles valid. */
     public static void reset() {
         windowStartedNanos = enabled ? System.nanoTime() : 0L;
@@ -212,6 +258,9 @@ public final class DutyMetrics {
         }
         for (Counter counter : COUNTERS.values()) {
             counter.reset();
+        }
+        for (Gauge gauge : GAUGES.values()) {
+            gauge.reset();
         }
     }
 
@@ -236,6 +285,14 @@ public final class DutyMetrics {
         return out;
     }
 
+    /** {@return every gauge that has been sampled, by name} */
+    public static List<Gauge> gauges() {
+        List<Gauge> out = new ArrayList<>(GAUGES.values());
+        out.removeIf(g -> g.samples() == 0);
+        out.sort(Comparator.comparing(Gauge::name));
+        return out;
+    }
+
     /**
      * {@return a human-readable report, or a line explaining why it is empty}
      *
@@ -254,13 +311,14 @@ public final class DutyMetrics {
         // is off. Say which half is missing instead of implying both are.
         final List<Timer> timers = enabled ? timers() : List.of();
         final List<Counter> counters = counters();
+        final List<Gauge> gauges = gauges();
 
         if (!enabled) {
             out.append("  timings are off; set ").append(ENABLED)
-                    .append("=true for those. Counters below are collected regardless.\n");
+                    .append("=true for those. Counters and levels below are collected regardless.\n");
         }
 
-        if (timers.isEmpty() && counters.isEmpty()) {
+        if (timers.isEmpty() && counters.isEmpty() && gauges.isEmpty()) {
             out.append("  nothing recorded yet");
             return out.toString();
         }
@@ -279,10 +337,28 @@ public final class DutyMetrics {
             if (!timers.isEmpty()) {
                 out.append('\n');
             }
-            out.append(String.format(Locale.ROOT, "  %-38s %9s%n", "counter", "value"));
+            // A rate, not just a total. "73372 hidden" cannot be read without knowing whether that
+            // was over ten seconds or an hour, and the window is already tracked.
+            final double seconds = counterWindowNanos() / 1.0e9d;
+            out.append(String.format(Locale.ROOT, "  %-38s %12s %12s%n", "counter", "value", "per second"));
             for (Counter c : counters) {
-                out.append(String.format(Locale.ROOT, "  %-38s %9d%n",
-                        trim(c.name(), 38), c.value()));
+                final String rate = seconds > 0.0d
+                        ? String.format(Locale.ROOT, "%.1f", c.value() / seconds)
+                        : "-";
+                out.append(String.format(Locale.ROOT, "  %-38s %12d %12s%n",
+                        trim(c.name(), 38), c.value(), rate));
+            }
+        }
+
+        if (!gauges.isEmpty()) {
+            if (!timers.isEmpty() || !counters.isEmpty()) {
+                out.append('\n');
+            }
+            out.append(String.format(Locale.ROOT, "  %-38s %12s %12s %12s %9s%n",
+                    "level", "last", "min", "max", "samples"));
+            for (Gauge g : gauges) {
+                out.append(String.format(Locale.ROOT, "  %-38s %12d %12d %12d %9d%n",
+                        trim(g.name(), 38), g.last(), g.min(), g.max(), g.samples()));
             }
         }
 
@@ -565,6 +641,69 @@ public final class DutyMetrics {
      * cost is one {@link LongAdder} increment and the number is usually wanted precisely when
      * nobody thought to switch measuring on first.
      */
+    /**
+     * A level: the last value recorded, and the range it has moved through.
+     *
+     * <p>Always records, like {@link Counter} and unlike {@link Timer}, for the same reason: there
+     * is no clock to read, so "off" would only be hiding data that cost nothing to keep. What it
+     * costs is three atomic writes, so sample it where a level changes rather than in a loop.
+     *
+     * <p>Min and max are both kept because which one matters depends on the question. For a queue's
+     * capacity the high water mark is the whole point; for a pool's size, a floor that never rises
+     * says the pool is never being drawn down.
+     */
+    public static final class Gauge {
+        private final String name;
+        private final AtomicLong last = new AtomicLong();
+        private final AtomicLong max = new AtomicLong(Long.MIN_VALUE);
+        private final AtomicLong min = new AtomicLong(Long.MAX_VALUE);
+        private final LongAdder samples = new LongAdder();
+
+        private Gauge(String name) {
+            this.name = name;
+        }
+
+        /** Records the current level. */
+        public void record(long value) {
+            this.last.set(value);
+            this.samples.increment();
+            this.max.accumulateAndGet(value, Math::max);
+            this.min.accumulateAndGet(value, Math::min);
+        }
+
+        public String name() {
+            return this.name;
+        }
+
+        /** {@return the most recent level, or 0 if nothing has been recorded} */
+        public long last() {
+            return this.last.get();
+        }
+
+        /** {@return the highest level seen, or 0 if nothing has been recorded} */
+        public long max() {
+            final long value = this.max.get();
+            return value == Long.MIN_VALUE ? 0L : value;
+        }
+
+        /** {@return the lowest level seen, or 0 if nothing has been recorded} */
+        public long min() {
+            final long value = this.min.get();
+            return value == Long.MAX_VALUE ? 0L : value;
+        }
+
+        public long samples() {
+            return this.samples.sum();
+        }
+
+        void reset() {
+            this.last.set(0L);
+            this.max.set(Long.MIN_VALUE);
+            this.min.set(Long.MAX_VALUE);
+            this.samples.reset();
+        }
+    }
+
     public static final class Counter {
         private final String name;
         private final LongAdder value = new LongAdder();

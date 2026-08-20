@@ -519,6 +519,37 @@ public final class StarLightInterface {
                             where, duty$worstChunkNanos / 1.0e6, duty$slowChunkCount,
                             SLOW_CHUNK_NANOS / 1.0e6)));
         });
+
+        // What the propagation queues cost, and whether they are being handed back.
+        //
+        // The rules above cannot read this one: they know a level is high, not that a high level
+        // is expected during worldgen and only worth reporting if it stays high once the world is
+        // quiet. That judgement belongs to the module that knows what the number means.
+        net.dutymod.framework.DutyReport.contributor(findings -> {
+            final net.dutymod.framework.DutyMetrics.Gauge entries =
+                    net.dutymod.framework.DutyMetrics.gauge("server.lighting.queue_entries");
+            if (entries.samples() == 0L) {
+                return;
+            }
+            final long trims = net.dutymod.framework.DutyMetrics.counter("server.lighting.queue_trims").value();
+            // Two queues per engine, eight bytes an entry.
+            final long peakBytes = entries.max() * 8L;
+            final long nowBytes = entries.last() * 8L;
+
+            findings.add(new net.dutymod.framework.DutyReport.Finding(
+                    net.dutymod.framework.DutyReport.Severity.INFO,
+                    "Light propagation queues",
+                    String.format(java.util.Locale.ROOT,
+                            "Peaked at %d entries (%.1f KiB per engine), currently %d (%.1f KiB), "
+                                    + "across %d release(s), and shrank %d time(s). These only grow "
+                                    + "while lighting is busy. A peak far above the current value "
+                                    + "with a non-zero shrink count is the memory being handed back; "
+                                    + "a peak that equals the current value and never shrank means "
+                                    + "either the load never stopped or it is being held for nothing.",
+                            entries.max(), peakBytes / 1024.0d,
+                            entries.last(), nowBytes / 1024.0d,
+                            entries.samples(), trims)));
+        });
     }
 
     /**

@@ -66,6 +66,15 @@ public final class DutyGc {
     /** Heap still reachable after the most recent major collection; -1 until one happens. */
     private static final AtomicLong LIVE_SET_BYTES = new AtomicLong(-1L);
 
+    /** Heap in use after the previous collection, the baseline the next one measures against. */
+    private static final AtomicLong LAST_HEAP_AFTER = new AtomicLong(-1L);
+
+    /** Bytes allocated between collections, summed. See the note in {@link #record}. */
+    private static final AtomicLong ALLOCATED_BYTES = new AtomicLong();
+
+    /** When collection monitoring started, so the total above can be turned into a rate. */
+    private static volatile long startedNanos;
+
     private static final AtomicReference<String> WORST_CAUSE = new AtomicReference<>("");
 
     /** Above this, a pause is long enough for a person to see the window stop repainting. */
@@ -94,6 +103,7 @@ public final class DutyGc {
             if (!DutyConfig.get(ENABLED)) {
                 return;
             }
+            startedNanos = System.nanoTime();
             for (GarbageCollectorMXBean bean : ManagementFactory.getGarbageCollectorMXBeans()) {
                 COLLECTORS.add(bean.getName());
                 if (bean instanceof NotificationEmitter emitter) {
@@ -126,6 +136,21 @@ public final class DutyGc {
         COUNT.incrementAndGet();
         TOTAL_PAUSE_MILLIS.addAndGet(millis);
 
+        // How much was allocated since the last collection: what the heap held going into this one,
+        // less what it held coming out of the previous one. The pair of readings is already being
+        // handed to us, so this costs a subtraction on a callback that was going to run anyway.
+        //
+        // Worth having because it is the number a memory module is actually judged on. Pause times
+        // say whether the collector is coping; the allocation rate says how much work it is being
+        // given, and that is the thing deduplicating block states and interning tags is meant to
+        // reduce. A report could previously say collection looked healthy while the game churned
+        // through hundreds of megabytes a second.
+        final long before = heapBefore(info);
+        final long previousAfter = LAST_HEAP_AFTER.getAndSet(heapAfter(info));
+        if (previousAfter >= 0L && before > previousAfter) {
+            ALLOCATED_BYTES.addAndGet(before - previousAfter);
+        }
+
         if (millis >= LONG_PAUSE_MILLIS) {
             LONG_PAUSES.incrementAndGet();
         }
@@ -150,6 +175,22 @@ public final class DutyGc {
     private static boolean isMajor(GarbageCollectionNotificationInfo info) {
         String action = info.getGcAction();
         return action != null && action.toLowerCase(Locale.ROOT).contains("major");
+    }
+
+    /** {@return total heap in use just before the collection started, across every heap pool} */
+    private static long heapBefore(GarbageCollectionNotificationInfo info) {
+        long used = 0L;
+        for (var entry : info.getGcInfo().getMemoryUsageBeforeGc().entrySet()) {
+            String pool = entry.getKey().toLowerCase(Locale.ROOT);
+            if (pool.contains("metaspace") || pool.contains("code") || pool.contains("compressed")) {
+                continue;
+            }
+            MemoryUsage usage = entry.getValue();
+            if (usage != null) {
+                used += usage.getUsed();
+            }
+        }
+        return used;
     }
 
     /** {@return total heap in use once the collection finished, across every heap pool} */
@@ -184,6 +225,27 @@ public final class DutyGc {
             }
         }
         return false;
+    }
+
+    /** {@return bytes allocated between collections so far, or 0 before two collections have run} */
+    public static long allocatedBytes() {
+        return ALLOCATED_BYTES.get();
+    }
+
+    /**
+     * {@return allocation rate in bytes per second, or -1 when it cannot be known}
+     *
+     * <p>Needs at least two collections, because the measurement is the gap between one ending and
+     * the next beginning.
+     */
+    public static double allocationBytesPerSecond() {
+        final long started = startedNanos;
+        final long allocated = ALLOCATED_BYTES.get();
+        if (started == 0L || allocated <= 0L || COUNT.get() < 2L) {
+            return -1.0d;
+        }
+        final double seconds = (System.nanoTime() - started) / 1.0e9d;
+        return seconds > 0.0d ? allocated / seconds : -1.0d;
     }
 
     public static long count() {
