@@ -32,17 +32,34 @@ public class IrisCompat {
     public static BooleanConsumer renderWithExtendedVertexFormat;
     public static ThreadLocal<Boolean> skipExtension;
 
+    /**
+     * Wires up the three Iris fields the batching code needs.
+     *
+     * <p>Upstream called {@code System.exit(-1)} when this failed, which kills the game process
+     * outright -- no crash report, no error screen, the window simply gone -- because an optional
+     * mod moved a field. Duty's first rule is that it works alongside other mods, so a failure
+     * here disables the Iris path and leaves everything else running.
+     *
+     * <p>The flag is set last for the same reason. Every consumer reads these three fields only
+     * behind {@code IRIS_LOADED}, so setting it first meant a failure left the flag true and the
+     * fields null, and the exit was the only thing standing between that and a
+     * {@code NullPointerException} on the render path.
+     */
     public static void init() {
-        IRIS_LOADED = true;
         try {
             final Class<?> immediateStateClass = Class.forName("net.irisshaders.iris.vertices.ImmediateState");
 
             isRenderingLevel = FieldAccessor.makeGetter(BooleanSupplier.class, null, immediateStateClass.getDeclaredField("isRenderingLevel"));
             renderWithExtendedVertexFormat = FieldAccessor.makeSetter(BooleanConsumer.class, null, immediateStateClass.getDeclaredField("renderWithExtendedVertexFormat"));
             skipExtension = RStream.of(immediateStateClass).fields().by("skipExtension").get();
+            IRIS_LOADED = true;
         } catch (Throwable t) {
-            Batching.LOGGER.error("Failed to initialize Iris compatibility. Try updating Iris and Batching before reporting this on GitHub", t);
-            System.exit(-1);
+            IRIS_LOADED = false;
+            isRenderingLevel = null;
+            renderWithExtendedVertexFormat = null;
+            skipExtension = null;
+            Batching.LOGGER.error("Could not wire up Iris compatibility, so batching will run without it."
+                    + " Update Iris if this shows up as wrong geometry under shaders.", t);
         }
     }
 
