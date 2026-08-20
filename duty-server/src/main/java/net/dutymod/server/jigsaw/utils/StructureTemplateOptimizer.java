@@ -18,7 +18,19 @@ import java.util.Map;
 
 public class StructureTemplateOptimizer {
 
-    private static final Map<StructureProcessor, Boolean> FINALIZE_PROCESSING_PROCESSORS = Object2BooleanMaps.synchronize(new Object2BooleanOpenHashMap<>());
+    /**
+     * Whether a processor class overrides {@code finalizeProcessing}, cached per class.
+     *
+     * <p>Keyed by class rather than by processor instance, which is what this used to do. The
+     * answer depends on nothing else: {@link #isFinalizeProcessor} reads only
+     * {@code getClass()}. Keying by instance grew the map with every distinct processor ever seen
+     * and held a strong reference to each for the life of the process. Vanilla's come from
+     * datapack processor lists and are registry singletons, so it stayed small there, but a mod
+     * that builds a processor per placement turned it into a leak that grew with structure
+     * generation.
+     */
+    private static final Map<Class<?>, Boolean> FINALIZE_PROCESSING_PROCESSORS =
+            Object2BooleanMaps.synchronize(new Object2BooleanOpenHashMap<>());
 
     public static @NotNull List<StructureTemplate.StructureBlockInfo> getStructureBlockInfosInBounds(StructureTemplate.Palette palette, BlockPos offset, StructurePlaceSettings structurePlaceSettings) {
         BoundingBox boundingBox = structurePlaceSettings.getBoundingBox();
@@ -29,7 +41,7 @@ public class StructureTemplateOptimizer {
 
         // Capped processor needs full nbt block lists
         for (StructureProcessor processor : structurePlaceSettings.getProcessors()) {
-            if (FINALIZE_PROCESSING_PROCESSORS.computeIfAbsent(processor, StructureTemplateOptimizer::isFinalizeProcessor)) {
+            if (FINALIZE_PROCESSING_PROCESSORS.computeIfAbsent(processor.getClass(), StructureTemplateOptimizer::isFinalizeProcessor)) {
                 return palette.blocks();
             }
         }
@@ -60,9 +72,9 @@ public class StructureTemplateOptimizer {
         return listOfInBoundsRelativePositions;
     }
 
-    private static @NotNull Boolean isFinalizeProcessor(StructureProcessor structureProcessor) {
+    private static @NotNull Boolean isFinalizeProcessor(Class<?> processorClass) {
         try {
-            var method = structureProcessor.getClass().getMethod(
+            var method = processorClass.getMethod(
                     "finalizeProcessing",
                     ServerLevelAccessor.class,
                     BlockPos.class,
