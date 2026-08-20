@@ -134,7 +134,23 @@ That determines each module's licence:
 | `duty-memory` | Jasione (LGPL-3.0) + FerriteCore (MIT) + Fast-Tag (LGPL-3.0) | **LGPL-3.0** |
 | `duty-client` | Particle Core (MIT) + OptimisedBlockEntities (LGPL-3.0) + OcclusionCulling (MIT) + Stfu (MIT) + EntityCulling (Protective) | **Not distributable** |
 | `duty-fixerupper` | ModernFix (LGPL-3.0) + Resource-Trimmer (LGPL-3.0) | **LGPL-3.0** |
-| `duty-server` | BiomeSpy (LGPL-3.0) + KryptonReno (LGPL-3.0), bundling velocity-native | **LGPL-3.0** |
+| `duty-server` | BiomeSpy (LGPL-3.0) + KryptonReno (LGPL-3.0) + ScalableLux (LGPL-3.0) + Alternate Current, bundling velocity-native and FlowSched | **LGPL-3.0** |
+| `duty-essentials` | Necessities (Apache-2.0) | **Apache-2.0** |
+| `duty-worldgen` | FastNoise (MPL-2.0) | **MPL-2.0** |
+| `duty-innovative` | Async (GPL-3.0) | **GPL-3.0** |
+
+The bottom three rows were missing from this table while the modules shipped. The jars themselves
+have always carried their upstream in the `credits` field of their `neoforge.mods.toml`, so the
+attribution was being delivered; it was simply not written down here, which is where somebody would
+look for it.
+
+`duty-innovative` is the only **GPL-3.0** module, and GPL-3.0 is stronger copyleft than the
+LGPL-3.0 governing most of this project. Keeping it in its own jar is what stops that reaching
+anything else, the same way `duty-client` quarantines the non-distributable code.
+
+Alternate Current's licence is deliberately not stated. It has not been confirmed, and guessing in
+this file is worse than an admitted gap. `duty-server` is LGPL-3.0 on its other components
+regardless, so nothing depends on the answer except this row.
 
 `duty-framework` is deliberately MIT even though it is original work: had it been
 LGPL-3.0, it would have dragged `duty-client` to LGPL-3.0 along with it for no
@@ -152,6 +168,16 @@ Under LGPL-3.0, for `duty-memory` and `duty-fixerupper`:
 
 Under MIT, for `duty-framework` and the MIT-licensed parts of `duty-client`: keep the
 copyright notice and the permission notice. That is all it asks.
+
+Under **GPL-3.0**, for `duty-innovative`: the same obligations as LGPL-3.0 above, and one more that
+matters. GPL-3.0 extends to anything the work is combined with, where LGPL-3.0 does not. That is
+the reason it stays in its own jar. Nesting it into `duty-all`, or folding its code into another
+module, would pull that module under GPL-3.0 too.
+
+Under **MPL-2.0**, for `duty-worldgen`: MPL is file level rather than project level. Keep the
+licence header on every file that came from FastNoise, and keep the source of those files
+available. Files that did not come from it are unaffected, which is what makes MPL comfortable to
+combine with the rest.
 
 For `duty-client` as a whole: build it, run it, keep it. Do not hand it to anyone.
 
@@ -200,6 +226,19 @@ Two packaging decisions worth recording, because they look inconsistent and are 
 - FlowSched **is** relocated, because C2ME shades its own copy of
   `com.ishland.flowsched` and two copies on one classloader is a real conflict. Nothing
   outside the engine references it by name, so moving it costs nothing.
+
+**Necessities** (`net.dutymod.essentials`, Apache-2.0) by DAQEM is where the homes, warps,
+teleport requests and moderation commands come from. The one module that is not about
+performance, which is why `duty-all` deliberately does not nest it.
+
+**FastNoise** (`org.codeberg.zenxarch.fastnoise`, MPL-2.0) by ZenXArch, from
+<https://codeberg.org/ZenXArch/FastNoise>, is `duty-worldgen`. It replaces the noise, surface and
+biome population passes of chunk generation. Ported from Yarn to Mojang mappings, so effectively
+every file is modified from upstream.
+
+**Async** (`com.axalotl.async`, GPL-3.0) by AxalotL, Alchemy, Bliss, FurryMileon, Grider and
+jediminer543 is `duty-innovative`. It ticks entities in parallel. It ships mixins that target
+Lithium's own classes by name, which is why the two cooperate rather than collide.
 
 One upstream bug was fixed in the process: `BlockStarLightEngine.getSources` set
 `mutablePos4` to the block being tested and then read light emission at `mutablePos1`,

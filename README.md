@@ -6,7 +6,7 @@ A performance mod for **Minecraft 26.1.2** on **NeoForge**, built by combining s
 existing performance mods into a few jars and dropping everything that only existed to
 support older versions.
 
-Duty is five separate jars. Install the ones you want — none of them requires the others.
+Duty is seven separate jars. Install the ones you want. None of them requires the others.
 
 | Jar | What it does for you |
 |---|---|
@@ -14,6 +14,8 @@ Duty is five separate jars. Install the ones you want — none of them requires 
 | **Duty: Client** | Higher frame rate. Bakes chests, signs and banners into the chunk mesh instead of redrawing them every frame, hides entities behind walls so they cost nothing, and speeds up particles. |
 | **Duty: FixerUpper** | Faster startup. Trims datafixer work and makes resource and registry loading lazy, cutting the long tail of loading stalls. |
 | **Duty: Server** | Smoother worlds. Faster `/locate`, faster redstone, a quicker network path, autosaves that no longer stall the game, and a rewritten light engine so chunks generate faster and stop filling in dark. |
+| **Duty: WorldGen** | Faster world generation. Replaces the noise, surface and biome passes of chunk generation with quicker implementations. |
+| **Duty: Innovative** | Ticks entities across several threads instead of one. Off by default: parallel ticking can change how an entity behaves, so it is a decision rather than something installing a jar does to you. Set `disabled = false` in `config/async.toml`. |
 | **Duty: Essentials** | Homes, warps, `/back`, random teleport, teleport requests, and the usual moderation commands. The one module that is not about performance. |
 
 > [!IMPORTANT]
@@ -75,8 +77,9 @@ every object smaller, which compounds with what Duty: Memory already does.
 
 ## 📜 Licensing
 
-Duty is assembled from LGPL-3.0, MIT and Apache-2.0 code, plus one component that is not
-redistributable. Read [NOTICE.md](NOTICE.md) before sharing anything.
+Duty is assembled from LGPL-3.0, MIT, Apache-2.0, MPL-2.0 and GPL-3.0 code, plus one
+component that is not redistributable. Each jar carries its own licence and they are not
+the same, so read [NOTICE.md](NOTICE.md) before sharing anything.
 
 ## 💻 For developers
 

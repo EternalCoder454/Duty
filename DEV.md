@@ -45,9 +45,11 @@ print `error:`** — it says `Unresolved reference`. Check the exit code, not a 
 | `duty-memory` | Jasione + FerriteCore | LGPL-3.0 |
 | `duty-client` | Particle Core + EntityCulling + OptimisedBlockEntities + ImmediatelyFast/Batching + Stfu | Mixed, **not redistributable** |
 | `duty-fixerupper` | ModernFix | LGPL-3.0 |
-| `duty-server` | BiomeSpy + KryptonReno + Alternate Current + async saving | LGPL-3.0 |
+| `duty-server` | BiomeSpy + KryptonReno + ScalableLux + Alternate Current + async saving | LGPL-3.0 |
 | `duty-essentials` | Necessities | Apache-2.0 |
-| `duty-all` | packaging only — nests the four performance modules | — |
+| `duty-worldgen` | FastNoise | MPL-2.0 |
+| `duty-innovative` | Async | GPL-3.0 |
+| `duty-all` | packaging only, nests the performance modules | n/a |
 
 `duty-framework` is nested into every module via JarJar, so exactly one copy loads however
 many modules are installed. `duty-all` deliberately does **not** nest `duty-essentials`:
@@ -125,17 +127,25 @@ task object, the structure watchdog tracked its own elapsed time, FixerUpper tim
 with bespoke mixins — and most of those numbers were written and never read. The culling
 timings sat there for months with nothing displaying them.
 
-Two primitives. Hold the handle in a `static final` field so the registry lookup happens
+Three primitives. Hold the handle in a `static final` field so the registry lookup happens
 once at class-init, never on the measured path:
 
 ```java
 private static final DutyMetrics.Timer PASS = DutyMetrics.timer("client.culling.pass");
 private static final DutyMetrics.Counter HIDDEN = DutyMetrics.counter("client.culling.hidden");
+private static final DutyMetrics.Gauge QUEUE = DutyMetrics.gauge("server.lighting.queue_entries");
 
 long started = PASS.begin();
 try { runPass(); } finally { PASS.end(started); }
 HIDDEN.add(count);
+QUEUE.record(queue.length);
 ```
+
+A timer answers how long, a counter how many, and a **gauge how big it is now**. Nothing
+measured a level before, so a queue's capacity or a pool's size could only be reasoned
+about. It keeps last, min, max and a sample count; min and max are both there because which
+one matters depends on the question, and a floor that never rises says a pool is never being
+drawn down.
 
 `PASS.open()` gives the same thing as try-with-resources, at one allocation per call — fine
 off the hot paths, not fine on them.
@@ -145,6 +155,10 @@ without touching a clock; `end()` and `record()` do the same. That matters becau
 meant for per-frame and per-tick paths, where `System.nanoTime()` is itself the expensive
 part — a VDSO call on Linux, a QPC on Windows, tens of nanoseconds, which is real money at
 sixty frames a second across thousands of entities.
+
+Counters and gauges are the exception: they always record, because there is no clock to read
+and switching them off would only hide data that cost nothing to keep. A gauge is three
+atomic writes, so sample it where a level changes rather than in a loop.
 
 Counters are the exception: they always count, because a `LongAdder` increment is cheap and
 the number is usually wanted precisely when nobody thought to switch measuring on first.
@@ -227,6 +241,15 @@ not worth a CAS loop on a number whose only job is to be displayed.
 | `server.save.write` / `.count` | whether the single save worker keeps up with autosave |
 | `server.net.compress` / `.decompress` | what native compression costs per packet |
 | `memory.blockstate.shapes_shared` / `.face_sturdy_shared` | objects that did not stay on the heap |
+| `server.lighting.queue_entries` / `.queue_trims` | whether the propagation queues give their capacity back, or hold their high water mark forever |
+
+Two numbers come from the collector rather than from a timer, and are collected whether or not
+measuring is on:
+
+| name | what it tells you |
+|---|---|
+| allocation rate | how hard the collector is being worked, which is what deduplication and interning exist to reduce. Pause times say whether it is coping; this says how much it is being given |
+| counter rates | every counter also prints per second, because a total cannot be read without the span it was collected over |
 
 Two of those are deliberately paired against a baseline rather than measured alone. Timing
 only the async particle path would show what it costs without showing what it replaced, and

@@ -31,10 +31,19 @@ Rule 1 is not decorative. Four separate crashes came from breaking it.
 | `duty-memory` | Jasione (`Enum.values()`), FerriteCore (block-state tables, block state cache dedup, data component dedup), Fast-Tag (TagKey/ResourceKey interning) | LGPL-3.0 |
 | `duty-client` | EntityCulling, Particle Core, OptimisedBlockEntities, OcclusionCulling, Stfu, ImmediatelyFast | **not distributable** |
 | `duty-fixerupper` | ModernFix, plus Resource-Trimmer's compact identifier encoding | LGPL-3.0 |
-| `duty-server` | BiomeSpy (`/locate` biome + structure search), KryptonReno network pipeline | LGPL-3.0 |
-| `duty-framework` | shared config/logging, JarJar-nested into each of the above — **never installed separately** |
-| `duty-all` | nothing of its own; JarJars the four modules into one jar | container |
+| `duty-server` | BiomeSpy (`/locate` biome + structure search), KryptonReno network pipeline, ScalableLux light engine, Alternate Current redstone, async world saving | LGPL-3.0 |
+| `duty-essentials` | Necessities: homes, warps, teleports, moderation commands. The one module that is not about performance | Apache-2.0 |
+| `duty-worldgen` | FastNoise: the noise, surface and biome passes of chunk generation | MPL-2.0 |
+| `duty-innovative` | Async: parallel entity ticking. Off by default, in `config/async.toml` | **GPL-3.0** |
+| `duty-framework` | shared config/logging, JarJar-nested into each of the above. **never installed separately** |
+| `duty-all` | nothing of its own; JarJars the performance modules into one jar | container |
 | `duty-annotations`, `fixerupper-mixin-ap` | build-time only, never shipped |
+
+Seven modules ship, not four. The bottom four rows above were missing from this table while
+those modules were installed and running, so if the tree and this file disagree, believe the tree.
+
+`duty-innovative` is the only GPL-3.0 module. GPL-3.0 reaches whatever it is combined with, where
+LGPL-3.0 does not, which is why it stays in its own jar and out of `duty-all`.
 
 `duty-client` contains EntityCulling, whose licence permits use/modify/compile but not
 redistribution. The owner has assessed this, keeps builds private, and accepts responsibility.
@@ -238,6 +247,19 @@ happened four times. Use the editor tooling, or Python with raw strings written 
 
 ---
 
+**Check that a setting survived a restart before believing you changed it.** For a long time none
+of them did. `DutyConfig.ensureLoaded` set its initialised flag and then registered an option, and
+registering an option after initialisation rewrites the file, so the file was written out while the
+loaded values were still empty: one key, at its default, everything else gone. The truncated file
+was then read back. Editing `duty.properties` did nothing, `/duty metrics on` persisted nothing,
+and the report's "config: all defaults" line was right for a reason nobody wanted.
+
+Fixed on 2026-08-20 by reading the file before setting the flag. The reason it survived so long is
+that nothing ever checked: the config wrote itself out looking correct, and it is only visible if
+you set a value, restart, and look again. Do that.
+
+---
+
 ## 5. The Modernica lesson
 
 FixerUpper briefly contained Modernica (a Fabric-only ModernFix fork). All six of the first six
@@ -276,7 +298,30 @@ owner wants (small before big):
    duplicate ModernFix, which Duty already ships newer. Only the other 36 are worth considering.
 
 Done since this was first written: Fast-Tag, Resource-Trimmer, BiomeSpy (in a new `duty-server`
-module) and Stfu are all merged, and `NOTICE.md` attribution is up to date.
+module) and Stfu are all merged, and `NOTICE.md` attribution is up to date. ScalableLux, Alternate
+Current and async saving joined `duty-server` after that, and three more modules exist:
+`duty-essentials`, `duty-worldgen` and `duty-innovative`.
+
+### Next, in the order the work suggests
+
+1. **Writing rules are not enforced and the docs do not pass them.** 230 violations across
+   `FEATURES.md` (157), `HANDOFF.md`, `DEV.md`, `NOTICE.md`, `PORTING.md` and `README.md`, all of
+   them em dashes, en dashes or double hyphens. mc-tools' README says CI fails on that checker;
+   Duty's CI does not run it. Adding the step turns CI red immediately, so the documents have to be
+   cleaned first. Mechanical but large, and it should be one commit that touches nothing else.
+2. **`ConcurrentLightQueue` keeps its peak table forever.** The anonymous
+   `Long2ObjectOpenHashMap` overrides `rehash` to refuse to shrink, which is deliberate for
+   concurrency and costs roughly a megabyte per dimension after heavy worldgen. Shrinking it safely
+   means understanding the read paths first: everything except `isEmpty` goes through the
+   `StampedLock`, and `isEmpty` only reads `size`.
+3. **`DutyEvent` is unreachable**, 78 lines, and is deliberate API for other mods to hook. Nothing
+   in Duty or Liteminer uses it. Keeping it is a product decision, not an oversight; deciding
+   either way closes the last dead-code finding.
+4. **LightLoad**, as below.
+
+Two things are measured now that were not, and the next person should read them before optimising
+anything: the allocation rate in the garbage collection finding, and
+`server.lighting.queue_entries`. Both are in `logs/duty-report.txt`.
 
 **A caution learned from Stfu:** check every branch of a multi-version repo before judging the
 port cost. Stfu's version branches use Yarn mappings; its `multiversion` branch uses Mojang and
