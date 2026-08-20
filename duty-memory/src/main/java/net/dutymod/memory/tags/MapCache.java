@@ -1,12 +1,9 @@
 package net.dutymod.memory.tags;
 
-import com.google.common.base.Equivalence;
 import com.google.common.collect.MapMaker;
 
-import java.lang.reflect.Field;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -29,64 +26,42 @@ public final class MapCache<K, V> {
     }
 
 
+    /**
+     * Builds a cache, optionally over a {@link MapMaker} rather than a plain map.
+     *
+     * <p>Upstream also offered a key equivalence, set by reflecting into {@code MapMaker}'s
+     * package-private {@code keyEquivalence} field. Nothing here ever asked for one -- FastTag
+     * builds every cache with {@code maker(MapMaker::weakValues)} or with no options at all -- and
+     * the code could not have worked if it had: the field is package-private and the reflection
+     * never called {@code setAccessible}, so any caller would have got an
+     * {@code IllegalAccessException} wrapped in a {@code RuntimeException}. {@code MapMaker} has a
+     * public {@code keyEquivalence} method anyway.
+     *
+     * <p>What it did do was run a {@code getDeclaredField} lookup in a static initializer on every
+     * load, where a rename in Guava would throw {@code ExceptionInInitializerError} and take
+     * FastTag's interning down with it. So it was a liability that could only ever cost something.
+     */
     public static final class Build<K, V> {
 
-        private static final Field keyEquivalence;
-
-        static {
-            try {
-                keyEquivalence = MapMaker.class.getDeclaredField("keyEquivalence");
-            } catch (NoSuchFieldException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
         private UnaryOperator<MapMaker> maker;
-        private Equivalence<K> equivalence;
         private final Function<K, V> mapFunction;
 
         public Build(Function<K, V> mapFunction) {
             this.mapFunction = mapFunction;
         }
 
-        // Written out rather than generated: upstream used Lombok's @Setter/@Accessors for
-        // these two, and Duty does not carry Lombok.
+        // Written out rather than generated: upstream used Lombok's @Setter/@Accessors for this,
+        // and Duty does not carry Lombok.
         public Build<K, V> maker(UnaryOperator<MapMaker> maker) {
             this.maker = maker;
             return this;
         }
 
-        public Build<K, V> equivalence(Equivalence<K> equivalence) {
-            this.equivalence = equivalence;
-            return this;
-        }
-
-        public Build<K, V> identity() {
-            equivalence = (Equivalence<K>) Equivalence.identity();
-            return this;
-        }
-
-        public Build<K, V> equals() {
-            equivalence = (Equivalence<K>) Equivalence.equals();
-            return this;
-        }
-
         public MapCache<K, V> build() {
-            if (maker == null && equivalence == null) {
+            if (maker == null) {
                 return new MapCache<>(mapFunction, new ConcurrentHashMap<>());
             }
-            var mapMaker = new MapMaker();
-            if (maker != null) {
-                mapMaker = maker.apply(mapMaker);
-            }
-            if (equivalence != null) {
-                try {
-                    keyEquivalence.set(mapMaker, equivalence);
-                } catch (IllegalAccessException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            return new MapCache<>(mapFunction, mapMaker.makeMap());
+            return new MapCache<>(mapFunction, maker.apply(new MapMaker()).makeMap());
         }
     }
 
