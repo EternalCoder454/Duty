@@ -93,7 +93,12 @@ public final class NetOptions {
     // synchronized, so the hot paths (compression level, oversized packets, wide VarInt) read
     // through the cached fields below rather than hitting the lock on every packet.
 
-    private static boolean loaded;
+    // The latch is volatile because these are read from several Netty threads and written by
+    // whichever one arrives first. Without it a thread can see loaded == true while the three
+    // fields below still hold their defaults, and a compressionLevel read as zero is no
+    // compression at all -- silently, and only when the race happens to land. Writing the latch
+    // last is not enough on its own; the volatile write is what publishes the three before it.
+    private static volatile boolean loaded;
     private static int compressionLevel;
     private static boolean permitOversizedPackets;
     private static boolean allowWideVarInt;
