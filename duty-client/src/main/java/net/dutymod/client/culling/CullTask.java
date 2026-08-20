@@ -88,19 +88,34 @@ public final class CullTask implements Runnable {
             if (traced == 0) {
                 return;
             }
-            long passes = Math.max(1L, PASS_TIME.count());
-            double hitRate = 100.0 * hidden / traced;
+            final long passes = PASS_TIME.count();
+            final double hitRate = 100.0 * hidden / traced;
+            final String title = "Culling hid "
+                    + String.format(java.util.Locale.ROOT, "%.1f%%", hitRate) + " of what it traced";
 
-            findings.add(new net.dutymod.framework.DutyReport.Finding(
-                    net.dutymod.framework.DutyReport.Severity.INFO,
-                    "Culling hid " + String.format(java.util.Locale.ROOT, "%.1f%%", hitRate)
-                            + " of what it traced",
-                    String.format(java.util.Locale.ROOT,
-                            "%d of %d traced, about %d skipped renders per pass. Each of those is "
-                                    + "a draw that did not happen, against %.3fms of tracing per "
-                                    + "pass on a background thread.",
-                            hidden, traced, hidden / passes,
-                            PASS_TIME.totalNanos() / 1.0e6 / passes)));
+            // Per-pass figures need the pass count, and that comes from a timer, so it is zero
+            // whenever measuring is off. Dividing by max(1, passes) then printed the session total
+            // as a per-pass number: one report claimed about 80717 skipped renders per pass, which
+            // was every skipped render of the session. The counters are still true, so say those
+            // and drop the rates rather than inventing them.
+            if (passes == 0L) {
+                findings.add(new net.dutymod.framework.DutyReport.Finding(
+                        net.dutymod.framework.DutyReport.Severity.INFO, title,
+                        String.format(java.util.Locale.ROOT,
+                                "%d of %d traced. Each of those is a draw that did not happen. How "
+                                        + "many passes that took, and what they cost, needs "
+                                        + "measuring switched on.",
+                                hidden, traced)));
+            } else {
+                findings.add(new net.dutymod.framework.DutyReport.Finding(
+                        net.dutymod.framework.DutyReport.Severity.INFO, title,
+                        String.format(java.util.Locale.ROOT,
+                                "%d of %d traced, about %d skipped renders per pass. Each of those is "
+                                        + "a draw that did not happen, against %.3fms of tracing per "
+                                        + "pass on a background thread.",
+                                hidden, traced, hidden / passes,
+                                PASS_TIME.totalNanos() / 1.0e6 / passes)));
+            }
 
             if (candidates > 0) {
                 double survived = 100.0 * traced / candidates;

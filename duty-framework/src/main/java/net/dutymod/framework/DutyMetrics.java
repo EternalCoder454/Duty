@@ -506,7 +506,13 @@ public final class DutyMetrics {
             for (int i = 0; i < BUCKET_COUNT; i++) {
                 seen += histogram.get(i);
                 if (seen >= target) {
-                    return bucketUpperNanos(i) / 1.0e6;
+                    // Clamped to the worst sample actually recorded. A bucket is a range and this
+                    // returns its ceiling, which for a timer with few samples sits above everything
+                    // in it: one report showed server.save.write with a p99 of 14.680ms against a
+                    // worst of 13.255ms, over sixteen samples. A percentile of observed data cannot
+                    // exceed the observed maximum, and printing that it does makes a reader distrust
+                    // the whole table rather than just that cell.
+                    return Math.min(bucketUpperNanos(i), (double) this.maxNanos()) / 1.0e6;
                 }
             }
             return maxNanos() / 1.0e6;
