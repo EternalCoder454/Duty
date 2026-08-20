@@ -45,7 +45,6 @@ public class FixerUpperEarlyConfig {
 
     public static final boolean OPTIFINE_PRESENT;
 
-    private File configFile;
 
     static {
         boolean hasOfClass = false;
@@ -283,7 +282,8 @@ public class FixerUpperEarlyConfig {
             .build();
 
     private FixerUpperEarlyConfig(File file) {
-        this.configFile = file;
+        // file is not kept. It is only used by the one-time migration in load(), and the field
+        // that used to hold it was never read once FixerUpper's options moved into duty.properties.
         OptionCategories.load();
         this.scanForAndBuildMixinOptions();
         mixinOptions.addAll(DEFAULT_SETTING_OVERRIDES.keySet());
@@ -483,8 +483,12 @@ public class FixerUpperEarlyConfig {
     }
 
     /**
-     * Loads the configuration file from the specified location. If it does not exist, a new configuration file will be
-     * created. The file on disk will then be updated to include any new options.
+     * Builds the options and puts their values in {@link DutyConfig}.
+     *
+     * <p>{@code file} is not where the options live any more. It names an older build's standalone
+     * properties file, and the only thing done with it is the one-time migration below: read it if
+     * it is there, copy the values across, delete it. Nothing is written back to it, and nothing is
+     * created if it is absent.
      */
     public static FixerUpperEarlyConfig load(File file) {
         FixerUpperEarlyConfig config = new FixerUpperEarlyConfig(file);
@@ -505,17 +509,23 @@ public class FixerUpperEarlyConfig {
                 Properties legacy = new Properties();
                 try (FileInputStream fin = new FileInputStream(file)) {
                     legacy.load(fin);
+
+                    config.readProperties(legacy);
+                    config.saveToDutyConfig();
+                    if (file.delete()) {
+                        LOGGER.info("Migrated {} into Duty's config and removed it", file.getName());
+                    } else {
+                        LOGGER.warn("Migrated {} into Duty's config, but could not remove the old file; "
+                                + "it will be read again next launch and override the settings screen",
+                                file.getName());
+                    }
                 } catch (IOException e) {
-                    throw new RuntimeException("Could not load config file", e);
-                }
-                config.readProperties(legacy);
-                config.saveToDutyConfig();
-                if (file.delete()) {
-                    LOGGER.info("Migrated {} into Duty's config and removed it", file.getName());
-                } else {
-                    LOGGER.warn("Migrated {} into Duty's config, but could not remove the old file; "
-                            + "it will be read again next launch and override the settings screen",
-                            file.getName());
+                    // This runs inside the mixin config plugin, so throwing fails mixin application
+                    // rather than failing the read, and takes FixerUpper down over a file that only
+                    // exists to be migrated away. Leaving the registered defaults in place is what a
+                    // fresh install gets, and the file stays put for a later attempt.
+                    LOGGER.warn("Could not read {} to migrate it, so the defaults apply and the file"
+                            + " is left where it is: {}", file.getName(), e.toString());
                 }
             }
 
