@@ -245,6 +245,19 @@ public class FixerUpperEarlyConfig {
         }
     }
 
+    /**
+     * Options whose default differs from "on".
+     *
+     * <p>Every key here becomes an option whether or not a mixin package backs it, because the
+     * constructor adds this key set to the ones it found by scanning. Seventeen keys inherited from
+     * upstream named mixins this port never took, so they wrote seventeen settings into
+     * duty.properties that nothing reads -- including four that read as memory and startup wins
+     * (clear_mixin_classinfo, deduplicate_location, deduplicate_climate_parameters,
+     * dynamic_entity_renderers) and would have done nothing whatever they were set to.
+     *
+     * <p>So a key belongs here only if {@code common/mixin/<category>/<name>} exists. Adding one
+     * for a mixin that does not ship puts the setting back in the file and nothing behind it.
+     */
     private static final ImmutableMap<String, Boolean> DEFAULT_SETTING_OVERRIDES = new DefaultSettingMapBuilder()
             // Changes the wire format of identifiers, so both ends must run Duty. Safe in a
             // pack you control on both sides, broken when joining a server without it.
@@ -260,29 +273,12 @@ public class FixerUpperEarlyConfig {
             // conflict is stale rather than current, but missing or wrong block textures is the
             // symptom to look for, and this one line is the revert.
             .put("mixin.perf.dynamic_resources", true)
-            .put("mixin.feature.direct_stack_trace", false)
-            .put("mixin.feature.stalled_chunk_load_detection", false)
             .put("mixin.bugfix.restore_old_dragon_movement", false)
             .put("mixin.feature.cause_lag_by_disabling_threads", false)
             .put("mixin.bugfix.missing_block_entities", false)
             .put("mixin.feature.blockentity_incorrect_thread", false)
-            .put("mixin.perf.clear_mixin_classinfo", false)
-            .put("mixin.perf.deduplicate_climate_parameters", false)
-            .put("mixin.bugfix.packet_leak", false)
-            .put("mixin.perf.deduplicate_location", false)
-            .put("mixin.perf.dynamic_entity_renderers", false)
-            .put("mixin.feature.integrated_server_watchdog", true)
-            .put("mixin.perf.faster_item_rendering", false)
-            .put("mixin.feature.spam_thread_dump", false)
             .put("mixin.feature.remove_chat_signing", false)
-            .put("mixin.bugfix.skip_redundant_saves", false)
-            .put("mixin.feature.snapshot_easter_egg", true)
-            .put("mixin.feature.warn_missing_perf_mods", true)
-            .put("mixin.feature.spark_profile_launch", false)
-            .put("mixin.feature.spark_profile_world_join", false)
-            .put("mixin.feature.log_stdout_in_log_files", true)
             .put("mixin.devenv", isDevEnv)
-            .putConditionally(() -> !isFabric, "mixin.bugfix.fix_config_crashes", true)
             .putConditionally(() -> !isFabric, "mixin.feature.registry_event_progress", true)
             .build();
 
