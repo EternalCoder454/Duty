@@ -4,7 +4,6 @@ import com.google.common.base.Suppliers;
 import it.unimi.dsi.fastutil.booleans.BooleanArrays;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import net.dutymod.memory.mixin.blockstatecache.ArrayVSAccess;
-import net.dutymod.memory.mixin.blockstatecache.SliceShapeAccess;
 import net.minecraft.world.level.block.state.BlockBehaviour.BlockStateBase;
 import net.minecraft.world.phys.shapes.ArrayVoxelShape;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -149,15 +148,4 @@ public class BlockStateCacheImpl {
         toReplaceAccess.setShape(toKeepAccess.getShape());
     }
 
-    @Nullable
-    private static VoxelShape getRenderShape(@Nullable VoxelShape[] projected) {
-        if (projected != null) {
-            for (VoxelShape side : projected) {
-                if (side instanceof SliceShapeAccess slice) {
-                    return slice.getDelegate();
-                }
-            }
-        }
-        return null;
-    }
 }
