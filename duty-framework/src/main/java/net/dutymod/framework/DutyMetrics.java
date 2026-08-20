@@ -247,13 +247,19 @@ public final class DutyMetrics {
         StringBuilder out = new StringBuilder(512);
         out.append("Duty performance report\n");
 
+        // Counters are collected whether or not measurement is on, so this only withholds the
+        // timers. Returning here withheld the counters too, and told the reader there was nothing
+        // to see while the findings above the table were quoting those very numbers: a session
+        // that reported culling had hidden 73372 of 75644 traced, over a table saying measurement
+        // is off. Say which half is missing instead of implying both are.
+        final List<Timer> timers = enabled ? timers() : List.of();
+        final List<Counter> counters = counters();
+
         if (!enabled) {
-            out.append("  measurement is off; set ").append(ENABLED).append("=true to collect it");
-            return out.toString();
+            out.append("  timings are off; set ").append(ENABLED)
+                    .append("=true for those. Counters below are collected regardless.\n");
         }
 
-        List<Timer> timers = timers();
-        List<Counter> counters = counters();
         if (timers.isEmpty() && counters.isEmpty()) {
             out.append("  nothing recorded yet");
             return out.toString();
