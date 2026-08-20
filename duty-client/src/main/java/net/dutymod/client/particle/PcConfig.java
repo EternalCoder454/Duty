@@ -34,7 +34,55 @@ public final class PcConfig {
      */
     private volatile double renderDistanceSq = 0.0;
 
-    private PcConfig() {}
+    /**
+     * The potion filters, read once rather than per particle.
+     *
+     * <p>{@link #shouldDisablePotionParticle} is reached from {@code LivingEntity.tickEffects},
+     * which is every living entity with an effect on it, every tick. {@link DutyConfig#get} is
+     * {@code synchronized} and reads through a {@link java.util.Properties}, itself a
+     * {@code Hashtable}, so asking it there cost two monitors and a map lookup per potion particle
+     * -- inside the module whose job is to make particles cheaper.
+     *
+     * <p>Volatile rather than final because {@code /duty reload} refreshes them below.
+     */
+    private volatile boolean potionFiltering;
+    private volatile boolean hideOwn;
+    private volatile boolean hideOtherPlayers;
+    private volatile boolean hideMobs;
+
+    /**
+     * The particle buffer cap, read once rather than per tick.
+     *
+     * <p>The async ticking mixin asks for this every client tick, and {@link DutyConfig#getInt}
+     * parses the value out of its string form on every call.
+     */
+    private volatile int maxParticlesPerSheet;
+
+    /**
+     * The forced-minimal override, read once rather than per particle.
+     *
+     * <p>{@code ClientLevel.calculateParticleLevel} decides whether each spawn attempt is allowed,
+     * so this sat on the same per-particle path as the potion filters above.
+     */
+    private volatile boolean forceMinimalParticles;
+
+    private PcConfig() {
+        readConfig();
+        // DEV.md asks any module that caches an option to register here, so the file and the
+        // behaviour cannot disagree after a reload.
+        DutyConfig.onReload(this::readConfig);
+    }
+
+    private void readConfig() {
+        ClientOptions.init();
+        potionFiltering = DutyConfig.get(ClientOptions.POTION_PARTICLE_FILTERING);
+        hideOwn = DutyConfig.get(ClientOptions.HIDE_OWN_POTION_PARTICLES);
+        hideOtherPlayers = DutyConfig.get(ClientOptions.HIDE_OTHER_PLAYER_POTION_PARTICLES);
+        hideMobs = DutyConfig.get(ClientOptions.HIDE_MOB_POTION_PARTICLES);
+        maxParticlesPerSheet =
+                DutyConfig.getInt(ClientOptions.MAX_PARTICLES_PER_SHEET, 256, Integer.MAX_VALUE);
+        forceMinimalParticles = DutyConfig.get(ClientOptions.FORCE_MINIMAL_PARTICLES);
+    }
 
     public Impl getImpl() {
         return impl;
@@ -51,17 +99,15 @@ public final class PcConfig {
 
     /** {@return whether potion particles of this category are switched off} */
     public boolean shouldDisablePotionParticle(PotionDisableType type) {
-        if (!DutyConfig.get(ClientOptions.POTION_PARTICLE_FILTERING)) {
+        if (!potionFiltering) {
             return type == PotionDisableType.NONE;
         }
         return switch (type) {
             case NONE -> false;
-            case SELF -> DutyConfig.get(ClientOptions.HIDE_OWN_POTION_PARTICLES);
-            case OTHER_PLAYER -> DutyConfig.get(ClientOptions.HIDE_OTHER_PLAYER_POTION_PARTICLES);
-            case MOBS -> DutyConfig.get(ClientOptions.HIDE_MOB_POTION_PARTICLES);
-            case ALL -> DutyConfig.get(ClientOptions.HIDE_OWN_POTION_PARTICLES)
-                    && DutyConfig.get(ClientOptions.HIDE_OTHER_PLAYER_POTION_PARTICLES)
-                    && DutyConfig.get(ClientOptions.HIDE_MOB_POTION_PARTICLES);
+            case SELF -> hideOwn;
+            case OTHER_PLAYER -> hideOtherPlayers;
+            case MOBS -> hideMobs;
+            case ALL -> hideOwn && hideOtherPlayers && hideMobs;
         };
     }
 
@@ -95,7 +141,7 @@ public final class PcConfig {
 
         /** {@return the particle buffer cap, in particles per texture sheet} */
         public IntValue getMaxParticlesPerSheet() {
-            return new IntValue(DutyConfig.getInt(ClientOptions.MAX_PARTICLES_PER_SHEET, 256, Integer.MAX_VALUE));
+            return new IntValue(maxParticlesPerSheet);
         }
 
         /** Recomputes the particle render distance from the current video settings. */
@@ -130,7 +176,7 @@ public final class PcConfig {
             if (disableParticles.get()) {
                 return ParticleStatus.MINIMAL;
             }
-            if (DutyConfig.get(ClientOptions.FORCE_MINIMAL_PARTICLES)) {
+            if (forceMinimalParticles) {
                 return ParticleStatus.MINIMAL;
             }
             return requested;
