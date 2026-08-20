@@ -350,11 +350,20 @@ public final class DutyConfig {
         if (initialized) {
             return;
         }
-        initialized = true;
-        register(VERBOSE_LOGGING, false,
-                "Write Duty's debug lines to the log. Off by default because the busy ones sit on\n"
-                        + "per-packet and per-frame paths. Turn it on when asked for a log that\n"
-                        + "shows what Duty decided, rather than only what it did.");
+
+        // Read the file before setting `initialized`, and that order is the whole point.
+        //
+        // register() rewrites the file whenever a key arrives after initialisation. Setting the
+        // flag first meant the VERBOSE_LOGGING registration below rewrote the file while LOADED was
+        // still empty, so it wrote out that one key at its default and nothing else -- truncating
+        // the file -- and then the truncated file was read back into LOADED. Every module that
+        // registered afterwards appended its own defaults the same way.
+        //
+        // The result was that no setting survived a launch. Editing duty.properties did nothing,
+        // /duty metrics on persisted nothing, and the report's "config: all defaults" line was
+        // correct for a reason nobody wanted. It also explains why removing an option did not leave
+        // it in the "modules not currently installed" section: there were never any unknown keys to
+        // preserve, because LOADED was empty at the moment that write happened.
         Path path = configPath();
         if (Files.isRegularFile(path)) {
             try (InputStream in = Files.newInputStream(path)) {
@@ -365,6 +374,16 @@ public final class DutyConfig {
         } else {
             dirty = true;
         }
+
+        initialized = true;
+        register(VERBOSE_LOGGING, false,
+                "Write Duty's debug lines to the log. Off by default because the busy ones sit on\n"
+                        + "per-packet and per-frame paths. Turn it on when asked for a log that\n"
+                        + "shows what Duty decided, rather than only what it did.");
+
+        // The file is normalised once here, now that LOADED holds whatever the player had set.
+        DutyLog.setVerbose(Boolean.parseBoolean(
+                LOADED.getProperty(VERBOSE_LOGGING, "false").trim()));
         writeIfDirty();
     }
 
